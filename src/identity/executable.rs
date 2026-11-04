@@ -16,6 +16,7 @@ pub struct ExecutableIdentity {
     pub size: u64,
     pub file_version: Option<String>,
     pub product_version: Option<String>,
+    pub version_info_error: Option<String>,
 }
 
 #[derive(Debug, Error)]
@@ -59,9 +60,9 @@ impl ExecutableIdentity {
         }
 
         #[cfg(windows)]
-        let versions = windows_version_info(path).unwrap_or((None, None));
+        let (versions, version_info_error) = version_metadata(windows_version_info(path));
         #[cfg(not(windows))]
-        let versions = (None, None);
+        let (versions, version_info_error) = ((None, None), None);
 
         let after = file_snapshot(&file).map_err(|source| io_error(path, source))?;
         let path_after = File::open(path)
@@ -78,6 +79,7 @@ impl ExecutableIdentity {
             size: before.size,
             file_version: versions.0,
             product_version: versions.1,
+            version_info_error,
         })
     }
 }
@@ -86,6 +88,16 @@ fn io_error(path: &Path, source: io::Error) -> ExecutableError {
     ExecutableError::Io {
         path: path.to_owned(),
         source,
+    }
+}
+
+#[cfg(any(windows, test))]
+fn version_metadata(
+    result: io::Result<(Option<String>, Option<String>)>,
+) -> ((Option<String>, Option<String>), Option<String>) {
+    match result {
+        Ok(versions) => (versions, None),
+        Err(error) => ((None, None), Some(error.to_string())),
     }
 }
 
@@ -169,9 +181,31 @@ fn platform_file_identity(
     Ok(PlatformFileIdentity)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preserves_version_metadata_read_errors_separately_from_absence() {
+        let absent = version_metadata(Ok((None, None)));
+        assert_eq!(absent, ((None, None), None));
+
+        let failed = version_metadata(Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "access denied",
+        )));
+        assert_eq!(failed.0, (None, None));
+        assert_eq!(failed.1.as_deref(), Some("access denied"));
+    }
+}
+
 #[cfg(windows)]
 fn windows_version_info(path: &Path) -> io::Result<(Option<String>, Option<String>)> {
     use std::{mem::size_of, os::windows::ffi::OsStrExt, ptr};
+    use windows_sys::Win32::Foundation::{
+        ERROR_RESOURCE_DATA_NOT_FOUND, ERROR_RESOURCE_LANG_NOT_FOUND,
+        ERROR_RESOURCE_NAME_NOT_FOUND, ERROR_RESOURCE_TYPE_NOT_FOUND, GetLastError,
+    };
     use windows_sys::Win32::Storage::FileSystem::{
         GetFileVersionInfoSizeW, GetFileVersionInfoW, VS_FIXEDFILEINFO, VerQueryValueW,
     };
@@ -181,7 +215,24 @@ fn windows_version_info(path: &Path) -> io::Result<(Option<String>, Option<Strin
     // SAFETY: wide_path is null-terminated and remains alive for this call.
     let size = unsafe { GetFileVersionInfoSizeW(wide_path.as_ptr(), &mut ignored) };
     if size == 0 {
-        return Ok((None, None));
+        let error = unsafe { GetLastError() };
+        if [
+            ERROR_RESOURCE_DATA_NOT_FOUND,
+            ERROR_RESOURCE_TYPE_NOT_FOUND,
+            ERROR_RESOURCE_NAME_NOT_FOUND,
+            ERROR_RESOURCE_LANG_NOT_FOUND,
+        ]
+        .contains(&error)
+        {
+            return Ok((None, None));
+        }
+        if error == 0 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Windows could not retrieve version information",
+            ));
+        }
+        return Err(io::Error::from_raw_os_error(error as i32));
     }
 
     let mut version_data = Vec::new();
@@ -215,13 +266,19 @@ fn windows_version_info(path: &Path) -> io::Result<(Option<String>, Option<Strin
         )
     };
     if found == 0 || fixed_info.is_null() || length < size_of::<VS_FIXEDFILEINFO>() as u32 {
-        return Ok((None, None));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "version resource has no valid fixed-file information",
+        ));
     }
 
     // SAFETY: VerQueryValueW returned a pointer to at least one VS_FIXEDFILEINFO.
     let fixed_info = unsafe { fixed_info.cast::<VS_FIXEDFILEINFO>().read_unaligned() };
     if fixed_info.dwSignature != 0xFEEF04BD {
-        return Ok((None, None));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "version resource has an invalid fixed-file signature",
+        ));
     }
 
     Ok((

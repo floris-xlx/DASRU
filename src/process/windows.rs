@@ -1,4 +1,4 @@
-use std::{ffi::OsString, io, mem::size_of, os::windows::ffi::OsStringExt, path::Path};
+use std::{ffi::OsString, io, mem::size_of, os::windows::ffi::OsStringExt};
 
 use windows_sys::Win32::{
     Foundation::{
@@ -19,15 +19,15 @@ use windows_sys::Win32::{
 };
 
 use super::{
-    GAME_EXECUTABLE, ProcessCandidate, ProcessFailure, ProcessFailureKind, ProcessIdentity,
-    ProcessInspection, ProcessScanError, is_game_executable_name,
+    GAME_EXECUTABLE, PinnedProcessCandidate, ProcessCandidate, ProcessFailure, ProcessFailureKind,
+    ProcessIdentity, ProcessInspection, ProcessScanError, is_game_executable_name,
 };
 
 const ERROR_ACCESS_DENIED: u32 = 5;
 const ERROR_INVALID_PARAMETER: u32 = 87;
 const ERROR_NO_MORE_FILES: u32 = 18;
 
-struct OwnedHandle(HANDLE);
+pub(super) struct OwnedHandle(pub(super) HANDLE);
 
 impl Drop for OwnedHandle {
     fn drop(&mut self) {
@@ -37,6 +37,16 @@ impl Drop for OwnedHandle {
 }
 
 pub fn enumerate_game_processes() -> Result<Vec<ProcessCandidate>, ProcessScanError> {
+    enumerate_pinned_game_processes().map(|candidates| {
+        candidates
+            .into_iter()
+            .map(|candidate| candidate.candidate)
+            .collect()
+    })
+}
+
+pub(super) fn enumerate_pinned_game_processes()
+-> Result<Vec<PinnedProcessCandidate>, ProcessScanError> {
     // SAFETY: the snapshot flags and process id are valid scalar arguments.
     let raw_snapshot = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
     if raw_snapshot == INVALID_HANDLE_VALUE {
@@ -63,10 +73,17 @@ pub fn enumerate_game_processes() -> Result<Vec<ProcessCandidate>, ProcessScanEr
         if is_game_executable_name(&name) {
             let pid = entry.th32ProcessID;
             tracing::debug!(pid, reported_name = %name, "found game process candidate by executable name");
-            candidates.push(ProcessCandidate {
-                pid,
-                reported_name: name,
-                inspection: inspect_process(pid),
+            let (inspection, handle) = match inspect_process(pid) {
+                Ok((identity, handle)) => (ProcessInspection::Available { identity }, Some(handle)),
+                Err(failure) => (failure, None),
+            };
+            candidates.push(PinnedProcessCandidate {
+                candidate: ProcessCandidate {
+                    pid,
+                    reported_name: name,
+                    inspection,
+                },
+                handle,
             });
         }
 
@@ -87,9 +104,9 @@ pub fn enumerate_game_processes() -> Result<Vec<ProcessCandidate>, ProcessScanEr
     Ok(candidates)
 }
 
-fn inspect_process(pid: u32) -> ProcessInspection {
+fn inspect_process(pid: u32) -> Result<(ProcessIdentity, OwnedHandle), ProcessInspection> {
     if pid == 0 {
-        return inconsistent("the process snapshot returned PID 0");
+        return Err(inconsistent("the process snapshot returned PID 0"));
     }
 
     // SAFETY: OpenProcess receives a PID from the process snapshot and only query/synchronization rights.
@@ -102,101 +119,88 @@ fn inspect_process(pid: u32) -> ProcessInspection {
     };
     if raw_process.is_null() {
         let error = last_error();
-        return if error == ERROR_INVALID_PARAMETER {
+        return Err(if error == ERROR_INVALID_PARAMETER {
             exited("OpenProcess")
         } else {
             unavailable("OpenProcess", error)
-        };
+        });
     }
     let process = OwnedHandle(raw_process);
+    inspect_open_process(process.0, pid).map(|identity| (identity, process))
+}
 
-    if let Err(failure) = validate_process_handle(process.0, pid) {
-        return failure;
-    }
+pub(super) fn inspect_open_process(
+    process: HANDLE,
+    pid: u32,
+) -> Result<ProcessIdentity, ProcessInspection> {
+    validate_process_handle(process, pid)?;
 
-    let first_creation_time = match creation_time(process.0) {
+    let first_creation_time = match creation_time(process) {
         Ok(value) => value,
-        Err(error) => return process_api_failure(process.0, pid, "GetProcessTimes", error),
+        Err(error) => return Err(process_api_failure(process, pid, "GetProcessTimes", error)),
     };
-    let first_path = match process_path(process.0) {
+    let first_path = match process_path(process) {
         Ok(value) => value,
         Err(error) => {
-            return process_api_failure(process.0, pid, "QueryFullProcessImageNameW", error);
+            return Err(process_api_failure(
+                process,
+                pid,
+                "QueryFullProcessImageNameW",
+                error,
+            ));
         }
     };
     if !first_path
         .file_name()
         .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case(GAME_EXECUTABLE))
     {
-        return inconsistent("process image path does not match the candidate executable name");
+        return Err(inconsistent(
+            "process image path does not match the candidate executable name",
+        ));
     }
 
-    let module = main_module(process.0);
-    if let Err(failure) = validate_process_handle(process.0, pid) {
-        return failure;
-    }
-    let (module_path, module_base, image_size) = match module {
+    let (module_path, module_base, image_size) = match main_module(process) {
         Ok(value) => value,
-        Err(error) => return error,
+        Err(error) => return Err(error),
     };
-    let second_path = match process_path(process.0) {
+    let second_path = match process_path(process) {
         Ok(value) => value,
         Err(error) => {
-            return process_api_failure(
-                process.0,
+            return Err(process_api_failure(
+                process,
                 pid,
                 "QueryFullProcessImageNameW after module lookup",
                 error,
-            );
+            ));
         }
     };
-    let second_creation_time = match creation_time(process.0) {
+    let second_creation_time = match creation_time(process) {
         Ok(value) => value,
         Err(error) => {
-            return process_api_failure(
-                process.0,
+            return Err(process_api_failure(
+                process,
                 pid,
                 "GetProcessTimes after module lookup",
                 error,
-            );
+            ));
         }
     };
-    if let Err(failure) = validate_process_handle(process.0, pid) {
-        return failure;
-    }
-
-    let first_canonical_path = match std::fs::canonicalize(&first_path) {
-        Ok(path) => path,
-        Err(error) => return io_unavailable("canonicalize process image path", error),
-    };
-    let module_canonical_path = match std::fs::canonicalize(&module_path) {
-        Ok(path) => path,
-        Err(error) => return io_unavailable("canonicalize main module path", error),
-    };
-    let second_canonical_path = match std::fs::canonicalize(&second_path) {
-        Ok(path) => path,
-        Err(error) => {
-            return io_unavailable("canonicalize process image path after module lookup", error);
-        }
-    };
+    validate_process_handle(process, pid)?;
 
     if first_creation_time != second_creation_time
-        || normalize_path(&first_canonical_path) != normalize_path(&module_canonical_path)
-        || normalize_path(&first_canonical_path) != normalize_path(&second_canonical_path)
+        || !super::same_process_image_paths(&[&first_path, &module_path, &second_path])
     {
-        return inconsistent(
+        return Err(inconsistent(
             "process path, creation time, or main module changed during inspection",
-        );
+        ));
     }
 
-    ProcessInspection::Available {
-        identity: ProcessIdentity {
-            creation_time_filetime: first_creation_time,
-            executable_path: first_path,
-            module_base,
-            image_size,
-        },
-    }
+    Ok(ProcessIdentity {
+        creation_time_filetime: first_creation_time,
+        executable_path: first_path,
+        module_base,
+        image_size,
+    })
 }
 
 fn main_module(process: HANDLE) -> Result<(std::path::PathBuf, u64, u32), ProcessInspection> {
@@ -347,15 +351,6 @@ fn from_wide(value: &[u16]) -> String {
         .into_owned()
 }
 
-fn normalize_path(path: &Path) -> String {
-    let value = path.to_string_lossy().replace('/', "\\");
-    let value = value
-        .strip_prefix("\\\\?\\")
-        .or_else(|| value.strip_prefix("\\??\\"))
-        .unwrap_or(&value);
-    value.to_lowercase()
-}
-
 fn unavailable(operation: &str, error: u32) -> ProcessInspection {
     ProcessInspection::Unavailable {
         failure: ProcessFailure {
@@ -366,22 +361,6 @@ fn unavailable(operation: &str, error: u32) -> ProcessInspection {
                 ProcessFailureKind::Unavailable
             },
             win32_error: Some(error),
-        },
-    }
-}
-
-fn io_unavailable(operation: &str, error: io::Error) -> ProcessInspection {
-    ProcessInspection::Unavailable {
-        failure: ProcessFailure {
-            operation: operation.to_owned(),
-            kind: if error.kind() == io::ErrorKind::PermissionDenied {
-                ProcessFailureKind::AccessDenied
-            } else {
-                ProcessFailureKind::Unavailable
-            },
-            win32_error: error
-                .raw_os_error()
-                .and_then(|code| u32::try_from(code).ok()),
         },
     }
 }
@@ -425,5 +404,68 @@ fn scan_error(operation: &str, error: u32) -> ProcessScanError {
     ProcessScanError::Io {
         operation: operation.to_owned(),
         source: io::Error::from_raw_os_error(error as i32),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{process::Command, thread, time::Duration};
+
+    #[test]
+    fn retained_process_handle_detects_exit_after_the_initial_scan() {
+        let test_binary = std::env::current_exe().expect("test executable path is available");
+        let mut child = Command::new(test_binary)
+            .args([
+                "--exact",
+                "process::windows::tests::wait_for_parent_to_kill_child",
+                "--ignored",
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .expect("child test process starts");
+        let pid = child.id();
+        let raw = unsafe {
+            OpenProcess(
+                PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SYNCHRONIZE,
+                0,
+                pid,
+            )
+        };
+        assert!(!raw.is_null(), "child process handle opens");
+        let pinned = PinnedProcessCandidate {
+            candidate: ProcessCandidate {
+                pid,
+                reported_name: GAME_EXECUTABLE.to_owned(),
+                inspection: ProcessInspection::Unavailable {
+                    failure: ProcessFailure {
+                        operation: "test setup".to_owned(),
+                        kind: ProcessFailureKind::Unavailable,
+                        win32_error: None,
+                    },
+                },
+            },
+            handle: Some(OwnedHandle(raw)),
+        };
+
+        child.kill().expect("child process is terminated");
+        child.wait().expect("child process exit is observed");
+
+        assert!(matches!(
+            super::super::recheck_pinned_process(&pinned),
+            ProcessInspection::Unavailable {
+                failure: ProcessFailure {
+                    kind: ProcessFailureKind::ProcessExited,
+                    ..
+                }
+            }
+        ));
+    }
+
+    #[test]
+    #[ignore]
+    fn wait_for_parent_to_kill_child() {
+        thread::sleep(Duration::from_secs(30));
     }
 }

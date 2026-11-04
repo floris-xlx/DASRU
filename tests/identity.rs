@@ -29,6 +29,7 @@ fn identity(sha256: &str, file_version: Option<&str>) -> ExecutableIdentity {
         size: 3,
         file_version: file_version.map(str::to_owned),
         product_version: Some("1.2.3.4".to_owned()),
+        version_info_error: None,
     }
 }
 
