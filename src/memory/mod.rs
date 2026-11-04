@@ -16,6 +16,7 @@ mod windows;
 
 const BUILDS_TOML: &str = include_str!("../../data/builds.toml");
 pub const FPS_SIGNATURE: &[u8] = b"%i FPS\0\0%.2fms\0\0Frame : %u";
+const FPS_MARKER_REPLACEMENT: &str = "%i FPS*";
 const FPS_SIGNATURE_HEX: &str = "2569204650530000252E32666D7300004672616D65203A202575";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -218,7 +219,7 @@ impl MetricsLayoutReport {
             dry_run: MetricsDryRun {
                 status: dry_run_status,
                 target_string: "fps_label",
-                replacement: "%i FPS (DASRU)",
+                replacement: FPS_MARKER_REPLACEMENT,
                 fits: None,
                 reason: Some(reason),
                 diff: Vec::new(),

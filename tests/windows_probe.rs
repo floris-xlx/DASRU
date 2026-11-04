@@ -146,12 +146,19 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
         layout_report["scan"]["scan_stats"]["coverage"],
         "FULL_MODULE"
     );
-    assert_eq!(layout_report["dry_run"]["status"], "UNSUPPORTED");
-    assert_eq!(layout_report["dry_run"]["fits"], false);
+    assert_eq!(layout_report["dry_run"]["status"], "SAFE");
+    assert_eq!(layout_report["dry_run"]["replacement"], "%i FPS*");
+    assert_eq!(layout_report["dry_run"]["fits"], true);
     assert_eq!(
         layout_report["dry_run"]["diff"].as_array().unwrap().len(),
-        0
+        1
     );
+    assert_eq!(
+        layout_report["dry_run"]["diff"][0]["offset_from_signature"],
+        6
+    );
+    assert_eq!(layout_report["dry_run"]["diff"][0]["before"], 0);
+    assert_eq!(layout_report["dry_run"]["diff"][0]["after"], b'*');
     assert_eq!(layout_report["region_type"], "MEM_IMAGE");
     assert_eq!(layout_report["strings"][0]["offset_from_signature"], 0);
     assert_eq!(

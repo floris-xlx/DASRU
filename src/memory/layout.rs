@@ -132,7 +132,7 @@ pub(super) fn plan_patch(
 
 #[cfg(test)]
 mod tests {
-    use super::super::FPS_SIGNATURE;
+    use super::super::{FPS_MARKER_REPLACEMENT, FPS_SIGNATURE};
     use super::{PatchError, parse_boundaries, plan_patch};
 
     #[test]
@@ -163,12 +163,16 @@ mod tests {
     }
 
     #[test]
-    fn seven_payload_bytes_fit_within_the_eight_byte_fps_slot() {
+    fn default_fps_marker_changes_only_the_seventh_payload_byte() {
         let original = b"%i FPS\0\0%.2fms\0\0Frame : %u\0";
-        let plan = plan_patch(original, 0, 8, b"%i FPS+").unwrap();
+        let plan = plan_patch(original, 0, 8, FPS_MARKER_REPLACEMENT.as_bytes()).unwrap();
 
-        assert_eq!(&plan.patched[..8], b"%i FPS+\0");
+        assert_eq!(&plan.patched[..8], b"%i FPS*\0");
         assert_eq!(&plan.patched[8..], &original[8..]);
+        assert_eq!(plan.diff.len(), 1);
+        assert_eq!(plan.diff[0].offset, 6);
+        assert_eq!(plan.diff[0].before, 0);
+        assert_eq!(plan.diff[0].after, b'*');
     }
 
     #[test]
