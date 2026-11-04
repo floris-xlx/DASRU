@@ -10,7 +10,10 @@ use std::{
 
 use dasru::{
     identity::BuildRegistry,
-    memory::{MetricsScanStatus, scan_metrics_with_registry},
+    memory::{
+        MetricsObjectStatus, MetricsScanStatus, discover_metrics_objects_with_registry,
+        scan_metrics_with_registry,
+    },
     probe::{ProbeStatus, run_probe_with_registry},
     process::ProcessInspection,
 };
@@ -122,6 +125,12 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
     assert!(found.protection_name.starts_with("PAGE_"));
     assert_eq!(found.region_type, "MEM_IMAGE");
     assert_eq!(found.module_offset, found.address - identity.module_base);
+
+    let object_discovery = discover_metrics_objects_with_registry(&registry);
+    assert_eq!(object_discovery.status, MetricsObjectStatus::UnknownBuild);
+    assert!(object_discovery.scan_stats.is_none());
+    assert!(object_discovery.candidates.is_empty());
+    assert!(!object_discovery.memory_modified);
 
     let cli_scan = Command::new(env!("CARGO_BIN_EXE_dasru"))
         .args(["memory", "scan", "--metrics", "--json"])
