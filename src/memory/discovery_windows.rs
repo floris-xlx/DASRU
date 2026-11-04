@@ -572,7 +572,12 @@ fn public_region(region: RemoteRegion, identity: &ProcessIdentity) -> MetricsObj
 }
 
 fn module_offset(address: u64, base: u64, end: Option<u64>) -> Option<u64> {
-    (address >= base && address < end?).then_some(address - base)
+    let end = end?;
+    if address >= base && address < end {
+        Some(address - base)
+    } else {
+        None
+    }
 }
 
 fn read_exact(handle: HANDLE, address: u64, output: &mut [u8]) -> bool {
@@ -675,6 +680,13 @@ mod tests {
     static mut SYNTHETIC_OWNER: [u64; SYNTHETIC_OWNER_WORDS] = [0; SYNTHETIC_OWNER_WORDS];
     #[cfg(target_pointer_width = "64")]
     static mut SYNTHETIC_OWNER_TWO: [u64; SYNTHETIC_OWNER_WORDS] = [0; SYNTHETIC_OWNER_WORDS];
+
+    #[test]
+    fn module_offset_returns_none_for_addresses_outside_the_image() {
+        assert_eq!(module_offset(0x1000, 0x2000, Some(0x3000)), None);
+        assert_eq!(module_offset(0x2000, 0x2000, Some(0x3000)), Some(0));
+        assert_eq!(module_offset(0x3000, 0x2000, Some(0x3000)), None);
+    }
 
     #[cfg(target_pointer_width = "64")]
     unsafe fn initialize_owner(owner: *mut u64, vtable_address: u64) {
