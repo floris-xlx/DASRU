@@ -106,4 +106,12 @@ mod tests {
 
         assert!(scanner.finish().is_empty());
     }
+
+    #[test]
+    fn short_read_is_a_gap_even_if_the_api_reports_success() {
+        let mut scanner = ChunkScanner::new(b"ABCD");
+
+        assert!(!scanner.push_read(100, b"ABCD", 8, true));
+        assert!(scanner.finish().is_empty());
+    }
 }

@@ -53,9 +53,26 @@ pub struct MemoryScanStats {
     pub readable_regions: u64,
     pub skipped_regions: u64,
     pub bytes_read: u64,
+    pub bytes_scanned: u64,
+    pub bytes_untrusted: u64,
     pub bytes_unreadable: u64,
     pub failed_reads: u64,
     pub coverage: &'static str,
+}
+
+impl MemoryScanStats {
+    #[cfg(any(windows, test))]
+    pub(crate) fn record_read(&mut self, requested: u64, returned: u64, scanned: bool) {
+        debug_assert!(returned <= requested);
+        self.bytes_read += returned;
+        self.bytes_unreadable += requested - returned;
+        if scanned {
+            self.bytes_scanned += requested;
+        } else {
+            self.bytes_untrusted += returned;
+            self.failed_reads += 1;
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -105,7 +122,7 @@ pub struct MetricsByteDiff {
 pub struct MetricsDryRun {
     pub status: MetricsDryRunStatus,
     pub target_string: &'static str,
-    pub replacement: &'static str,
+    pub replacement: String,
     pub fits: Option<bool>,
     pub reason: Option<String>,
     pub diff: Vec<MetricsByteDiff>,
@@ -166,12 +183,14 @@ impl MetricsScanReport {
         }
         if let Some(stats) = &self.scan_stats {
             output.push_str(&format!(
-                "Module: 0x{:X} ({} bytes)\nReadable regions: {}\nSkipped regions: {}\nBytes read: {}\nUnreadable bytes: {}\n",
+                "Module: 0x{:X} ({} bytes)\nReadable regions: {}\nSkipped regions: {}\nBytes returned: {}\nBytes scanned: {}\nUntrusted returned bytes: {}\nUnreadable bytes: {}\n",
                 stats.module_base,
                 stats.module_size,
                 stats.readable_regions,
                 stats.skipped_regions,
                 stats.bytes_read,
+                stats.bytes_scanned,
+                stats.bytes_untrusted,
                 stats.bytes_unreadable
             ));
         }
@@ -219,7 +238,7 @@ impl MetricsLayoutReport {
             dry_run: MetricsDryRun {
                 status: dry_run_status,
                 target_string: "fps_label",
-                replacement: FPS_MARKER_REPLACEMENT,
+                replacement: FPS_MARKER_REPLACEMENT.to_owned(),
                 fits: None,
                 reason: Some(reason),
                 diff: Vec::new(),
@@ -232,6 +251,11 @@ impl MetricsLayoutReport {
             strings: Vec::new(),
             errors: Vec::new(),
         }
+    }
+
+    fn with_replacement(mut self, replacement: &str) -> Self {
+        self.dry_run.replacement = replacement.to_owned();
+        self
     }
 
     pub fn exit_code(&self) -> i32 {
@@ -268,6 +292,10 @@ impl MetricsLayoutReport {
         if let Some(reason) = &self.dry_run.reason {
             output.push_str(&format!("Dry-run reason: {reason}\n"));
         }
+        output.push_str(&format!(
+            "Dry-run replacement: {}\n",
+            self.dry_run.replacement
+        ));
         output.push_str(&format!(
             "Dry-run byte changes: {}\n",
             self.dry_run.diff.len()
@@ -323,21 +351,30 @@ pub fn scan_metrics() -> MetricsScanReport {
 }
 
 pub fn scan_metrics_with_registry(registry: &BuildRegistry) -> MetricsScanReport {
-    metrics_with_registry(registry, false).scan
+    metrics_with_registry(registry, false, FPS_MARKER_REPLACEMENT).scan
 }
 
 pub fn inspect_metrics_layout() -> MetricsLayoutReport {
+    inspect_metrics_layout_with_replacement(FPS_MARKER_REPLACEMENT)
+}
+
+pub fn inspect_metrics_layout_with_replacement(replacement: &str) -> MetricsLayoutReport {
     match BuildRegistry::from_toml(BUILDS_TOML) {
-        Ok(registry) => inspect_metrics_layout_with_registry(&registry),
-        Err(error) => MetricsLayoutReport::new(registry_error_report(error, run_probe())),
+        Ok(registry) => metrics_with_registry(&registry, true, replacement),
+        Err(error) => MetricsLayoutReport::new(registry_error_report(error, run_probe()))
+            .with_replacement(replacement),
     }
 }
 
 pub fn inspect_metrics_layout_with_registry(registry: &BuildRegistry) -> MetricsLayoutReport {
-    metrics_with_registry(registry, true)
+    metrics_with_registry(registry, true, FPS_MARKER_REPLACEMENT)
 }
 
-fn metrics_with_registry(registry: &BuildRegistry, inspect_layout: bool) -> MetricsLayoutReport {
+fn metrics_with_registry(
+    registry: &BuildRegistry,
+    inspect_layout: bool,
+    replacement: &str,
+) -> MetricsLayoutReport {
     let probe = crate::probe::run_probe_with_registry(registry);
     if !matches!(
         probe.status,
@@ -346,15 +383,16 @@ fn metrics_with_registry(registry: &BuildRegistry, inspect_layout: bool) -> Metr
         return MetricsLayoutReport::new(MetricsScanReport::new(
             status_from_probe(probe.status),
             probe,
-        ));
+        ))
+        .with_replacement(replacement);
     }
 
     #[cfg(windows)]
     {
         if inspect_layout {
-            windows::inspect_metrics_layout(probe)
+            windows::inspect_metrics_layout(probe, replacement)
         } else {
-            MetricsLayoutReport::new(windows::scan_metrics(probe))
+            MetricsLayoutReport::new(windows::scan_metrics(probe)).with_replacement(replacement)
         }
     }
     #[cfg(not(windows))]
@@ -362,7 +400,8 @@ fn metrics_with_registry(registry: &BuildRegistry, inspect_layout: bool) -> Metr
         let mut report = MetricsLayoutReport::new(MetricsScanReport::new(
             MetricsScanStatus::UnsupportedPlatform,
             probe,
-        ));
+        ))
+        .with_replacement(replacement);
         if inspect_layout {
             report.dry_run.reason =
                 Some("process memory inspection is supported on Windows only".to_owned());
@@ -460,6 +499,58 @@ mod tests {
         assert_eq!(report.scan.status, MetricsScanStatus::PartialScan);
         assert_eq!(report.dry_run.status, MetricsDryRunStatus::Ambiguous);
         assert_eq!(report.scan.matches.len(), 2);
+    }
+
+    #[test]
+    fn partial_read_accounting_counts_missing_and_untrusted_bytes_once() {
+        let mut stats = MemoryScanStats {
+            module_base: 0,
+            module_size: 1024,
+            readable_regions: 0,
+            skipped_regions: 0,
+            bytes_read: 0,
+            bytes_scanned: 0,
+            bytes_untrusted: 0,
+            bytes_unreadable: 0,
+            failed_reads: 0,
+            coverage: "READABLE_REGIONS_ONLY",
+        };
+
+        stats.record_read(1024, 512, false);
+
+        assert_eq!(stats.bytes_read, 512);
+        assert_eq!(stats.bytes_scanned, 0);
+        assert_eq!(stats.bytes_untrusted, 512);
+        assert_eq!(stats.bytes_unreadable, 512);
+        assert_eq!(stats.failed_reads, 1);
+        assert_eq!(
+            stats.bytes_scanned + stats.bytes_untrusted + stats.bytes_unreadable,
+            1024
+        );
+    }
+
+    #[test]
+    fn successful_read_bytes_are_the_only_bytes_counted_as_scanned() {
+        let mut stats = MemoryScanStats {
+            module_base: 0,
+            module_size: 1024,
+            readable_regions: 0,
+            skipped_regions: 0,
+            bytes_read: 0,
+            bytes_scanned: 0,
+            bytes_untrusted: 0,
+            bytes_unreadable: 0,
+            failed_reads: 0,
+            coverage: "READABLE_REGIONS_ONLY",
+        };
+
+        stats.record_read(1024, 1024, true);
+
+        assert_eq!(stats.bytes_read, 1024);
+        assert_eq!(stats.bytes_scanned, 1024);
+        assert_eq!(stats.bytes_untrusted, 0);
+        assert_eq!(stats.bytes_unreadable, 0);
+        assert_eq!(stats.failed_reads, 0);
     }
 
     #[test]

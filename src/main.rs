@@ -1,7 +1,7 @@
 use std::{env, ffi::OsStr, io, path::PathBuf, process::ExitCode};
 
 use dasru::{
-    memory::{inspect_metrics_layout, scan_metrics},
+    memory::{inspect_metrics_layout, inspect_metrics_layout_with_replacement, scan_metrics},
     probe::{ProbeReport, inspect_executable, run_probe},
 };
 use serde::Serialize;
@@ -55,12 +55,30 @@ fn main() -> ExitCode {
         {
             print_metrics_layout(inspect_metrics_layout(), true)
         }
-        _ => {
-            eprintln!(
-                "Usage: dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--json]"
-            );
-            ExitCode::from(2)
+        [command, subcommand, option, label_option, label]
+            if command == OsStr::new("memory")
+                && subcommand == OsStr::new("inspect")
+                && option == OsStr::new("--metrics")
+                && label_option == OsStr::new("--fps-label") =>
+        {
+            print_metrics_layout_for_label(label, false)
         }
+        [
+            command,
+            subcommand,
+            option,
+            label_option,
+            label,
+            json_option,
+        ] if command == OsStr::new("memory")
+            && subcommand == OsStr::new("inspect")
+            && option == OsStr::new("--metrics")
+            && label_option == OsStr::new("--fps-label")
+            && json_option == OsStr::new("--json") =>
+        {
+            print_metrics_layout_for_label(label, true)
+        }
+        _ => print_usage(),
     }
 }
 
@@ -86,6 +104,25 @@ fn print_metrics_layout(report: dasru::memory::MetricsLayoutReport, json: bool) 
         .with_max_level(tracing::Level::DEBUG)
         .init();
     print_report(&report, &report.to_human_text(), json, report.exit_code())
+}
+
+fn print_metrics_layout_for_label(label: &OsStr, json: bool) -> ExitCode {
+    let Some(label) = label.to_str() else {
+        eprintln!("--fps-label must be an ASCII label beginning with %i FPS");
+        return print_usage();
+    };
+    if !label.is_ascii() || label.contains('\0') || !label.starts_with("%i FPS") {
+        eprintln!("--fps-label must be an ASCII label beginning with %i FPS");
+        return print_usage();
+    }
+    print_metrics_layout(inspect_metrics_layout_with_replacement(label), json)
+}
+
+fn print_usage() -> ExitCode {
+    eprintln!(
+        "Usage: dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--fps-label <label>] [--json]"
+    );
+    ExitCode::from(2)
 }
 
 fn print_report<T: Serialize>(report: &T, human: &str, json: bool, exit_code: i32) -> ExitCode {

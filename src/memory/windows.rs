@@ -37,14 +37,20 @@ struct ReadableRegion {
 }
 
 pub(super) fn scan_metrics(probe: ProbeReport) -> MetricsScanReport {
-    scan_metrics_inner(probe, false).scan
+    scan_metrics_inner(probe, false, super::FPS_MARKER_REPLACEMENT).scan
 }
 
-pub(super) fn inspect_metrics_layout(probe: ProbeReport) -> MetricsLayoutReport {
-    scan_metrics_inner(probe, true)
+pub(super) fn inspect_metrics_layout(probe: ProbeReport, replacement: &str) -> MetricsLayoutReport {
+    let mut report = scan_metrics_inner(probe, true, replacement);
+    report.dry_run.replacement = replacement.to_owned();
+    report
 }
 
-fn scan_metrics_inner(probe: ProbeReport, inspect_layout: bool) -> MetricsLayoutReport {
+fn scan_metrics_inner(
+    probe: ProbeReport,
+    inspect_layout: bool,
+    replacement: &str,
+) -> MetricsLayoutReport {
     if probe.processes.len() != 1 {
         return fail(
             probe,
@@ -184,6 +190,7 @@ fn scan_metrics_inner(probe: ProbeReport, inspect_layout: bool) -> MetricsLayout
         });
     }
     let mut report = MetricsLayoutReport::new(scan_report);
+    report.dry_run.replacement = replacement.to_owned();
     if inspect_layout {
         inspect_unique_layout(
             process_handle.raw(),
@@ -472,6 +479,8 @@ fn scan_module(
         readable_regions: 0,
         skipped_regions: 0,
         bytes_read: 0,
+        bytes_scanned: 0,
+        bytes_untrusted: 0,
         bytes_unreadable: 0,
         failed_reads: 0,
         coverage: "READABLE_REGIONS_ONLY",
@@ -557,16 +566,13 @@ fn scan_module(
                 if bytes_read > length {
                     return Err("ReadProcessMemory reported more bytes than requested".to_owned());
                 }
-                stats.bytes_read += bytes_read as u64;
-                if !scanner.push_read(
+                let scanned = scanner.push_read(
                     address as u64,
                     &buffer[..bytes_read],
                     length,
                     succeeded != 0,
-                ) {
-                    stats.failed_reads += 1;
-                    stats.bytes_unreadable += length as u64;
-                }
+                );
+                stats.record_read(length as u64, bytes_read as u64, scanned);
                 address += length;
             }
         } else {
@@ -577,7 +583,8 @@ fn scan_module(
         cursor = region_end;
     }
 
-    stats.coverage = if stats.bytes_read == module_size
+    stats.coverage = if stats.bytes_scanned == module_size
+        && stats.bytes_untrusted == 0
         && stats.bytes_unreadable == 0
         && stats.failed_reads == 0
     {

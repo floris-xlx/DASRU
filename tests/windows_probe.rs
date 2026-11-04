@@ -111,6 +111,11 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
         memory_scan.scan_stats.as_ref().unwrap().coverage,
         "FULL_MODULE"
     );
+    assert_eq!(
+        memory_scan.scan_stats.as_ref().unwrap().bytes_scanned,
+        memory_scan.scan_stats.as_ref().unwrap().module_size
+    );
+    assert_eq!(memory_scan.scan_stats.as_ref().unwrap().bytes_untrusted, 0);
     let found = &memory_scan.matches[0];
     assert!(found.address >= identity.module_base);
     assert!(found.address < identity.module_base + u64::from(identity.image_size));
@@ -176,6 +181,29 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
         context_hex[signature_offset * 2..]
             .starts_with("2569204650530000252E32666D7300004672616D65203A20257500")
     );
+
+    let plus_label = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args([
+            "memory",
+            "inspect",
+            "--metrics",
+            "--fps-label",
+            "%i FPS+",
+            "--json",
+        ])
+        .output()
+        .expect("parameterized memory inspect command starts");
+    assert!(plus_label.status.success());
+    let plus_report: serde_json::Value = serde_json::from_slice(&plus_label.stdout).unwrap();
+    assert_eq!(plus_report["dry_run"]["replacement"], "%i FPS+");
+    assert_eq!(plus_report["dry_run"]["status"], "SAFE");
+    assert_eq!(plus_report["dry_run"]["diff"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        plus_report["dry_run"]["diff"][0]["offset_from_signature"],
+        6
+    );
+    assert_eq!(plus_report["dry_run"]["diff"][0]["before"], 0);
+    assert_eq!(plus_report["dry_run"]["diff"][0]["after"], b'+');
 
     let second = Command::new(&executable)
         .stdin(Stdio::null())

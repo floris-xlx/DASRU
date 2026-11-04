@@ -100,6 +100,38 @@ fn memory_layout_cli_reports_unsupported_platform_without_a_process() {
     assert_eq!(report["dry_run"]["status"], "UNSUPPORTED");
 }
 
+#[cfg(not(windows))]
+#[test]
+fn memory_layout_cli_accepts_a_parameterized_fps_label() {
+    let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args([
+            "memory",
+            "inspect",
+            "--metrics",
+            "--fps-label",
+            "%i FPS+",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(1));
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["dry_run"]["replacement"], "%i FPS+");
+    assert_eq!(report["dry_run"]["status"], "UNSUPPORTED");
+}
+
+#[test]
+fn memory_layout_cli_rejects_labels_that_change_the_fps_format() {
+    let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args(["memory", "inspect", "--metrics", "--fps-label", "FPS+é"])
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ASCII label beginning with %i FPS"));
+}
+
 #[test]
 fn steam_build_mismatch_does_not_downgrade_executable_identity() {
     const HASH: &str = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
