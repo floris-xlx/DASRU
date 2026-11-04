@@ -1,7 +1,7 @@
 use std::{env, ffi::OsStr, io, path::PathBuf, process::ExitCode};
 
 use dasru::{
-    memory::scan_metrics,
+    memory::{inspect_metrics_layout, scan_metrics},
     probe::{ProbeReport, inspect_executable, run_probe},
 };
 use serde::Serialize;
@@ -32,6 +32,13 @@ fn main() -> ExitCode {
         {
             print_metrics(scan_metrics(), false)
         }
+        [command, subcommand, option]
+            if command == OsStr::new("memory")
+                && subcommand == OsStr::new("inspect")
+                && option == OsStr::new("--metrics") =>
+        {
+            print_metrics_layout(inspect_metrics_layout(), false)
+        }
         [command, subcommand, option, json_option]
             if command == OsStr::new("memory")
                 && subcommand == OsStr::new("scan")
@@ -40,9 +47,17 @@ fn main() -> ExitCode {
         {
             print_metrics(scan_metrics(), true)
         }
+        [command, subcommand, option, json_option]
+            if command == OsStr::new("memory")
+                && subcommand == OsStr::new("inspect")
+                && option == OsStr::new("--metrics")
+                && json_option == OsStr::new("--json") =>
+        {
+            print_metrics_layout(inspect_metrics_layout(), true)
+        }
         _ => {
             eprintln!(
-                "Usage: dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]"
+                "Usage: dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--json]"
             );
             ExitCode::from(2)
         }
@@ -58,6 +73,14 @@ fn print_probe(report: ProbeReport, json: bool) -> ExitCode {
 }
 
 fn print_metrics(report: dasru::memory::MetricsScanReport, json: bool) -> ExitCode {
+    tracing_subscriber::fmt()
+        .with_writer(io::stderr)
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+    print_report(&report, &report.to_human_text(), json, report.exit_code())
+}
+
+fn print_metrics_layout(report: dasru::memory::MetricsLayoutReport, json: bool) -> ExitCode {
     tracing_subscriber::fmt()
         .with_writer(io::stderr)
         .with_max_level(tracing::Level::DEBUG)

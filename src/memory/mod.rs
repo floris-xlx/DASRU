@@ -8,6 +8,8 @@ use crate::{
 };
 
 #[cfg(any(windows, test))]
+mod layout;
+#[cfg(any(windows, test))]
 mod scan;
 #[cfg(windows)]
 mod windows;
@@ -22,6 +24,7 @@ pub enum MetricsScanStatus {
     FoundUniqueMatch,
     NoMatch,
     AmbiguousMatch,
+    PartialScan,
     NoProcess,
     AmbiguousProcess,
     IdentityInconsistent,
@@ -33,11 +36,13 @@ pub enum MetricsScanStatus {
 #[derive(Clone, Debug, Serialize)]
 pub struct MetricsMatch {
     pub address: u64,
+    pub module_offset: u64,
     pub region_base: u64,
     pub region_size: u64,
     pub state: u32,
     pub protection: u32,
     pub protection_name: &'static str,
+    pub region_type: &'static str,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -63,6 +68,59 @@ pub struct MetricsScanReport {
     pub probe: ProbeReport,
     pub scan_stats: Option<MemoryScanStats>,
     pub matches: Vec<MetricsMatch>,
+    pub errors: Vec<ReportError>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum MetricsDryRunStatus {
+    Safe,
+    Unsupported,
+    Ambiguous,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct MetricsStringBoundary {
+    pub name: &'static str,
+    pub start_address: u64,
+    pub module_offset: u64,
+    pub offset_from_signature: u64,
+    pub terminator_address: u64,
+    pub terminator_offset_from_signature: u64,
+    pub capacity_bytes: u64,
+    pub max_payload_bytes: u64,
+    pub capacity_basis: &'static str,
+    pub original_value: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct MetricsByteDiff {
+    pub offset_from_signature: u64,
+    pub before: u8,
+    pub after: u8,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct MetricsDryRun {
+    pub status: MetricsDryRunStatus,
+    pub target_string: &'static str,
+    pub replacement: &'static str,
+    pub fits: Option<bool>,
+    pub reason: Option<String>,
+    pub diff: Vec<MetricsByteDiff>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct MetricsLayoutReport {
+    pub schema_version: u8,
+    pub scan: MetricsScanReport,
+    pub dry_run: MetricsDryRun,
+    pub region_type: Option<&'static str>,
+    pub context_address: Option<u64>,
+    pub context_module_offset: Option<u64>,
+    pub signature_offset_in_context: Option<u64>,
+    pub original_bytes_hex: Option<String>,
+    pub strings: Vec<MetricsStringBoundary>,
     pub errors: Vec<ReportError>,
 }
 
@@ -118,8 +176,105 @@ impl MetricsScanReport {
         }
         for found in &self.matches {
             output.push_str(&format!(
-                "FPS signature: 0x{:X} ({}; protection 0x{:X})\n",
-                found.address, found.protection_name, found.protection
+                "FPS signature: 0x{:X} (module +0x{:X}; {}; {}; protection 0x{:X})\n",
+                found.address,
+                found.module_offset,
+                found.region_type,
+                found.protection_name,
+                found.protection
+            ));
+        }
+        for error in &self.errors {
+            output.push_str(&format!(
+                "Error [{}] {}: {}\n",
+                error.code, error.field, error.message
+            ));
+        }
+        output
+    }
+}
+
+impl MetricsLayoutReport {
+    fn new(scan: MetricsScanReport) -> Self {
+        let ambiguous = matches!(
+            scan.status,
+            MetricsScanStatus::AmbiguousMatch | MetricsScanStatus::AmbiguousProcess
+        ) || (scan.status == MetricsScanStatus::PartialScan
+            && scan.matches.len() > 1);
+        let (dry_run_status, reason) = if ambiguous {
+            (
+                MetricsDryRunStatus::Ambiguous,
+                "more than one process or signature candidate was found".to_owned(),
+            )
+        } else {
+            (
+                MetricsDryRunStatus::Unsupported,
+                "layout inspection was not completed".to_owned(),
+            )
+        };
+        Self {
+            schema_version: 1,
+            scan,
+            dry_run: MetricsDryRun {
+                status: dry_run_status,
+                target_string: "fps_label",
+                replacement: "%i FPS (DASRU)",
+                fits: None,
+                reason: Some(reason),
+                diff: Vec::new(),
+            },
+            region_type: None,
+            context_address: None,
+            context_module_offset: None,
+            signature_offset_in_context: None,
+            original_bytes_hex: None,
+            strings: Vec::new(),
+            errors: Vec::new(),
+        }
+    }
+
+    pub fn exit_code(&self) -> i32 {
+        self.scan.exit_code()
+    }
+
+    pub fn to_human_text(&self) -> String {
+        let mut output = format!(
+            "Memory layout inspection: {}\n",
+            self.dry_run.status.label()
+        );
+        output.push_str(&self.scan.to_human_text());
+        if let Some(offset) = self.scan.matches.first().map(|found| found.module_offset) {
+            output.push_str(&format!("Module-relative signature offset: 0x{offset:X}\n"));
+        }
+        if let Some(region_type) = self.region_type {
+            output.push_str(&format!("Memory region type: {region_type}\n"));
+        }
+        if let (Some(address), Some(bytes)) = (self.context_address, &self.original_bytes_hex) {
+            output.push_str(&format!("Original bytes at 0x{address:X}: {bytes}\n"));
+        }
+        for string in &self.strings {
+            output.push_str(&format!(
+                "String {} {:?}: start 0x{:X} (module +0x{:X}), terminator 0x{:X}, capacity {} bytes ({} payload bytes)\n",
+                string.name,
+                string.original_value,
+                string.start_address,
+                string.module_offset,
+                string.terminator_address,
+                string.capacity_bytes,
+                string.max_payload_bytes
+            ));
+        }
+        if let Some(reason) = &self.dry_run.reason {
+            output.push_str(&format!("Dry-run reason: {reason}\n"));
+        }
+        output.push_str(&format!(
+            "Dry-run byte changes: {}\n",
+            self.dry_run.diff.len()
+        ));
+        for change in &self.dry_run.diff {
+            output.push_str(&format!(
+                "  +0x{:X}: {:02X} -> {:02X}\n",
+                change.offset_from_signature, change.before, change.after
             ));
         }
         for error in &self.errors {
@@ -138,6 +293,7 @@ impl MetricsScanStatus {
             Self::FoundUniqueMatch => "FOUND_UNIQUE_MATCH",
             Self::NoMatch => "NO_MATCH",
             Self::AmbiguousMatch => "AMBIGUOUS_MATCH",
+            Self::PartialScan => "PARTIAL_SCAN",
             Self::NoProcess => "NO_PROCESS",
             Self::AmbiguousProcess => "AMBIGUOUS_PROCESS",
             Self::IdentityInconsistent => "IDENTITY_INCONSISTENT",
@@ -148,29 +304,94 @@ impl MetricsScanStatus {
     }
 }
 
+impl MetricsDryRunStatus {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Safe => "SAFE",
+            Self::Unsupported => "UNSUPPORTED",
+            Self::Ambiguous => "AMBIGUOUS",
+        }
+    }
+}
+
 pub fn scan_metrics() -> MetricsScanReport {
     match BuildRegistry::from_toml(BUILDS_TOML) {
         Ok(registry) => scan_metrics_with_registry(&registry),
-        Err(_) => MetricsScanReport::new(MetricsScanStatus::ProbeError, run_probe()),
+        Err(error) => registry_error_report(error, run_probe()),
     }
 }
 
 pub fn scan_metrics_with_registry(registry: &BuildRegistry) -> MetricsScanReport {
+    metrics_with_registry(registry, false).scan
+}
+
+pub fn inspect_metrics_layout() -> MetricsLayoutReport {
+    match BuildRegistry::from_toml(BUILDS_TOML) {
+        Ok(registry) => inspect_metrics_layout_with_registry(&registry),
+        Err(error) => MetricsLayoutReport::new(registry_error_report(error, run_probe())),
+    }
+}
+
+pub fn inspect_metrics_layout_with_registry(registry: &BuildRegistry) -> MetricsLayoutReport {
+    metrics_with_registry(registry, true)
+}
+
+fn metrics_with_registry(registry: &BuildRegistry, inspect_layout: bool) -> MetricsLayoutReport {
     let probe = crate::probe::run_probe_with_registry(registry);
     if !matches!(
         probe.status,
         ProbeStatus::ExactMatch | ProbeStatus::UnknownBuild
     ) {
-        return MetricsScanReport::new(status_from_probe(probe.status), probe);
+        return MetricsLayoutReport::new(MetricsScanReport::new(
+            status_from_probe(probe.status),
+            probe,
+        ));
     }
 
     #[cfg(windows)]
     {
-        windows::scan_metrics(probe)
+        if inspect_layout {
+            windows::inspect_metrics_layout(probe)
+        } else {
+            MetricsLayoutReport::new(windows::scan_metrics(probe))
+        }
     }
     #[cfg(not(windows))]
     {
-        MetricsScanReport::new(MetricsScanStatus::UnsupportedPlatform, probe)
+        let mut report = MetricsLayoutReport::new(MetricsScanReport::new(
+            MetricsScanStatus::UnsupportedPlatform,
+            probe,
+        ));
+        if inspect_layout {
+            report.dry_run.reason =
+                Some("process memory inspection is supported on Windows only".to_owned());
+        }
+        report
+    }
+}
+
+fn registry_error_report(
+    error: crate::identity::BuildRegistryError,
+    probe: ProbeReport,
+) -> MetricsScanReport {
+    let mut report = MetricsScanReport::new(MetricsScanStatus::ProbeError, probe);
+    report.errors.push(ReportError {
+        field: "build_registry",
+        code: "BUILD_REGISTRY_INVALID",
+        message: error.to_string(),
+    });
+    report
+}
+
+#[cfg(any(windows, test))]
+fn classify_scan(match_count: usize, full_module: bool) -> MetricsScanStatus {
+    if !full_module {
+        return MetricsScanStatus::PartialScan;
+    }
+    match match_count {
+        0 => MetricsScanStatus::NoMatch,
+        1 => MetricsScanStatus::FoundUniqueMatch,
+        _ => MetricsScanStatus::AmbiguousMatch,
     }
 }
 
@@ -190,6 +411,55 @@ fn status_from_probe(status: ProbeStatus) -> MetricsScanStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn incomplete_scans_are_never_classified_as_unique_or_empty() {
+        assert_eq!(classify_scan(0, false), MetricsScanStatus::PartialScan);
+        assert_eq!(classify_scan(1, false), MetricsScanStatus::PartialScan);
+        assert_eq!(classify_scan(2, false), MetricsScanStatus::PartialScan);
+    }
+
+    #[test]
+    fn complete_scans_classify_match_counts() {
+        assert_eq!(classify_scan(0, true), MetricsScanStatus::NoMatch);
+        assert_eq!(classify_scan(1, true), MetricsScanStatus::FoundUniqueMatch);
+        assert_eq!(classify_scan(2, true), MetricsScanStatus::AmbiguousMatch);
+    }
+
+    #[test]
+    fn invalid_registry_is_reported_as_a_structured_scanner_error() {
+        let error = BuildRegistry::from_toml("not valid TOML = [").unwrap_err();
+        let probe = ProbeReport::empty(ProbeStatus::ProbeError, None);
+        let report = registry_error_report(error, probe);
+
+        assert_eq!(report.status, MetricsScanStatus::ProbeError);
+        assert_eq!(report.errors.len(), 1);
+        assert_eq!(report.errors[0].field, "build_registry");
+        assert_eq!(report.errors[0].code, "BUILD_REGISTRY_INVALID");
+    }
+
+    #[test]
+    fn partial_inspection_with_multiple_observed_matches_is_ambiguous() {
+        let probe = ProbeReport::empty(ProbeStatus::UnknownBuild, None);
+        let mut scan = MetricsScanReport::new(MetricsScanStatus::PartialScan, probe);
+        scan.matches = (0..2)
+            .map(|address| MetricsMatch {
+                address,
+                module_offset: address,
+                region_base: 0,
+                region_size: 1,
+                state: 0,
+                protection: 0,
+                protection_name: "UNKNOWN",
+                region_type: "UNKNOWN",
+            })
+            .collect();
+        let report = MetricsLayoutReport::new(scan);
+
+        assert_eq!(report.scan.status, MetricsScanStatus::PartialScan);
+        assert_eq!(report.dry_run.status, MetricsDryRunStatus::Ambiguous);
+        assert_eq!(report.scan.matches.len(), 2);
+    }
 
     #[test]
     fn fps_signature_matches_the_known_tdaunlocker_bytes() {

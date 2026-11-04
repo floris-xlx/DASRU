@@ -107,10 +107,16 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
     assert_eq!(memory_scan.status, MetricsScanStatus::FoundUniqueMatch);
     assert_eq!(memory_scan.probe.processes[0].pid, first.0.id());
     assert_eq!(memory_scan.matches.len(), 1);
+    assert_eq!(
+        memory_scan.scan_stats.as_ref().unwrap().coverage,
+        "FULL_MODULE"
+    );
     let found = &memory_scan.matches[0];
     assert!(found.address >= identity.module_base);
     assert!(found.address < identity.module_base + u64::from(identity.image_size));
     assert!(found.protection_name.starts_with("PAGE_"));
+    assert_eq!(found.region_type, "MEM_IMAGE");
+    assert_eq!(found.module_offset, found.address - identity.module_base);
 
     let cli_scan = Command::new(env!("CARGO_BIN_EXE_dasru"))
         .args(["memory", "scan", "--metrics", "--json"])
@@ -124,6 +130,45 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
     let cli_report: serde_json::Value = serde_json::from_slice(&cli_scan.stdout).unwrap();
     assert_eq!(cli_report["status"], "FOUND_UNIQUE_MATCH");
     assert_eq!(cli_report["matches"].as_array().unwrap().len(), 1);
+
+    let cli_inspection = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args(["memory", "inspect", "--metrics", "--json"])
+        .output()
+        .expect("DASRU memory inspect command starts");
+    assert!(
+        cli_inspection.status.success(),
+        "memory inspect failed: {}",
+        String::from_utf8_lossy(&cli_inspection.stderr)
+    );
+    let layout_report: serde_json::Value = serde_json::from_slice(&cli_inspection.stdout).unwrap();
+    assert_eq!(layout_report["scan"]["status"], "FOUND_UNIQUE_MATCH");
+    assert_eq!(
+        layout_report["scan"]["scan_stats"]["coverage"],
+        "FULL_MODULE"
+    );
+    assert_eq!(layout_report["dry_run"]["status"], "UNSUPPORTED");
+    assert_eq!(layout_report["dry_run"]["fits"], false);
+    assert_eq!(
+        layout_report["dry_run"]["diff"].as_array().unwrap().len(),
+        0
+    );
+    assert_eq!(layout_report["region_type"], "MEM_IMAGE");
+    assert_eq!(layout_report["strings"][0]["offset_from_signature"], 0);
+    assert_eq!(
+        layout_report["strings"][0]["terminator_offset_from_signature"],
+        6
+    );
+    assert_eq!(layout_report["strings"][0]["capacity_bytes"], 8);
+    assert_eq!(layout_report["strings"][1]["offset_from_signature"], 8);
+    assert_eq!(layout_report["strings"][2]["offset_from_signature"], 16);
+    let context_hex = layout_report["original_bytes_hex"].as_str().unwrap();
+    let signature_offset = layout_report["signature_offset_in_context"]
+        .as_u64()
+        .unwrap() as usize;
+    assert!(
+        context_hex[signature_offset * 2..]
+            .starts_with("2569204650530000252E32666D7300004672616D65203A20257500")
+    );
 
     let second = Command::new(&executable)
         .stdin(Stdio::null())
@@ -148,6 +193,15 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
             .iter()
             .any(|candidate| candidate.pid == second.0.id())
     );
+
+    let ambiguous_inspection = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args(["memory", "inspect", "--metrics", "--json"])
+        .output()
+        .expect("ambiguous memory inspect command starts");
+    let ambiguous_layout: serde_json::Value =
+        serde_json::from_slice(&ambiguous_inspection.stdout).unwrap();
+    assert_eq!(ambiguous_layout["scan"]["status"], "AMBIGUOUS_PROCESS");
+    assert_eq!(ambiguous_layout["dry_run"]["status"], "AMBIGUOUS");
 
     second.0.kill().unwrap();
     second.0.wait().unwrap();

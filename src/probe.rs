@@ -128,7 +128,7 @@ pub struct ProbeReport {
 }
 
 impl ProbeReport {
-    fn empty(status: ProbeStatus, reason: Option<String>) -> Self {
+    pub(crate) fn empty(status: ProbeStatus, reason: Option<String>) -> Self {
         Self {
             schema_version: 1,
             observed_at_unix_ms: SystemTime::now()

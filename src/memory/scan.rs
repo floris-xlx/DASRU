@@ -39,6 +39,22 @@ impl<'a> ChunkScanner<'a> {
         self.last_end = address.checked_add(chunk.len() as u64);
     }
 
+    pub(super) fn push_read(
+        &mut self,
+        address: u64,
+        bytes: &[u8],
+        requested: usize,
+        succeeded: bool,
+    ) -> bool {
+        if succeeded && bytes.len() == requested {
+            self.push(address, bytes);
+            true
+        } else {
+            self.unreadable_gap();
+            false
+        }
+    }
+
     pub(super) fn unreadable_gap(&mut self) {
         self.carry.clear();
         self.last_end = None;
@@ -80,5 +96,14 @@ mod tests {
         scanner.push(0x1000, b"aaaaa");
 
         assert_eq!(scanner.finish(), [0x1000, 0x1001, 0x1002]);
+    }
+
+    #[test]
+    fn failed_partial_reads_are_gaps_and_cannot_supply_matches() {
+        let mut scanner = ChunkScanner::new(b"ABCD");
+        scanner.push_read(100, b"ABCD", 8, false);
+        scanner.push_read(108, b"tail", 4, true);
+
+        assert!(scanner.finish().is_empty());
     }
 }

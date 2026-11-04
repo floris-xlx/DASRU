@@ -85,6 +85,21 @@ fn invalid_cli_usage_returns_exit_code_two() {
     assert_eq!(output.status.code(), Some(2));
 }
 
+#[cfg(not(windows))]
+#[test]
+fn memory_layout_cli_reports_unsupported_platform_without_a_process() {
+    let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args(["memory", "inspect", "--metrics", "--json"])
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(1));
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["schema_version"], 1);
+    assert_eq!(report["scan"]["status"], "UNSUPPORTED_PLATFORM");
+    assert_eq!(report["dry_run"]["status"], "UNSUPPORTED");
+}
+
 #[test]
 fn steam_build_mismatch_does_not_downgrade_executable_identity() {
     const HASH: &str = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
