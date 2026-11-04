@@ -1,0 +1,2 @@
+# Add builds only after the executable hash and version metadata have independent provenance.
+builds = []
