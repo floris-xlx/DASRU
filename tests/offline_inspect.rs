@@ -102,6 +102,25 @@ fn memory_layout_cli_reports_unsupported_platform_without_a_process() {
 
 #[cfg(not(windows))]
 #[test]
+fn metrics_object_cli_reports_unsupported_platform_without_a_process() {
+    let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args(["memory", "discover", "--metrics-objects", "--json"])
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(1));
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["schema_version"], 1);
+    assert_eq!(report["inspection_mode"], "PROCESS");
+    assert_eq!(report["status"], "UNSUPPORTED_PLATFORM");
+    assert_eq!(report["memory_modified"], false);
+    assert!(report["owner_vtable_module_offset"].is_null());
+    assert_eq!(report["row_pointer_offsets"], serde_json::json!([]));
+    assert_eq!(report["candidates"], serde_json::json!([]));
+}
+
+#[cfg(not(windows))]
+#[test]
 fn memory_layout_cli_accepts_a_parameterized_fps_label() {
     let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
         .args([

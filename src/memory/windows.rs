@@ -624,7 +624,7 @@ fn scan_module(
     Ok((matches, stats, scan_error))
 }
 
-fn readable_protection(protection: u32) -> bool {
+pub(super) fn readable_protection(protection: u32) -> bool {
     if protection & (PAGE_GUARD | PAGE_NOACCESS) != 0 {
         return false;
     }
@@ -639,7 +639,7 @@ fn readable_protection(protection: u32) -> bool {
     )
 }
 
-fn protection_name(protection: u32) -> &'static str {
+pub(super) fn protection_name(protection: u32) -> &'static str {
     match protection & 0xff {
         PAGE_READONLY => "PAGE_READONLY",
         PAGE_READWRITE => "PAGE_READWRITE",
@@ -651,7 +651,7 @@ fn protection_name(protection: u32) -> &'static str {
     }
 }
 
-fn region_type_name(region_type: u32) -> &'static str {
+pub(super) fn region_type_name(region_type: u32) -> &'static str {
     match region_type {
         MEM_IMAGE => "MEM_IMAGE",
         MEM_PRIVATE => "MEM_PRIVATE",

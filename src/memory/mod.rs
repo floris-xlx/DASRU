@@ -7,6 +7,9 @@ use crate::{
     probe::{ProbeReport, ProbeStatus, ReportError, RunIntegrityStatus, run_probe},
 };
 
+mod discovery;
+#[cfg(windows)]
+mod discovery_windows;
 #[cfg(any(windows, test))]
 mod layout;
 #[cfg(any(windows, test))]
@@ -19,6 +22,11 @@ pub(crate) mod transaction;
 mod windows;
 #[cfg(any(windows, test))]
 pub(crate) mod writer;
+
+pub use discovery::{
+    MetricsObjectCandidate, MetricsObjectRegion, MetricsObjectReport, MetricsObjectScanStats,
+    MetricsObjectStatus, MetricsRowPointer,
+};
 
 const BUILDS_TOML: &str = include_str!("../../data/builds.toml");
 pub const FPS_SIGNATURE: &[u8] = b"%i FPS\0\0%.2fms\0\0Frame : %u";
@@ -408,6 +416,51 @@ pub fn inspect_metrics_layout_with_registry_and_replacement(
     replacement: &str,
 ) -> MetricsLayoutReport {
     metrics_with_registry(registry, true, replacement)
+}
+
+pub fn discover_metrics_objects() -> MetricsObjectReport {
+    match BuildRegistry::from_toml(BUILDS_TOML) {
+        Ok(registry) => discover_metrics_objects_with_registry(&registry),
+        Err(error) => {
+            let mut report = MetricsObjectReport::new(
+                MetricsObjectStatus::ProbeError,
+                "REGISTRY_ERROR",
+                ProbeReport::empty(
+                    ProbeStatus::ProbeError,
+                    Some("build registry could not be parsed".to_owned()),
+                ),
+            );
+            report.errors.push(ReportError {
+                field: "build_registry",
+                code: "BUILD_REGISTRY_INVALID",
+                message: error.to_string(),
+            });
+            report
+        }
+    }
+}
+
+pub fn discover_metrics_objects_with_registry(registry: &BuildRegistry) -> MetricsObjectReport {
+    let probe = crate::probe::run_probe_with_registry(registry);
+    #[cfg(windows)]
+    {
+        discovery_windows::discover_metrics_objects(probe)
+    }
+    #[cfg(not(windows))]
+    {
+        let status = match probe.status {
+            ProbeStatus::UnknownBuild => MetricsObjectStatus::UnknownBuild,
+            ProbeStatus::NoProcess => MetricsObjectStatus::NoProcess,
+            ProbeStatus::AmbiguousProcess => MetricsObjectStatus::AmbiguousProcess,
+            ProbeStatus::AccessDenied => MetricsObjectStatus::AccessDenied,
+            ProbeStatus::IdentityInconsistent => MetricsObjectStatus::IdentityInconsistent,
+            ProbeStatus::ProbeError => MetricsObjectStatus::ProbeError,
+            ProbeStatus::ExactMatch | ProbeStatus::UnsupportedPlatform => {
+                MetricsObjectStatus::UnsupportedPlatform
+            }
+        };
+        MetricsObjectReport::new(status, "NOT_EVALUATED", probe)
+    }
 }
 
 fn metrics_with_registry(
