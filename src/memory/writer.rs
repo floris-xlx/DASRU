@@ -17,6 +17,9 @@ impl ExperimentalWritePermit {
     }
 }
 
+#[cfg(windows)]
+pub(crate) mod windows;
+
 #[cfg(test)]
 mod tests {
     use crate::identity::{BuildRecord, BuildResolution};

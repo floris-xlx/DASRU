@@ -10,9 +10,13 @@ use crate::{
 #[cfg(any(windows, test))]
 mod layout;
 #[cfg(any(windows, test))]
+pub(crate) mod protection;
+#[cfg(any(windows, test))]
 mod scan;
 #[cfg(windows)]
 mod windows;
+#[cfg(any(windows, test))]
+pub(crate) mod transaction;
 #[cfg(any(windows, test))]
 pub(crate) mod writer;
 
