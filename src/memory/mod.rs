@@ -13,10 +13,10 @@ mod layout;
 pub(crate) mod protection;
 #[cfg(any(windows, test))]
 mod scan;
-#[cfg(windows)]
-mod windows;
 #[cfg(any(windows, test))]
 pub(crate) mod transaction;
+#[cfg(windows)]
+mod windows;
 #[cfg(any(windows, test))]
 pub(crate) mod writer;
 
