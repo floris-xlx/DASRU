@@ -4,6 +4,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
+    sync::Mutex,
     thread,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
@@ -16,6 +17,7 @@ use dasru::{
 
 const FPS_SLOT_ORIGINAL: [u8; 8] = *b"%i FPS\0\0";
 const FPS_SLOT_PATCHED: [u8; 8] = *b"%i FPS+\0";
+static TEST_LOCK: Mutex<()> = Mutex::new(());
 
 struct ChildGuard(Child);
 
@@ -81,6 +83,7 @@ fn start(executable: &Path) -> ChildGuard {
 
 #[test]
 fn simulated_game_marker_is_patched_and_restored() {
+    let _serial = TEST_LOCK.lock().unwrap();
     let (root, executable) = fixture();
     let registry = registry_for(&executable);
     let _child = start(&executable);
@@ -106,6 +109,7 @@ fn simulated_game_marker_is_patched_and_restored() {
 
 #[test]
 fn unknown_build_is_refused_without_creating_a_snapshot() {
+    let _serial = TEST_LOCK.lock().unwrap();
     let (root, executable) = fixture();
     let _child = start(&executable);
     let snapshot_path = root.join("recovery.json");
@@ -128,6 +132,7 @@ fn unknown_build_is_refused_without_creating_a_snapshot() {
 
 #[test]
 fn duplicate_game_processes_are_refused_before_snapshot_creation() {
+    let _serial = TEST_LOCK.lock().unwrap();
     let (root, executable) = fixture();
     let registry = registry_for(&executable);
     let _first = start(&executable);
@@ -148,6 +153,7 @@ fn duplicate_game_processes_are_refused_before_snapshot_creation() {
 
 #[test]
 fn recovery_refuses_a_snapshot_bound_to_another_process_creation_time() {
+    let _serial = TEST_LOCK.lock().unwrap();
     let (root, executable) = fixture();
     let registry = registry_for(&executable);
     let _child = start(&executable);
@@ -171,6 +177,7 @@ fn recovery_refuses_a_snapshot_bound_to_another_process_creation_time() {
 
 #[test]
 fn terminated_target_is_not_reopened_by_pid_during_session_cleanup() {
+    let _serial = TEST_LOCK.lock().unwrap();
     let (root, executable) = fixture();
     let registry = registry_for(&executable);
     let mut child = start(&executable);
