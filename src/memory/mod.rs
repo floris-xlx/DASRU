@@ -13,6 +13,8 @@ mod layout;
 mod scan;
 #[cfg(windows)]
 mod windows;
+#[cfg(any(windows, test))]
+pub(crate) mod writer;
 
 const BUILDS_TOML: &str = include_str!("../../data/builds.toml");
 pub const FPS_SIGNATURE: &[u8] = b"%i FPS\0\0%.2fms\0\0Frame : %u";

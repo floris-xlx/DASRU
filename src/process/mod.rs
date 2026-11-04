@@ -122,14 +122,31 @@ pub(crate) fn recheck_pinned_process(candidate: &PinnedProcessCandidate) -> Proc
 }
 
 #[cfg(windows)]
-pub(crate) use windows::ReadOnlyProcessHandle;
+pub(crate) use windows::{ReadOnlyProcess, WritableProcess};
 
 #[cfg(windows)]
 pub(crate) fn open_readonly_process(
     pid: u32,
     expected: &ProcessIdentity,
-) -> Result<ReadOnlyProcessHandle, ProcessInspection> {
+) -> Result<ReadOnlyProcess, ProcessInspection> {
     windows::open_readonly_process(pid, expected)
+}
+
+#[cfg(windows)]
+pub(crate) fn open_writable_process(
+    pid: u32,
+    expected: &ProcessIdentity,
+    permit: &crate::memory::writer::ExperimentalWritePermit,
+) -> Result<WritableProcess, ProcessInspection> {
+    windows::open_writable_process(pid, expected, permit)
+}
+
+#[cfg(windows)]
+pub(crate) fn open_recovery_process(
+    pid: u32,
+    expected: &ProcessIdentity,
+) -> Result<WritableProcess, ProcessInspection> {
+    windows::open_recovery_process(pid, expected)
 }
 
 #[derive(Debug, Error)]

@@ -1,4 +1,9 @@
-use std::{ffi::OsString, io, mem::size_of, os::windows::ffi::OsStringExt};
+use std::{
+    ffi::{OsString, c_void},
+    io,
+    mem::size_of,
+    os::windows::ffi::OsStringExt,
+};
 
 use windows_sys::Win32::{
     Foundation::{
@@ -6,15 +11,17 @@ use windows_sys::Win32::{
         WAIT_OBJECT_0, WAIT_TIMEOUT,
     },
     System::{
+        Diagnostics::Debug::{ReadProcessMemory, WriteProcessMemory},
         Diagnostics::ToolHelp::{
             CreateToolhelp32Snapshot, MODULEENTRY32W, Module32FirstW, Module32NextW,
             PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPMODULE,
             TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS,
         },
+        Memory::{MEMORY_BASIC_INFORMATION, VirtualProtectEx, VirtualQueryEx},
         Threading::{
             GetProcessId, GetProcessTimes, OpenProcess, PROCESS_QUERY_INFORMATION,
-            PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SYNCHRONIZE, PROCESS_VM_READ,
-            QueryFullProcessImageNameW, WaitForSingleObject,
+            PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SYNCHRONIZE, PROCESS_VM_OPERATION,
+            PROCESS_VM_READ, PROCESS_VM_WRITE, QueryFullProcessImageNameW, WaitForSingleObject,
         },
     },
 };
@@ -30,12 +37,171 @@ const ERROR_NO_MORE_FILES: u32 = 18;
 
 pub(super) struct OwnedHandle(pub(super) HANDLE);
 
-pub(crate) struct ReadOnlyProcessHandle(OwnedHandle);
+pub(crate) struct ReadOnlyProcess(OwnedHandle);
 
-impl ReadOnlyProcessHandle {
+impl ReadOnlyProcess {
     pub(crate) fn raw(&self) -> HANDLE {
         self.0.0
     }
+}
+
+pub(crate) struct WritableProcess {
+    handle: OwnedHandle,
+    pid: u32,
+    identity: ProcessIdentity,
+}
+
+impl WritableProcess {
+    pub(crate) fn identity(&self) -> &ProcessIdentity {
+        &self.identity
+    }
+
+    pub(crate) fn pid(&self) -> u32 {
+        self.pid
+    }
+
+    pub(crate) fn read_exact(&self, address: u64, output: &mut [u8]) -> Result<(), String> {
+        let address = usize::try_from(address)
+            .map_err(|_| "remote address does not fit this process".to_owned())?;
+        let mut received = 0usize;
+        // SAFETY: the retained handle has PROCESS_VM_READ; output is writable for its length.
+        let succeeded = unsafe {
+            ReadProcessMemory(
+                self.handle.0,
+                address as *const c_void,
+                output.as_mut_ptr().cast(),
+                output.len(),
+                &mut received,
+            )
+        };
+        if succeeded == 0 || received != output.len() {
+            return Err(format!(
+                "ReadProcessMemory returned {received} of {} bytes (Win32 error {})",
+                output.len(),
+                last_error()
+            ));
+        }
+        Ok(())
+    }
+
+    pub(crate) fn write_exact(&self, address: u64, input: &[u8]) -> Result<(), String> {
+        let address = usize::try_from(address)
+            .map_err(|_| "remote address does not fit this process".to_owned())?;
+        let mut written = 0usize;
+        // SAFETY: the retained handle has PROCESS_VM_WRITE and PROCESS_VM_OPERATION; input is readable.
+        let succeeded = unsafe {
+            WriteProcessMemory(
+                self.handle.0,
+                address as *mut c_void,
+                input.as_ptr().cast(),
+                input.len(),
+                &mut written,
+            )
+        };
+        if succeeded == 0 || written != input.len() {
+            return Err(format!(
+                "WriteProcessMemory transferred {written} of {} bytes (Win32 error {})",
+                input.len(),
+                last_error()
+            ));
+        }
+        Ok(())
+    }
+
+    pub(crate) fn query_region(&self, address: u64) -> Result<RemoteMemoryRegion, String> {
+        let address = usize::try_from(address)
+            .map_err(|_| "remote address does not fit this process".to_owned())?;
+        // SAFETY: a zeroed output structure is valid for VirtualQueryEx to fill.
+        let mut info: MEMORY_BASIC_INFORMATION = unsafe { std::mem::zeroed() };
+        // SAFETY: the retained handle has query rights and info is writable for the API struct size.
+        let received = unsafe {
+            VirtualQueryEx(
+                self.handle.0,
+                address as *const c_void,
+                &mut info,
+                size_of::<MEMORY_BASIC_INFORMATION>(),
+            )
+        };
+        if received == 0 {
+            return Err(format!(
+                "VirtualQueryEx failed at 0x{address:X} (Win32 error {})",
+                last_error()
+            ));
+        }
+        Ok(RemoteMemoryRegion {
+            base: info.BaseAddress as usize as u64,
+            size: info.RegionSize as u64,
+            state: info.State,
+            protection: info.Protect,
+            region_type: info.Type,
+        })
+    }
+
+    pub(crate) fn set_protection(
+        &self,
+        address: u64,
+        length: usize,
+        protection: u32,
+    ) -> Result<u32, String> {
+        let address = usize::try_from(address)
+            .map_err(|_| "remote address does not fit this process".to_owned())?;
+        let mut previous = 0u32;
+        // SAFETY: the retained handle has PROCESS_VM_OPERATION and the target is a committed image page.
+        let succeeded = unsafe {
+            VirtualProtectEx(
+                self.handle.0,
+                address as *mut c_void,
+                length,
+                protection,
+                &mut previous,
+            )
+        };
+        if succeeded == 0 {
+            return Err(format!(
+                "VirtualProtectEx failed at 0x{address:X} (Win32 error {})",
+                last_error()
+            ));
+        }
+        Ok(previous)
+    }
+
+    pub(crate) fn is_running(&self) -> Result<bool, String> {
+        match unsafe { WaitForSingleObject(self.handle.0, 0) } {
+            WAIT_TIMEOUT => Ok(true),
+            WAIT_OBJECT_0 => Ok(false),
+            WAIT_FAILED => Err(format!(
+                "WaitForSingleObject failed (Win32 error {})",
+                last_error()
+            )),
+            value => Err(format!(
+                "WaitForSingleObject returned unexpected value {value}"
+            )),
+        }
+    }
+
+    pub(crate) fn revalidate(&self) -> Result<(), String> {
+        let identity =
+            inspect_open_process(self.handle.0, self.pid).map_err(|failure| match failure {
+                ProcessInspection::Unavailable { failure } => {
+                    format!("{} ({:?})", failure.operation, failure.kind)
+                }
+                ProcessInspection::Available { .. } => {
+                    "process revalidation returned an unexpected state".to_owned()
+                }
+            })?;
+        if identity != self.identity {
+            return Err("retained process identity changed".to_owned());
+        }
+        Ok(())
+    }
+}
+
+pub(crate) struct RemoteMemoryRegion {
+    pub(crate) base: u64,
+    pub(crate) size: u64,
+    pub(crate) state: u32,
+    pub(crate) protection: u32,
+    pub(crate) region_type: u32,
 }
 
 impl Drop for OwnedHandle {
@@ -141,7 +307,7 @@ fn inspect_process(pid: u32) -> Result<(ProcessIdentity, OwnedHandle), ProcessIn
 pub(crate) fn open_readonly_process(
     pid: u32,
     expected: &ProcessIdentity,
-) -> Result<ReadOnlyProcessHandle, ProcessInspection> {
+) -> Result<ReadOnlyProcess, ProcessInspection> {
     // VirtualQueryEx needs query access; memory reads add PROCESS_VM_READ only.
     let raw_process = unsafe {
         OpenProcess(
@@ -165,7 +331,62 @@ pub(crate) fn open_readonly_process(
             "read-only memory handle identity differs from the inspected process",
         ));
     }
-    Ok(ReadOnlyProcessHandle(handle))
+    Ok(ReadOnlyProcess(handle))
+}
+
+pub(crate) fn open_writable_process(
+    pid: u32,
+    expected: &ProcessIdentity,
+    _permit: &crate::memory::writer::ExperimentalWritePermit,
+) -> Result<WritableProcess, ProcessInspection> {
+    open_writable_process_handle(pid, expected, "experimental memory writing")
+}
+
+pub(crate) fn open_recovery_process(
+    pid: u32,
+    expected: &ProcessIdentity,
+) -> Result<WritableProcess, ProcessInspection> {
+    open_writable_process_handle(pid, expected, "recovery")
+}
+
+fn open_writable_process_handle(
+    pid: u32,
+    expected: &ProcessIdentity,
+    purpose: &str,
+) -> Result<WritableProcess, ProcessInspection> {
+    // SAFETY: this handle is created only after an explicit write permit or validated recovery snapshot.
+    let raw_process = unsafe {
+        OpenProcess(
+            PROCESS_QUERY_INFORMATION
+                | PROCESS_VM_READ
+                | PROCESS_VM_WRITE
+                | PROCESS_VM_OPERATION
+                | PROCESS_SYNCHRONIZE,
+            0,
+            pid,
+        )
+    };
+    if raw_process.is_null() {
+        let error = last_error();
+        let operation = format!("OpenProcess for {purpose}");
+        return Err(if error == ERROR_INVALID_PARAMETER {
+            exited(&operation)
+        } else {
+            unavailable(&operation, error)
+        });
+    }
+    let handle = OwnedHandle(raw_process);
+    let identity = inspect_open_process(handle.0, pid)?;
+    if identity != *expected {
+        return Err(inconsistent(
+            "writable process handle identity differs from the inspected process",
+        ));
+    }
+    Ok(WritableProcess {
+        handle,
+        pid,
+        identity,
+    })
 }
 
 pub(super) fn inspect_open_process(
