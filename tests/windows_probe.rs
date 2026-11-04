@@ -89,10 +89,15 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
     let ProcessInspection::Available { identity } = &single.processes[0].inspection else {
         panic!("simulated game process identity is available");
     };
-    assert!(same_path(
-        &identity.executable_path,
-        &fs::canonicalize(&executable).unwrap()
-    ));
+    let observed_path = fs::canonicalize(&identity.executable_path)
+        .expect("the process-reported executable path resolves");
+    let expected_path = fs::canonicalize(&executable).unwrap();
+    assert!(
+        same_path(&observed_path, &expected_path),
+        "process path {:?} differs from expected {:?}",
+        observed_path,
+        expected_path
+    );
     assert!(identity.creation_time_filetime > 0);
     assert!(identity.module_base > 0);
     assert!(identity.image_size > 0);
