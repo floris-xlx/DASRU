@@ -80,6 +80,26 @@ fn main() -> ExitCode {
         {
             print_metrics_layout_for_label(label, true)
         }
+        [command, subcommand, marker_option, marker, experimental]
+            if command == OsStr::new("memory")
+                && subcommand == OsStr::new("osd")
+                && marker_option == OsStr::new("--fps-marker")
+                && experimental == OsStr::new("--experimental-write") =>
+        {
+            match marker.to_str() {
+                Some(marker) => {
+                    print_osd_result(dasru::osd::run_experimental_session(marker, true))
+                }
+                None => print_usage(),
+            }
+        }
+        [command, subcommand, restore]
+            if command == OsStr::new("memory")
+                && subcommand == OsStr::new("osd")
+                && restore == OsStr::new("restore") =>
+        {
+            print_osd_result(dasru::osd::restore_fps_marker())
+        }
         _ => print_usage(),
     }
 }
@@ -108,6 +128,19 @@ fn print_metrics_layout(report: dasru::memory::MetricsLayoutReport, json: bool) 
     print_report(&report, &report.to_human_text(), json, report.exit_code())
 }
 
+fn print_osd_result(result: Result<String, String>) -> ExitCode {
+    match result {
+        Ok(message) => {
+            println!("{message}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("Memory OSD error: {error}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
 fn print_metrics_layout_for_label(label: &OsStr, json: bool) -> ExitCode {
     let Some(label) = label.to_str() else {
         eprintln!("--replacement must be an ASCII label beginning with %i FPS");
@@ -122,7 +155,7 @@ fn print_metrics_layout_for_label(label: &OsStr, json: bool) -> ExitCode {
 
 fn print_usage() -> ExitCode {
     eprintln!(
-        "Usage: dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]"
+        "Usage: dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore"
     );
     ExitCode::from(2)
 }
