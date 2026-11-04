@@ -43,6 +43,7 @@ impl ExecutableIdentity {
 
         let mut hasher = Sha256::new();
         let mut buffer = [0u8; 64 * 1024];
+        let mut bytes_hashed = 0u64;
         loop {
             let read = file
                 .read(&mut buffer)
@@ -51,10 +52,14 @@ impl ExecutableIdentity {
                 break;
             }
             hasher.update(&buffer[..read]);
+            bytes_hashed += read as u64;
+        }
+        if bytes_hashed != before.size {
+            return Err(ExecutableError::ChangedDuringInspection(path.to_owned()));
         }
 
         #[cfg(windows)]
-        let versions = windows_version_info(path).map_err(|source| io_error(path, source))?;
+        let versions = windows_version_info(path).unwrap_or((None, None));
         #[cfg(not(windows))]
         let versions = (None, None);
 
@@ -62,7 +67,7 @@ impl ExecutableIdentity {
         let path_after = File::open(path)
             .and_then(|path_file| file_snapshot(&path_file))
             .map_err(|source| io_error(path, source))?;
-        // shortcut: metadata checks catch normal races; require immutable snapshots before attestation.
+        // shortcut: in-place rewrites that restore metadata can evade snapshots; parse one immutable image if hostile writers matter.
         if before != after || before != path_after {
             return Err(ExecutableError::ChangedDuringInspection(path.to_owned()));
         }

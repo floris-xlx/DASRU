@@ -59,15 +59,10 @@ fn reports_unknown_hash_even_when_steam_metadata_is_absent() {
 }
 
 #[test]
-fn reports_install_metadata_conflicting_with_the_executable_hash() {
+fn reports_unknown_build_when_only_steam_metadata_matches_the_registry() {
     let result = fixture_registry().resolve(&identity(&"0".repeat(64), None), Some("12345"));
 
-    assert_eq!(
-        result,
-        BuildResolution::InstallMismatch {
-            expected_build_id: "12345".to_owned()
-        }
-    );
+    assert_eq!(result, BuildResolution::UnknownBuild);
 }
 
 #[test]

@@ -100,7 +100,7 @@ impl BuildRegistry {
                     if observed != registered {
                         return BuildResolution::IdentityInconsistent {
                             reason: format!(
-                                "registered SHA-256 conflicts with observed {field} {observed}; registry says {registered}"
+                                "registered build metadata conflicts with observed {field} {observed}; registry says {registered}"
                             ),
                         };
                     }
@@ -120,18 +120,6 @@ impl BuildRegistry {
             return BuildResolution::ExactMatch {
                 build: build.clone(),
             };
-        }
-
-        if let Some(observed) = observed_steam_build_id {
-            if self
-                .builds
-                .iter()
-                .any(|build| build.steam_build_id.as_deref() == Some(observed))
-            {
-                return BuildResolution::InstallMismatch {
-                    expected_build_id: observed.to_owned(),
-                };
-            }
         }
 
         BuildResolution::UnknownBuild

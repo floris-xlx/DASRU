@@ -1,7 +1,10 @@
 use std::{ffi::OsString, io, mem::size_of, os::windows::ffi::OsStringExt, path::Path};
 
 use windows_sys::Win32::{
-    Foundation::{CloseHandle, FILETIME, GetLastError, HANDLE, INVALID_HANDLE_VALUE},
+    Foundation::{
+        CloseHandle, FILETIME, GetLastError, HANDLE, INVALID_HANDLE_VALUE, WAIT_FAILED,
+        WAIT_OBJECT_0, WAIT_TIMEOUT,
+    },
     System::{
         Diagnostics::ToolHelp::{
             CreateToolhelp32Snapshot, MODULEENTRY32W, Module32FirstW, Module32NextW,
@@ -9,8 +12,8 @@ use windows_sys::Win32::{
             TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS,
         },
         Threading::{
-            GetProcessTimes, OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
-            QueryFullProcessImageNameW,
+            GetProcessId, GetProcessTimes, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+            PROCESS_SYNCHRONIZE, QueryFullProcessImageNameW, WaitForSingleObject,
         },
     },
 };
@@ -21,6 +24,7 @@ use super::{
 };
 
 const ERROR_ACCESS_DENIED: u32 = 5;
+const ERROR_INVALID_PARAMETER: u32 = 87;
 const ERROR_NO_MORE_FILES: u32 = 18;
 
 struct OwnedHandle(HANDLE);
@@ -84,20 +88,41 @@ pub fn enumerate_game_processes() -> Result<Vec<ProcessCandidate>, ProcessScanEr
 }
 
 fn inspect_process(pid: u32) -> ProcessInspection {
-    // SAFETY: OpenProcess receives a PID from the system process snapshot and explicit read-only rights.
-    let raw_process = unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, pid) };
+    if pid == 0 {
+        return inconsistent("the process snapshot returned PID 0");
+    }
+
+    // SAFETY: OpenProcess receives a PID from the process snapshot and only query/synchronization rights.
+    let raw_process = unsafe {
+        OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SYNCHRONIZE,
+            0,
+            pid,
+        )
+    };
     if raw_process.is_null() {
-        return unavailable("OpenProcess", last_error());
+        let error = last_error();
+        return if error == ERROR_INVALID_PARAMETER {
+            exited("OpenProcess")
+        } else {
+            unavailable("OpenProcess", error)
+        };
     }
     let process = OwnedHandle(raw_process);
 
+    if let Err(failure) = validate_process_handle(process.0, pid) {
+        return failure;
+    }
+
     let first_creation_time = match creation_time(process.0) {
         Ok(value) => value,
-        Err(error) => return unavailable("GetProcessTimes", error),
+        Err(error) => return process_api_failure(process.0, pid, "GetProcessTimes", error),
     };
     let first_path = match process_path(process.0) {
         Ok(value) => value,
-        Err(error) => return unavailable("QueryFullProcessImageNameW", error),
+        Err(error) => {
+            return process_api_failure(process.0, pid, "QueryFullProcessImageNameW", error);
+        }
     };
     if !first_path
         .file_name()
@@ -106,22 +131,58 @@ fn inspect_process(pid: u32) -> ProcessInspection {
         return inconsistent("process image path does not match the candidate executable name");
     }
 
-    let (module_path, module_base, image_size) = match main_module(pid) {
+    let module = main_module(process.0);
+    if let Err(failure) = validate_process_handle(process.0, pid) {
+        return failure;
+    }
+    let (module_path, module_base, image_size) = match module {
         Ok(value) => value,
         Err(error) => return error,
     };
     let second_path = match process_path(process.0) {
         Ok(value) => value,
-        Err(error) => return unavailable("QueryFullProcessImageNameW after module lookup", error),
+        Err(error) => {
+            return process_api_failure(
+                process.0,
+                pid,
+                "QueryFullProcessImageNameW after module lookup",
+                error,
+            );
+        }
     };
     let second_creation_time = match creation_time(process.0) {
         Ok(value) => value,
-        Err(error) => return unavailable("GetProcessTimes after module lookup", error),
+        Err(error) => {
+            return process_api_failure(
+                process.0,
+                pid,
+                "GetProcessTimes after module lookup",
+                error,
+            );
+        }
+    };
+    if let Err(failure) = validate_process_handle(process.0, pid) {
+        return failure;
+    }
+
+    let first_canonical_path = match std::fs::canonicalize(&first_path) {
+        Ok(path) => path,
+        Err(error) => return io_unavailable("canonicalize process image path", error),
+    };
+    let module_canonical_path = match std::fs::canonicalize(&module_path) {
+        Ok(path) => path,
+        Err(error) => return io_unavailable("canonicalize main module path", error),
+    };
+    let second_canonical_path = match std::fs::canonicalize(&second_path) {
+        Ok(path) => path,
+        Err(error) => {
+            return io_unavailable("canonicalize process image path after module lookup", error);
+        }
     };
 
-    if first_path != second_path
-        || first_creation_time != second_creation_time
-        || normalize_path(&first_path) != normalize_path(&module_path)
+    if first_creation_time != second_creation_time
+        || normalize_path(&first_canonical_path) != normalize_path(&module_canonical_path)
+        || normalize_path(&first_canonical_path) != normalize_path(&second_canonical_path)
     {
         return inconsistent(
             "process path, creation time, or main module changed during inspection",
@@ -138,7 +199,15 @@ fn inspect_process(pid: u32) -> ProcessInspection {
     }
 }
 
-fn main_module(pid: u32) -> Result<(std::path::PathBuf, u64, u32), ProcessInspection> {
+fn main_module(process: HANDLE) -> Result<(std::path::PathBuf, u64, u32), ProcessInspection> {
+    let pid = unsafe { GetProcessId(process) };
+    if pid == 0 {
+        return Err(unavailable(
+            "GetProcessId for module snapshot",
+            last_error(),
+        ));
+    }
+
     // SAFETY: the snapshot flags request modules for the PID from the current process table.
     let raw_snapshot =
         unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid) };
@@ -170,6 +239,11 @@ fn main_module(pid: u32) -> Result<(std::path::PathBuf, u64, u32), ProcessInspec
             .file_name()
             .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case(GAME_EXECUTABLE))
         {
+            if module.modBaseAddr.is_null() || module.modBaseSize == 0 {
+                return Err(inconsistent(
+                    "the main module has an invalid base or image size",
+                ));
+            }
             return Ok((
                 module_path,
                 module.modBaseAddr as usize as u64,
@@ -191,6 +265,49 @@ fn main_module(pid: u32) -> Result<(std::path::PathBuf, u64, u32), ProcessInspec
             });
         }
     }
+}
+
+fn validate_process_handle(process: HANDLE, expected_pid: u32) -> Result<(), ProcessInspection> {
+    let actual_pid = unsafe { GetProcessId(process) };
+    if actual_pid == 0 {
+        return Err(unavailable("GetProcessId", last_error()));
+    }
+    if actual_pid != expected_pid {
+        return Err(inconsistent(
+            "the process handle PID does not match the process snapshot",
+        ));
+    }
+
+    match unsafe { WaitForSingleObject(process, 0) } {
+        WAIT_TIMEOUT => Ok(()),
+        WAIT_OBJECT_0 => Err(exited("WaitForSingleObject")),
+        WAIT_FAILED => Err(unavailable("WaitForSingleObject", last_error())),
+        _ => Err(unavailable_without_error(
+            "WaitForSingleObject returned an unexpected result",
+        )),
+    }
+}
+
+fn process_api_failure(
+    process: HANDLE,
+    pid: u32,
+    operation: &str,
+    error: u32,
+) -> ProcessInspection {
+    if let Err(failure) = validate_process_handle(process, pid) {
+        if matches!(
+            &failure,
+            ProcessInspection::Unavailable {
+                failure: ProcessFailure {
+                    kind: ProcessFailureKind::ProcessExited,
+                    ..
+                }
+            }
+        ) {
+            return failure;
+        }
+    }
+    unavailable(operation, error)
 }
 
 fn process_path(process: HANDLE) -> Result<std::path::PathBuf, u32> {
@@ -249,6 +366,42 @@ fn unavailable(operation: &str, error: u32) -> ProcessInspection {
                 ProcessFailureKind::Unavailable
             },
             win32_error: Some(error),
+        },
+    }
+}
+
+fn io_unavailable(operation: &str, error: io::Error) -> ProcessInspection {
+    ProcessInspection::Unavailable {
+        failure: ProcessFailure {
+            operation: operation.to_owned(),
+            kind: if error.kind() == io::ErrorKind::PermissionDenied {
+                ProcessFailureKind::AccessDenied
+            } else {
+                ProcessFailureKind::Unavailable
+            },
+            win32_error: error
+                .raw_os_error()
+                .and_then(|code| u32::try_from(code).ok()),
+        },
+    }
+}
+
+fn unavailable_without_error(operation: &str) -> ProcessInspection {
+    ProcessInspection::Unavailable {
+        failure: ProcessFailure {
+            operation: operation.to_owned(),
+            kind: ProcessFailureKind::Unavailable,
+            win32_error: None,
+        },
+    }
+}
+
+fn exited(operation: &str) -> ProcessInspection {
+    ProcessInspection::Unavailable {
+        failure: ProcessFailure {
+            operation: operation.to_owned(),
+            kind: ProcessFailureKind::ProcessExited,
+            win32_error: None,
         },
     }
 }

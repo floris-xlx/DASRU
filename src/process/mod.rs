@@ -30,6 +30,7 @@ pub enum ProcessFailureKind {
     AccessDenied,
     Unavailable,
     IdentityInconsistent,
+    ProcessExited,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]

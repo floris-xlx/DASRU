@@ -5,7 +5,7 @@ use crate::{
         BuildRegistry, BuildRegistryError, BuildResolution, ExecutableError, ExecutableIdentity,
     },
     process::{
-        ProcessCandidate, ProcessFailureKind, ProcessInspection, ProcessScanError,
+        ProcessCandidate, ProcessFailure, ProcessFailureKind, ProcessInspection, ProcessScanError,
         enumerate_game_processes,
     },
 };
@@ -179,20 +179,8 @@ pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
     let process_identity = match &candidate.inspection {
         ProcessInspection::Available { identity } => identity,
         ProcessInspection::Unavailable { failure } => {
-            let mut report = ProbeReport::empty(
-                match failure.kind {
-                    ProcessFailureKind::AccessDenied => ProbeStatus::AccessDenied,
-                    ProcessFailureKind::IdentityInconsistent => ProbeStatus::IdentityInconsistent,
-                    ProcessFailureKind::Unavailable => ProbeStatus::ProbeError,
-                },
-                Some(format!(
-                    "{} failed (Win32 error: {})",
-                    failure.operation,
-                    failure
-                        .win32_error
-                        .map_or_else(|| "none".to_owned(), |code| code.to_string())
-                )),
-            );
+            let (status, reason) = process_failure_details(failure, "during process inspection");
+            let mut report = ProbeReport::empty(status, Some(reason));
             report.processes = candidates;
             report
                 .evidence_provenance
@@ -245,19 +233,9 @@ pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
 
     let verification_failure = match current_candidates.as_slice() {
         [current] if current.pid == candidate.pid => match &current.inspection {
-            ProcessInspection::Unavailable { failure } => Some((
-                match failure.kind {
-                    ProcessFailureKind::AccessDenied => ProbeStatus::AccessDenied,
-                    ProcessFailureKind::IdentityInconsistent => ProbeStatus::IdentityInconsistent,
-                    ProcessFailureKind::Unavailable => ProbeStatus::ProbeError,
-                },
-                format!(
-                    "{} failed while rechecking the process (Win32 error: {})",
-                    failure.operation,
-                    failure
-                        .win32_error
-                        .map_or_else(|| "none".to_owned(), |code| code.to_string())
-                ),
+            ProcessInspection::Unavailable { failure } => Some(process_failure_details(
+                failure,
+                "while rechecking the process",
             )),
             ProcessInspection::Available { identity }
                 if current
@@ -352,6 +330,28 @@ fn process_error_parts(error: ProcessScanError) -> (ProbeStatus, String) {
             (status, format!("{operation} failed: {source}"))
         }
     }
+}
+
+fn process_failure_details(failure: &ProcessFailure, context: &str) -> (ProbeStatus, String) {
+    let status = match failure.kind {
+        ProcessFailureKind::AccessDenied => ProbeStatus::AccessDenied,
+        ProcessFailureKind::IdentityInconsistent | ProcessFailureKind::ProcessExited => {
+            ProbeStatus::IdentityInconsistent
+        }
+        ProcessFailureKind::Unavailable => ProbeStatus::ProbeError,
+    };
+    let reason = if failure.kind == ProcessFailureKind::ProcessExited {
+        format!("process exited {context}")
+    } else {
+        format!(
+            "{} failed {context} (Win32 error: {})",
+            failure.operation,
+            failure
+                .win32_error
+                .map_or_else(|| "none".to_owned(), |code| code.to_string())
+        )
+    };
+    (status, reason)
 }
 
 fn executable_error(error: ExecutableError) -> (ProbeStatus, String) {
