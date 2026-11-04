@@ -1,4 +1,8 @@
 use serde::Serialize;
+use std::{
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use crate::{
     identity::{
@@ -17,13 +21,66 @@ const BUILDS_TOML: &str = include_str!("../data/builds.toml");
 pub enum ProbeStatus {
     ExactMatch,
     UnknownBuild,
-    InstallMismatch,
     AmbiguousProcess,
     AccessDenied,
     IdentityInconsistent,
     NoProcess,
     UnsupportedPlatform,
     ProbeError,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InspectionMode {
+    Offline,
+    Process,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ProcessStatus {
+    NotEvaluated,
+    Verified,
+    Ambiguous,
+    AccessDenied,
+    IdentityInconsistent,
+    NotFound,
+    Unsupported,
+    Error,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ExecutableStatus {
+    NotEvaluated,
+    ExactMatch,
+    UnknownBuild,
+    IdentityInconsistent,
+    AccessDenied,
+    Error,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SteamStatus {
+    NotEvaluated,
+    Match,
+    Mismatch,
+    Unavailable,
+    ReadError,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ReportError {
+    pub field: &'static str,
+    pub code: &'static str,
+    pub message: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct FieldProvenance {
+    pub field: &'static str,
+    pub source: &'static str,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -37,7 +94,6 @@ impl ProbeStatus {
         match self {
             Self::ExactMatch => "EXACT_MATCH",
             Self::UnknownBuild => "UNKNOWN_BUILD",
-            Self::InstallMismatch => "INSTALL_MISMATCH",
             Self::AmbiguousProcess => "AMBIGUOUS_PROCESS",
             Self::AccessDenied => "ACCESS_DENIED",
             Self::IdentityInconsistent => "IDENTITY_INCONSISTENT",
@@ -50,28 +106,61 @@ impl ProbeStatus {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct ProbeReport {
+    pub schema_version: u8,
+    pub observed_at_unix_ms: u64,
+    pub inspection_mode: InspectionMode,
+    pub process_status: ProcessStatus,
+    pub executable_status: ExecutableStatus,
+    pub steam_status: SteamStatus,
     pub status: ProbeStatus,
     pub run_integrity: RunIntegrityStatus,
     pub processes: Vec<ProcessCandidate>,
     pub executable: Option<ExecutableIdentity>,
     pub steam_build_id: Option<String>,
+    pub expected_steam_build_id: Option<String>,
+    pub steam_install_dir: Option<String>,
     pub steam_build_id_error: Option<String>,
     pub build_resolution: Option<BuildResolution>,
     pub evidence_provenance: Vec<&'static str>,
+    pub field_provenance: Vec<FieldProvenance>,
+    pub errors: Vec<ReportError>,
     pub reason: Option<String>,
 }
 
 impl ProbeReport {
     fn empty(status: ProbeStatus, reason: Option<String>) -> Self {
         Self {
+            schema_version: 1,
+            observed_at_unix_ms: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis()
+                .min(u64::MAX as u128) as u64,
+            inspection_mode: InspectionMode::Process,
+            process_status: process_status(status),
+            executable_status: ExecutableStatus::NotEvaluated,
+            steam_status: SteamStatus::NotEvaluated,
             status,
             run_integrity: RunIntegrityStatus::NotEvaluated,
             processes: Vec::new(),
             executable: None,
             steam_build_id: None,
+            expected_steam_build_id: None,
+            steam_install_dir: None,
             steam_build_id_error: None,
             build_resolution: None,
             evidence_provenance: Vec::new(),
+            field_provenance: Vec::new(),
+            errors: reason
+                .as_ref()
+                .map(|message| {
+                    vec![ReportError {
+                        field: "probe",
+                        code: status.label(),
+                        message: message.clone(),
+                    }]
+                })
+                .unwrap_or_default(),
             reason,
         }
     }
@@ -80,6 +169,16 @@ impl ProbeReport {
         let mut output = format!(
             "Status: {}\nRun integrity: NOT_EVALUATED\n",
             self.status.label()
+        );
+        output.insert_str(
+            0,
+            &format!(
+                "Inspection mode: {}\nProcess status: {}\nExecutable status: {}\nSteam metadata status: {}\n",
+                self.inspection_mode.label(),
+                self.process_status.label(),
+                self.executable_status.label(),
+                self.steam_status.label(),
+            ),
         );
 
         for process in &self.processes {
@@ -124,9 +223,15 @@ impl ProbeReport {
         if let Some(build_id) = &self.steam_build_id {
             output.push_str(&format!("Steam Build ID (local install): {build_id}\n"));
         }
+        if let Some(install_dir) = &self.steam_install_dir {
+            output.push_str(&format!("Steam install directory: {install_dir}\n"));
+        }
+        if let Some(build_id) = &self.expected_steam_build_id {
+            output.push_str(&format!("Registered Steam Build ID: {build_id}\n"));
+        }
         if let Some(error) = &self.steam_build_id_error {
             output.push_str(&format!("Steam Build ID read error: {error}\n"));
-        } else if self.steam_build_id.is_none() {
+        } else if self.steam_build_id.is_none() && self.steam_status == SteamStatus::Unavailable {
             output.push_str("Steam Build ID: unavailable\n");
         }
         if let Some(resolution) = &self.build_resolution {
@@ -138,11 +243,6 @@ impl ProbeReport {
                     ));
                 }
                 BuildResolution::UnknownBuild => output.push_str("Registered build: unknown\n"),
-                BuildResolution::InstallMismatch { expected_build_id } => {
-                    output.push_str(&format!(
-                        "Installation mismatch; expected Steam Build ID: {expected_build_id}\n"
-                    ))
-                }
                 BuildResolution::IdentityInconsistent { reason } => {
                     output.push_str(&format!("Identity inconsistency: {reason}\n"));
                 }
@@ -152,10 +252,110 @@ impl ProbeReport {
         for source in &self.evidence_provenance {
             output.push_str(&format!("Evidence: {source}\n"));
         }
-        if let Some(reason) = &self.reason {
+        for error in &self.errors {
+            output.push_str(&format!(
+                "Error [{}] {}: {}\n",
+                error.code, error.field, error.message
+            ));
+        }
+        if self.errors.is_empty()
+            && let Some(reason) = &self.reason
+        {
             output.push_str(&format!("Reason: {reason}\n"));
         }
         output
+    }
+
+    pub fn exit_code(&self) -> i32 {
+        match self.status {
+            ProbeStatus::ExactMatch | ProbeStatus::UnknownBuild => 0,
+            _ => 1,
+        }
+    }
+}
+
+impl InspectionMode {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Offline => "OFFLINE",
+            Self::Process => "PROCESS",
+        }
+    }
+}
+
+impl ProcessStatus {
+    fn label(self) -> &'static str {
+        match self {
+            Self::NotEvaluated => "NOT_EVALUATED",
+            Self::Verified => "VERIFIED",
+            Self::Ambiguous => "AMBIGUOUS",
+            Self::AccessDenied => "ACCESS_DENIED",
+            Self::IdentityInconsistent => "IDENTITY_INCONSISTENT",
+            Self::NotFound => "NOT_FOUND",
+            Self::Unsupported => "UNSUPPORTED",
+            Self::Error => "ERROR",
+        }
+    }
+}
+
+impl ExecutableStatus {
+    fn label(self) -> &'static str {
+        match self {
+            Self::NotEvaluated => "NOT_EVALUATED",
+            Self::ExactMatch => "EXACT_MATCH",
+            Self::UnknownBuild => "UNKNOWN_BUILD",
+            Self::IdentityInconsistent => "IDENTITY_INCONSISTENT",
+            Self::AccessDenied => "ACCESS_DENIED",
+            Self::Error => "ERROR",
+        }
+    }
+}
+
+impl SteamStatus {
+    fn label(self) -> &'static str {
+        match self {
+            Self::NotEvaluated => "NOT_EVALUATED",
+            Self::Match => "MATCH",
+            Self::Mismatch => "MISMATCH",
+            Self::Unavailable => "UNAVAILABLE",
+            Self::ReadError => "READ_ERROR",
+        }
+    }
+}
+
+fn resolution_status(resolution: &BuildResolution) -> ProbeStatus {
+    match resolution {
+        BuildResolution::ExactMatch { .. } => ProbeStatus::ExactMatch,
+        BuildResolution::UnknownBuild => ProbeStatus::UnknownBuild,
+        BuildResolution::IdentityInconsistent { .. } => ProbeStatus::IdentityInconsistent,
+    }
+}
+
+fn executable_status(resolution: &BuildResolution) -> ExecutableStatus {
+    match resolution {
+        BuildResolution::ExactMatch { .. } => ExecutableStatus::ExactMatch,
+        BuildResolution::UnknownBuild => ExecutableStatus::UnknownBuild,
+        BuildResolution::IdentityInconsistent { .. } => ExecutableStatus::IdentityInconsistent,
+    }
+}
+
+fn executable_error_status(status: ProbeStatus) -> ExecutableStatus {
+    match status {
+        ProbeStatus::AccessDenied => ExecutableStatus::AccessDenied,
+        ProbeStatus::IdentityInconsistent => ExecutableStatus::IdentityInconsistent,
+        _ => ExecutableStatus::Error,
+    }
+}
+
+fn process_status(status: ProbeStatus) -> ProcessStatus {
+    match status {
+        ProbeStatus::AmbiguousProcess => ProcessStatus::Ambiguous,
+        ProbeStatus::AccessDenied => ProcessStatus::AccessDenied,
+        ProbeStatus::IdentityInconsistent => ProcessStatus::IdentityInconsistent,
+        ProbeStatus::NoProcess => ProcessStatus::NotFound,
+        ProbeStatus::UnsupportedPlatform => ProcessStatus::Unsupported,
+        ProbeStatus::ProbeError => ProcessStatus::Error,
+        ProbeStatus::ExactMatch | ProbeStatus::UnknownBuild => ProcessStatus::NotEvaluated,
     }
 }
 
@@ -165,6 +365,204 @@ pub fn run_probe() -> ProbeReport {
         Err(error) => return registry_error(error),
     };
     run_probe_with_registry(&registry)
+}
+
+pub fn inspect_executable(path: &Path) -> ProbeReport {
+    let registry = match BuildRegistry::from_toml(BUILDS_TOML) {
+        Ok(registry) => registry,
+        Err(error) => return registry_error(error),
+    };
+    inspect_executable_with_registry(path, &registry)
+}
+
+pub fn inspect_executable_with_registry(path: &Path, registry: &BuildRegistry) -> ProbeReport {
+    match inspect_executable_identity(path, registry) {
+        Ok(inspection) => {
+            let mut report = ProbeReport::empty(resolution_status(&inspection.resolution), None);
+            report.inspection_mode = InspectionMode::Offline;
+            report.process_status = ProcessStatus::NotEvaluated;
+            report.attach_executable_inspection(inspection);
+            report
+                .evidence_provenance
+                .push("offline executable inspection");
+            report
+        }
+        Err((status, reason)) => {
+            let mut report = ProbeReport::empty(status, Some(reason.clone()));
+            report.inspection_mode = InspectionMode::Offline;
+            report.process_status = ProcessStatus::NotEvaluated;
+            report.executable_status = executable_error_status(status);
+            if let Some(error) = report.errors.first_mut() {
+                error.field = "executable";
+                error.code = "EXECUTABLE_INSPECTION_FAILED";
+            }
+            report
+                .evidence_provenance
+                .push("offline executable inspection");
+            report
+        }
+    }
+}
+
+#[derive(Clone)]
+struct ExecutableInspection {
+    executable: ExecutableIdentity,
+    resolution: BuildResolution,
+    steam_status: SteamStatus,
+    steam_build_id: Option<String>,
+    expected_steam_build_id: Option<String>,
+    steam_install_dir: Option<String>,
+    steam_build_id_error: Option<String>,
+    steam_error: Option<ReportError>,
+}
+
+impl ProbeReport {
+    fn attach_executable_inspection(&mut self, inspection: ExecutableInspection) {
+        if let BuildResolution::IdentityInconsistent { reason } = &inspection.resolution {
+            self.errors.push(ReportError {
+                field: "executable.version_metadata",
+                code: "REGISTERED_METADATA_MISMATCH",
+                message: reason.clone(),
+            });
+        }
+        if let Some(message) = &inspection.executable.version_info_error {
+            self.errors.push(ReportError {
+                field: "executable.version_info",
+                code: "VERSION_METADATA_READ_FAILED",
+                message: message.clone(),
+            });
+        }
+        self.executable_status = executable_status(&inspection.resolution);
+        self.steam_status = inspection.steam_status;
+        self.executable = Some(inspection.executable);
+        self.build_resolution = Some(inspection.resolution);
+        self.steam_build_id = inspection.steam_build_id;
+        self.expected_steam_build_id = inspection.expected_steam_build_id;
+        self.steam_install_dir = inspection.steam_install_dir;
+        self.steam_build_id_error = inspection.steam_build_id_error;
+        if let Some(error) = inspection.steam_error {
+            self.errors.push(error);
+        }
+        self.field_provenance.extend([
+            FieldProvenance {
+                field: "executable.sha256",
+                source: "streaming SHA-256 of executable file",
+            },
+            FieldProvenance {
+                field: "executable.size",
+                source: "executable file metadata and byte count",
+            },
+            FieldProvenance {
+                field: "executable.file_version",
+                source: "Windows PE version resource",
+            },
+            FieldProvenance {
+                field: "executable.product_version",
+                source: "Windows PE version resource",
+            },
+        ]);
+        if self.steam_status != SteamStatus::NotEvaluated
+            && self.steam_status != SteamStatus::Unavailable
+        {
+            self.field_provenance.extend([
+                FieldProvenance {
+                    field: "steam.install_dir",
+                    source: "local Steam appmanifest",
+                },
+                FieldProvenance {
+                    field: "steam.build_id",
+                    source: "local Steam appmanifest",
+                },
+            ]);
+        }
+        self.evidence_provenance.extend([
+            "streaming SHA-256 of the executable file",
+            "bundled data/builds.toml compatibility registry",
+        ]);
+        if self.steam_status != SteamStatus::NotEvaluated
+            && self.steam_status != SteamStatus::Unavailable
+        {
+            self.evidence_provenance.push("local Steam appmanifest");
+        }
+    }
+}
+
+fn inspect_executable_identity(
+    path: &Path,
+    registry: &BuildRegistry,
+) -> Result<ExecutableInspection, (ProbeStatus, String)> {
+    let executable = ExecutableIdentity::inspect(path).map_err(executable_error)?;
+    let resolution = registry.resolve(&executable);
+    let expected_steam_build_id = match &resolution {
+        BuildResolution::ExactMatch { build } => build.steam_build_id.clone(),
+        BuildResolution::UnknownBuild | BuildResolution::IdentityInconsistent { .. } => None,
+    };
+    let (steam_status, steam_build_id, steam_install_dir, steam_build_id_error, steam_error) =
+        match crate::steam::read_install_metadata(path) {
+            Ok(None) => (SteamStatus::Unavailable, None, None, None, None),
+            Ok(Some(metadata)) => {
+                if let Some(expected) = expected_steam_build_id.as_deref()
+                    && expected != metadata.build_id
+                {
+                    let message = format!(
+                        "Steam Build ID {} differs from registered Build ID {expected}",
+                        metadata.build_id
+                    );
+                    (
+                        SteamStatus::Mismatch,
+                        Some(metadata.build_id),
+                        Some(metadata.install_dir),
+                        None,
+                        Some(ReportError {
+                            field: "steam.build_id",
+                            code: "STEAM_BUILD_ID_MISMATCH",
+                            message,
+                        }),
+                    )
+                } else {
+                    (
+                        SteamStatus::Match,
+                        Some(metadata.build_id),
+                        Some(metadata.install_dir),
+                        None,
+                        None,
+                    )
+                }
+            }
+            Err(crate::steam::SteamReadError::InstallationMismatch { metadata }) => (
+                SteamStatus::Mismatch,
+                Some(metadata.build_id),
+                Some(metadata.install_dir),
+                None,
+                Some(ReportError {
+                    field: "steam.install_dir",
+                    code: "STEAM_INSTALL_DIR_MISMATCH",
+                    message: "manifest installdir does not contain the inspected executable"
+                        .to_owned(),
+                }),
+            ),
+            Err(crate::steam::SteamReadError::Manifest(message)) => (
+                SteamStatus::ReadError,
+                None,
+                None,
+                Some(message.clone()),
+                Some(ReportError {
+                    field: "steam.manifest",
+                    code: "STEAM_MANIFEST_READ_FAILED",
+                    message,
+                }),
+            ),
+        };
+    Ok(ExecutableInspection {
+        executable,
+        resolution,
+        steam_status,
+        steam_build_id,
+        expected_steam_build_id,
+        steam_install_dir,
+        steam_build_id_error,
+        steam_error,
+    })
 }
 
 pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
@@ -208,23 +606,24 @@ pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
         }
     };
 
-    let executable = match ExecutableIdentity::inspect(&process_identity.executable_path) {
-        Ok(identity) => identity,
-        Err(error) => {
-            let (status, reason) = executable_error(error);
-            let mut report = ProbeReport::empty(status, Some(reason));
-            report.processes = candidates;
-            report.evidence_provenance.extend([
-                "Windows process path query",
-                "executable file open and metadata inspection",
-            ]);
-            return report;
-        }
-    };
-    let (steam_build_id, steam_build_id_error) =
-        match crate::steam::read_build_id(&process_identity.executable_path) {
-            Ok(build_id) => (build_id, None),
-            Err(error) => (None, Some(error)),
+    let executable_inspection =
+        match inspect_executable_identity(&process_identity.executable_path, registry) {
+            Ok(inspection) => inspection,
+            Err((status, reason)) => {
+                let mut report = ProbeReport::empty(status, Some(reason));
+                report.processes = candidates;
+                report.process_status = ProcessStatus::Verified;
+                report.executable_status = executable_error_status(status);
+                if let Some(error) = report.errors.first_mut() {
+                    error.field = "executable";
+                    error.code = "EXECUTABLE_INSPECTION_FAILED";
+                }
+                report.evidence_provenance.extend([
+                    "Windows process path query",
+                    "executable file open and metadata inspection",
+                ]);
+                return report;
+            }
         };
 
     let current_candidates = match enumerate_game_processes() {
@@ -233,16 +632,11 @@ pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
             let (status, reason) = process_error_parts(error);
             let mut report = ProbeReport::empty(status, Some(reason));
             report.processes = candidates;
-            report.executable = Some(executable);
-            report.steam_build_id = steam_build_id;
-            report.steam_build_id_error = steam_build_id_error;
-            report.evidence_provenance.extend([
-                "Windows process path query",
-                "streaming SHA-256 of the executable file",
-            ]);
-            if report.steam_build_id.is_some() || report.steam_build_id_error.is_some() {
-                report.evidence_provenance.push("local Steam appmanifest");
-            }
+            report.process_status = process_status(status);
+            report.attach_executable_inspection(executable_inspection.clone());
+            report
+                .evidence_provenance
+                .extend(["Windows process path query"]);
             return report;
         }
     };
@@ -252,16 +646,11 @@ pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
             current_candidates,
             "multiple game process candidates existed during inspection; none was selected",
         );
-        report.executable = Some(executable);
-        report.steam_build_id = steam_build_id;
-        report.steam_build_id_error = steam_build_id_error;
-        report.evidence_provenance.extend([
-            "Windows process snapshots before and after file inspection",
-            "streaming SHA-256 of the executable file",
-        ]);
-        if report.steam_build_id.is_some() || report.steam_build_id_error.is_some() {
-            report.evidence_provenance.push("local Steam appmanifest");
-        }
+        report.process_status = ProcessStatus::Ambiguous;
+        report.attach_executable_inspection(executable_inspection.clone());
+        report
+            .evidence_provenance
+            .extend(["Windows process snapshots before and after file inspection"]);
         return report;
     }
 
@@ -313,46 +702,28 @@ pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
     if let Some((status, reason)) = verification_failure {
         let mut report = ProbeReport::empty(status, Some(reason));
         report.processes = current_candidates;
-        report.executable = Some(executable);
-        report.steam_build_id = steam_build_id;
-        report.steam_build_id_error = steam_build_id_error;
-        report.evidence_provenance.extend([
-            "Windows process snapshots before and after file inspection",
-            "streaming SHA-256 of the executable file",
-        ]);
-        if report.steam_build_id.is_some() || report.steam_build_id_error.is_some() {
-            report.evidence_provenance.push("local Steam appmanifest");
-        }
+        report.process_status = process_status(status);
+        report.attach_executable_inspection(executable_inspection);
+        report
+            .evidence_provenance
+            .extend(["Windows process snapshots before and after file inspection"]);
         return report;
     }
 
-    let resolution = registry.resolve(&executable, steam_build_id.as_deref());
-    let status = match &resolution {
-        BuildResolution::ExactMatch { .. } => ProbeStatus::ExactMatch,
-        BuildResolution::UnknownBuild => ProbeStatus::UnknownBuild,
-        BuildResolution::InstallMismatch { .. } => ProbeStatus::InstallMismatch,
-        BuildResolution::IdentityInconsistent { .. } => ProbeStatus::IdentityInconsistent,
-    };
-    let mut evidence_provenance = vec![
+    let status = resolution_status(&executable_inspection.resolution);
+    let mut report = ProbeReport::empty(status, None);
+    report.process_status = ProcessStatus::Verified;
+    report.processes = current_candidates;
+    report.attach_executable_inspection(executable_inspection);
+    report.evidence_provenance.extend([
         "Windows Toolhelp process and module snapshots",
         "QueryFullProcessImageNameW and GetProcessTimes",
-        "streaming SHA-256 of the executable file",
-        "bundled data/builds.toml compatibility registry",
-    ];
-    if steam_build_id.is_some() || steam_build_id_error.is_some() {
-        evidence_provenance.push("local Steam appmanifest");
-    }
-    ProbeReport {
-        status,
-        run_integrity: RunIntegrityStatus::NotEvaluated,
-        processes: current_candidates,
-        executable: Some(executable),
-        steam_build_id,
-        steam_build_id_error,
-        build_resolution: Some(resolution),
-        evidence_provenance,
-        reason: None,
-    }
+    ]);
+    report.field_provenance.push(FieldProvenance {
+        field: "processes",
+        source: "Windows Toolhelp process and module snapshots",
+    });
+    report
 }
 
 fn process_scan_error(error: ProcessScanError) -> ProbeReport {

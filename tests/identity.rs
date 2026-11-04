@@ -47,28 +47,28 @@ fn hashes_the_entire_executable_file() {
 
 #[test]
 fn recognizes_a_registered_build_only_by_sha256() {
-    let result = fixture_registry().resolve(&identity(HASH, Some("1.2.3.4")), Some("12345"));
+    let result = fixture_registry().resolve(&identity(HASH, Some("1.2.3.4")));
 
     assert!(matches!(result, BuildResolution::ExactMatch { .. }));
 }
 
 #[test]
 fn reports_unknown_hash_even_when_steam_metadata_is_absent() {
-    let result = fixture_registry().resolve(&identity(&"0".repeat(64), None), None);
+    let result = fixture_registry().resolve(&identity(&"0".repeat(64), None));
 
     assert_eq!(result, BuildResolution::UnknownBuild);
 }
 
 #[test]
 fn reports_unknown_build_when_only_steam_metadata_matches_the_registry() {
-    let result = fixture_registry().resolve(&identity(&"0".repeat(64), None), Some("12345"));
+    let result = fixture_registry().resolve(&identity(&"0".repeat(64), None));
 
     assert_eq!(result, BuildResolution::UnknownBuild);
 }
 
 #[test]
 fn rejects_conflicting_version_metadata_for_a_registered_hash() {
-    let result = fixture_registry().resolve(&identity(HASH, Some("9.9.9.9")), None);
+    let result = fixture_registry().resolve(&identity(HASH, Some("9.9.9.9")));
 
     assert!(matches!(
         result,

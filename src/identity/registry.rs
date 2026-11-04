@@ -23,7 +23,6 @@ pub struct BuildRecord {
 pub enum BuildResolution {
     ExactMatch { build: BuildRecord },
     UnknownBuild,
-    InstallMismatch { expected_build_id: String },
     IdentityInconsistent { reason: String },
 }
 
@@ -73,11 +72,7 @@ impl BuildRegistry {
         Ok(Self { builds })
     }
 
-    pub fn resolve(
-        &self,
-        identity: &ExecutableIdentity,
-        observed_steam_build_id: Option<&str>,
-    ) -> BuildResolution {
+    pub fn resolve(&self, identity: &ExecutableIdentity) -> BuildResolution {
         let matched_build = self
             .builds
             .iter()
@@ -104,16 +99,6 @@ impl BuildRegistry {
                             ),
                         };
                     }
-                }
-            }
-
-            if let (Some(observed), Some(expected)) =
-                (observed_steam_build_id, build.steam_build_id.as_deref())
-            {
-                if observed != expected {
-                    return BuildResolution::InstallMismatch {
-                        expected_build_id: expected.to_owned(),
-                    };
                 }
             }
 
