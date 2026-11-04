@@ -159,10 +159,7 @@ pub(super) fn inspect_open_process(
         ));
     }
 
-    let (module_path, module_base, image_size) = match main_module(process) {
-        Ok(value) => value,
-        Err(error) => return Err(error),
-    };
+    let (module_path, module_base, image_size) = main_module(process)?;
     let second_path = match process_path(process) {
         Ok(value) => value,
         Err(error) => {

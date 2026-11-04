@@ -181,24 +181,6 @@ fn platform_file_identity(
     Ok(PlatformFileIdentity)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn preserves_version_metadata_read_errors_separately_from_absence() {
-        let absent = version_metadata(Ok((None, None)));
-        assert_eq!(absent, ((None, None), None));
-
-        let failed = version_metadata(Err(io::Error::new(
-            io::ErrorKind::PermissionDenied,
-            "access denied",
-        )));
-        assert_eq!(failed.0, (None, None));
-        assert_eq!(failed.1.as_deref(), Some("access denied"));
-    }
-}
-
 #[cfg(windows)]
 fn windows_version_info(path: &Path) -> io::Result<(Option<String>, Option<String>)> {
     use std::{mem::size_of, os::windows::ffi::OsStrExt, ptr};
@@ -302,4 +284,22 @@ fn format_version(high: u32, low: u32) -> String {
         low >> 16,
         low & 0xffff
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preserves_version_metadata_read_errors_separately_from_absence() {
+        let absent = version_metadata(Ok((None, None)));
+        assert_eq!(absent, ((None, None), None));
+
+        let failed = version_metadata(Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "access denied",
+        )));
+        assert_eq!(failed.0, (None, None));
+        assert_eq!(failed.1.as_deref(), Some("access denied"));
+    }
 }
