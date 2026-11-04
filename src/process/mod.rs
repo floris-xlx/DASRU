@@ -121,6 +121,17 @@ pub(crate) fn recheck_pinned_process(candidate: &PinnedProcessCandidate) -> Proc
     candidate.candidate.inspection.clone()
 }
 
+#[cfg(windows)]
+pub(crate) use windows::ReadOnlyProcessHandle;
+
+#[cfg(windows)]
+pub(crate) fn open_readonly_process(
+    pid: u32,
+    expected: &ProcessIdentity,
+) -> Result<ReadOnlyProcessHandle, ProcessInspection> {
+    windows::open_readonly_process(pid, expected)
+}
+
 #[derive(Debug, Error)]
 pub enum ProcessScanError {
     #[error("process discovery is not implemented on this operating system")]

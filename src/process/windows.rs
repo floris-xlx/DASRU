@@ -12,8 +12,9 @@ use windows_sys::Win32::{
             TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS,
         },
         Threading::{
-            GetProcessId, GetProcessTimes, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
-            PROCESS_SYNCHRONIZE, QueryFullProcessImageNameW, WaitForSingleObject,
+            GetProcessId, GetProcessTimes, OpenProcess, PROCESS_QUERY_INFORMATION,
+            PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SYNCHRONIZE, PROCESS_VM_READ,
+            QueryFullProcessImageNameW, WaitForSingleObject,
         },
     },
 };
@@ -28,6 +29,14 @@ const ERROR_INVALID_PARAMETER: u32 = 87;
 const ERROR_NO_MORE_FILES: u32 = 18;
 
 pub(super) struct OwnedHandle(pub(super) HANDLE);
+
+pub(crate) struct ReadOnlyProcessHandle(OwnedHandle);
+
+impl ReadOnlyProcessHandle {
+    pub(crate) fn raw(&self) -> HANDLE {
+        self.0.0
+    }
+}
 
 impl Drop for OwnedHandle {
     fn drop(&mut self) {
@@ -127,6 +136,36 @@ fn inspect_process(pid: u32) -> Result<(ProcessIdentity, OwnedHandle), ProcessIn
     }
     let process = OwnedHandle(raw_process);
     inspect_open_process(process.0, pid).map(|identity| (identity, process))
+}
+
+pub(crate) fn open_readonly_process(
+    pid: u32,
+    expected: &ProcessIdentity,
+) -> Result<ReadOnlyProcessHandle, ProcessInspection> {
+    // VirtualQueryEx needs query access; memory reads add PROCESS_VM_READ only.
+    let raw_process = unsafe {
+        OpenProcess(
+            PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_SYNCHRONIZE,
+            0,
+            pid,
+        )
+    };
+    if raw_process.is_null() {
+        let error = last_error();
+        return Err(if error == ERROR_INVALID_PARAMETER {
+            exited("OpenProcess for read-only memory scan")
+        } else {
+            unavailable("OpenProcess for read-only memory scan", error)
+        });
+    }
+    let handle = OwnedHandle(raw_process);
+    let observed = inspect_open_process(handle.0, pid)?;
+    if observed != *expected {
+        return Err(inconsistent(
+            "read-only memory handle identity differs from the inspected process",
+        ));
+    }
+    Ok(ReadOnlyProcessHandle(handle))
 }
 
 pub(super) fn inspect_open_process(

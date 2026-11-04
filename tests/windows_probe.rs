@@ -10,6 +10,7 @@ use std::{
 
 use dasru::{
     identity::BuildRegistry,
+    memory::{MetricsScanStatus, scan_metrics_with_registry},
     probe::{ProbeStatus, run_probe_with_registry},
     process::ProcessInspection,
 };
@@ -101,6 +102,28 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
     assert!(identity.creation_time_filetime > 0);
     assert!(identity.module_base > 0);
     assert!(identity.image_size > 0);
+
+    let memory_scan = scan_metrics_with_registry(&registry);
+    assert_eq!(memory_scan.status, MetricsScanStatus::FoundUniqueMatch);
+    assert_eq!(memory_scan.probe.processes[0].pid, first.0.id());
+    assert_eq!(memory_scan.matches.len(), 1);
+    let found = &memory_scan.matches[0];
+    assert!(found.address >= identity.module_base);
+    assert!(found.address < identity.module_base + u64::from(identity.image_size));
+    assert!(found.protection_name.starts_with("PAGE_"));
+
+    let cli_scan = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args(["memory", "scan", "--metrics", "--json"])
+        .output()
+        .expect("DASRU memory scan command starts");
+    assert!(
+        cli_scan.status.success(),
+        "memory scan failed: {}",
+        String::from_utf8_lossy(&cli_scan.stderr)
+    );
+    let cli_report: serde_json::Value = serde_json::from_slice(&cli_scan.stdout).unwrap();
+    assert_eq!(cli_report["status"], "FOUND_UNIQUE_MATCH");
+    assert_eq!(cli_report["matches"].as_array().unwrap().len(), 1);
 
     let second = Command::new(&executable)
         .stdin(Stdio::null())

@@ -7,6 +7,8 @@ dasru probe
 dasru probe --json
 dasru inspect --exe "C:\path\to\DOOMTheDarkAges.exe"
 dasru inspect --exe "C:\path\to\DOOMTheDarkAges.exe" --json
+dasru memory scan --metrics
+dasru memory scan --metrics --json
 ```
 
 `inspect --exe` hashes and reads version metadata from an executable without looking for a running process. Its report uses `PROCESS_NOT_EVALUATED` semantics (`process_status: NOT_EVALUATED`), with an empty process list. `probe` discovers a process by executable name, retains its Windows process handle while it hashes the executable, and reports the live process identity.
@@ -16,5 +18,7 @@ JSON reports use `schema_version: 1`; `observed_at_unix_ms` is the UTC Unix epoc
 CLI exit codes are stable: `0` means executable inspection completed with either an exact or unknown build; `1` means a process/probe or executable inspection failure; `2` means invalid CLI usage. Exit `0` does not mean Steam metadata succeeded or that run integrity was evaluated: check `steam_status`, `errors`, and `run_integrity` separately.
 
 The initial registry is empty, so no executable is reported as a known build yet. Build compatibility does not establish run integrity, and neither the local registry nor its report is a tamper-proof attestation. Linux process discovery and game-memory access are not implemented.
+
+`memory scan --metrics` scans the main module of the single verified process for the shared FPS format signature. It requests `PROCESS_QUERY_INFORMATION` and `PROCESS_VM_READ` only, walks committed readable regions with `VirtualQueryEx`, and reads them with `ReadProcessMemory`. Guarded, inaccessible, and uncommitted regions are skipped and counted. The report includes every match with its address and memory protection. `coverage` is `FULL_MODULE` only when every module byte was read; otherwise matches apply only to `READABLE_REGIONS_ONLY`. One match yields `FOUND_UNIQUE_MATCH`; `NO_MATCH` is a completed scan, while ambiguous matches or process/scan errors return exit code `1`. The command never writes to game memory; `run_integrity` remains `NOT_EVALUATED`.
 
 The upstream [DESRU repository is marked GPL-3.0](https://github.com/bowsr/DESRU). No DESRU source was copied into this first slice; this checkout does not contain the separate research notes needed to clear their provenance. No project license is selected. Review those notes and any excerpts before publishing under MIT.
