@@ -1,4 +1,4 @@
-use super::protection::{PAGE_WRITECOPY, PageProtectionGuard, PageProtector};
+use super::protection::{PAGE_READWRITE, PAGE_WRITECOPY, PageProtectionGuard, PageProtector};
 
 pub(crate) const FPS_SLOT_ORIGINAL: [u8; 8] = *b"%i FPS\0\0";
 pub(crate) const FPS_SLOT_PATCHED: [u8; 8] = *b"%i FPS+\0";
@@ -123,7 +123,10 @@ pub(crate) fn restore_fps_patch<T: MemoryAccess>(
     let current_protection = memory
         .protection_at(patch_address)
         .map_err(|error| failure("read recovery protection", error))?;
-    if current_protection != original_protection && current_protection != PAGE_WRITECOPY {
+    if current_protection != original_protection
+        && current_protection != PAGE_WRITECOPY
+        && current_protection != PAGE_READWRITE
+    {
         return Err(failure(
             "validate recovery protection",
             format!("unexpected page protection 0x{current_protection:X}"),
@@ -222,7 +225,7 @@ mod tests {
     use std::{cell::Cell, cell::RefCell};
 
     use super::{MemoryAccess, apply_fps_patch, restore_fps_patch};
-    use crate::memory::protection::{PAGE_WRITECOPY, PageProtector};
+    use crate::memory::protection::{PAGE_READWRITE, PAGE_WRITECOPY, PageProtector};
 
     const BASE: u64 = 0x1000;
     const PATCH_ADDRESS: u64 = BASE + 6;
@@ -292,10 +295,16 @@ mod tests {
             if self.fail_next_write.replace(false) {
                 let start = usize::try_from(address - BASE).map_err(|error| error.to_string())?;
                 self.bytes.borrow_mut()[start] = input[0];
+                if self.protection.get() == PAGE_WRITECOPY {
+                    self.protection.set(PAGE_READWRITE);
+                }
                 return Err("simulated short write".to_owned());
             }
             let start = usize::try_from(address - BASE).map_err(|error| error.to_string())?;
             self.bytes.borrow_mut()[start..start + input.len()].copy_from_slice(input);
+            if self.protection.get() == PAGE_WRITECOPY {
+                self.protection.set(PAGE_READWRITE);
+            }
             Ok(())
         }
 
@@ -411,5 +420,16 @@ mod tests {
         restore_fps_patch(&memory, PATCH_ADDRESS, READ_ONLY).unwrap();
         restore_fps_patch(&memory, PATCH_ADDRESS, READ_ONLY).unwrap();
         assert_eq!(&memory.bytes.borrow()[..8], b"%i FPS\0\0");
+    }
+
+    #[test]
+    fn recovery_accepts_readwrite_protection_after_copy_on_write() {
+        let memory = FakeMemory::new(b"%i FPS+\0");
+        memory.protection.set(PAGE_READWRITE);
+
+        restore_fps_patch(&memory, PATCH_ADDRESS, READ_ONLY).unwrap();
+
+        assert_eq!(&memory.bytes.borrow()[..8], b"%i FPS\0\0");
+        assert_eq!(memory.protection.get(), READ_ONLY);
     }
 }

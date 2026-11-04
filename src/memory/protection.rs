@@ -1,5 +1,6 @@
 // Copy-on-write keeps the patch private to the mapped game process.
 pub(crate) const PAGE_WRITECOPY: u32 = 0x08;
+pub(crate) const PAGE_READWRITE: u32 = 0x04;
 
 pub(crate) trait PageProtector {
     fn set_protection(&self, address: u64, length: usize, protection: u32) -> Result<u32, String>;
@@ -48,11 +49,29 @@ impl<'a, T: PageProtector> PageProtectionGuard<'a, T> {
     }
 
     pub(crate) fn ensure_writable(&mut self) -> Result<(), String> {
-        self.target
-            .set_protection(self.address, self.length, PAGE_WRITECOPY)
-            .map(|_| {
-                self.active = true;
-            })
+        let previous = self
+            .target
+            .set_protection(self.address, self.length, PAGE_WRITECOPY)?;
+        if previous == self.restore_to || previous == PAGE_WRITECOPY || previous == PAGE_READWRITE {
+            self.active = true;
+            return Ok(());
+        }
+
+        let restore = self
+            .target
+            .set_protection(self.address, self.length, previous);
+        self.active = restore.is_err();
+        Err(match restore {
+            Ok(observed) if observed == PAGE_WRITECOPY || observed == PAGE_READWRITE => format!(
+                "unexpected page protection 0x{previous:X} during recovery; observed protection was reapplied"
+            ),
+            Ok(observed) => format!(
+                "unexpected page protection 0x{previous:X} during recovery; protection changed from 0x{observed:X} while restoring"
+            ),
+            Err(error) => format!(
+                "unexpected page protection 0x{previous:X} during recovery; could not reapply it: {error}"
+            ),
+        })
     }
 
     pub(crate) fn restore(&mut self) -> Result<(), String> {
@@ -63,9 +82,9 @@ impl<'a, T: PageProtector> PageProtectionGuard<'a, T> {
             .target
             .set_protection(self.address, self.length, self.restore_to)?;
         self.active = false;
-        if previous != PAGE_WRITECOPY {
+        if previous != PAGE_WRITECOPY && previous != PAGE_READWRITE {
             return Err(format!(
-                "page protection before restoration was 0x{previous:X}, expected PAGE_WRITECOPY"
+                "page protection before restoration was 0x{previous:X}, expected PAGE_WRITECOPY or PAGE_READWRITE"
             ));
         }
         Ok(())

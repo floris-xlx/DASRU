@@ -25,7 +25,7 @@ use windows_sys::Win32::{
             CTRL_BREAK_EVENT, CTRL_C_EVENT, CTRL_CLOSE_EVENT, CTRL_LOGOFF_EVENT,
             CTRL_SHUTDOWN_EVENT, SetConsoleCtrlHandler,
         },
-        Memory::{MEM_COMMIT, MEM_IMAGE, PAGE_GUARD, PAGE_READONLY},
+        Memory::{MEM_COMMIT, MEM_IMAGE, PAGE_GUARD, PAGE_READONLY, PAGE_READWRITE},
     },
 };
 
@@ -154,7 +154,8 @@ impl FpsMarkerSession {
         if region.state != MEM_COMMIT
             || region.region_type != MEM_IMAGE
             || (region.protection != self.snapshot.original_protection
-                && region.protection != crate::memory::protection::PAGE_WRITECOPY)
+                && region.protection != crate::memory::protection::PAGE_WRITECOPY
+                && region.protection != PAGE_READWRITE)
             || address < region.base
             || address >= region_end
             || address < self.snapshot.module_base
