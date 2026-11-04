@@ -1,2 +1,12 @@
-# Add builds only after the executable hash and version metadata have independent provenance.
-builds = []
+# Provenance checked 2026-11-04: Windows Authenticode reports a valid signature from
+# id Software LLC (thumbprint 785CC37F739A4686C3C80835B85D2E432893643E).
+# The installed Steam appmanifest reports build 25755602; SteamDB independently lists
+# that public build at https://steamdb.info/app/3017860/depots/.
+# DASRU offline inspection measured this signed executable's SHA-256 and PE versions.
+[[builds]]
+id = "steam-25755602"
+name = "DOOM: The Dark Ages Steam build 25755602"
+sha256 = "b7aece5fe2842035efd9036a1049edd53ee5efa25564811e20c39ca18362c018"
+file_version = "1.0.0.1"
+product_version = "1.0.0.1"
+steam_build_id = "25755602"
