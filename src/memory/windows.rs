@@ -42,7 +42,7 @@ pub(super) fn scan_metrics(probe: ProbeReport) -> MetricsScanReport {
 
 pub(super) fn inspect_metrics_layout(probe: ProbeReport, replacement: &str) -> MetricsLayoutReport {
     let mut report = scan_metrics_inner(probe, true, replacement);
-    report.dry_run.replacement = replacement.to_owned();
+    report.dry_run.set_replacement(replacement);
     report
 }
 
@@ -399,8 +399,18 @@ fn inspect_unique_layout(
             report.dry_run.status = MetricsDryRunStatus::Safe;
             report.dry_run.fits = Some(true);
             report.dry_run.reason = None;
+            report.dry_run.patch_bytes = plan.write_plan.len() as u64;
             report.dry_run.diff = plan
                 .diff
+                .into_iter()
+                .map(|diff| MetricsByteDiff {
+                    offset_from_signature: diff.offset.saturating_sub(signature_index) as u64,
+                    before: diff.before,
+                    after: diff.after,
+                })
+                .collect();
+            report.dry_run.write_plan = plan
+                .write_plan
                 .into_iter()
                 .map(|diff| MetricsByteDiff {
                     offset_from_signature: diff.offset.saturating_sub(signature_index) as u64,

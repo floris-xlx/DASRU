@@ -187,7 +187,7 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
             "memory",
             "inspect",
             "--metrics",
-            "--fps-label",
+            "--replacement",
             "%i FPS+",
             "--json",
         ])
@@ -196,14 +196,33 @@ fn complete_probe_discovers_simulated_game_and_reports_ambiguity() {
     assert!(plus_label.status.success());
     let plus_report: serde_json::Value = serde_json::from_slice(&plus_label.stdout).unwrap();
     assert_eq!(plus_report["dry_run"]["replacement"], "%i FPS+");
+    assert_eq!(
+        plus_report["dry_run"]["replacement_length_including_nul"],
+        8
+    );
     assert_eq!(plus_report["dry_run"]["status"], "SAFE");
     assert_eq!(plus_report["dry_run"]["diff"].as_array().unwrap().len(), 1);
+    assert_eq!(plus_report["dry_run"]["patch_bytes"], 2);
+    assert_eq!(
+        plus_report["dry_run"]["write_plan"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
     assert_eq!(
         plus_report["dry_run"]["diff"][0]["offset_from_signature"],
         6
     );
     assert_eq!(plus_report["dry_run"]["diff"][0]["before"], 0);
     assert_eq!(plus_report["dry_run"]["diff"][0]["after"], b'+');
+    assert_eq!(
+        plus_report["dry_run"]["write_plan"][1]["offset_from_signature"],
+        7
+    );
+    assert_eq!(plus_report["dry_run"]["write_plan"][1]["before"], 0);
+    assert_eq!(plus_report["dry_run"]["write_plan"][1]["after"], 0);
+    assert_eq!(plus_report["memory_modified"], false);
 
     let second = Command::new(&executable)
         .stdin(Stdio::null())

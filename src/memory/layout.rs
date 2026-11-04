@@ -28,6 +28,7 @@ pub(super) struct PatchDiff {
 pub(super) struct PatchPlan {
     pub(super) patched: Vec<u8>,
     pub(super) diff: Vec<PatchDiff>,
+    pub(super) write_plan: Vec<PatchDiff>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -115,7 +116,7 @@ pub(super) fn plan_patch(
     let mut patched = original.to_vec();
     patched[start..end].fill(0);
     patched[start..start + replacement.len()].copy_from_slice(replacement);
-    let diff = original[start..end]
+    let diff: Vec<_> = original[start..end]
         .iter()
         .zip(&patched[start..end])
         .enumerate()
@@ -127,7 +128,28 @@ pub(super) fn plan_patch(
             })
         })
         .collect();
-    Ok(PatchPlan { patched, diff })
+    let write_plan = if let (Some(first), Some(last)) = (diff.first(), diff.last()) {
+        let terminator = start + replacement.len();
+        let write_start = first.offset.min(terminator);
+        let write_end = (last.offset + 1).max(terminator + 1);
+        original[write_start..write_end]
+            .iter()
+            .zip(&patched[write_start..write_end])
+            .enumerate()
+            .map(|(offset, (before, after))| PatchDiff {
+                offset: write_start + offset,
+                before: *before,
+                after: *after,
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    Ok(PatchPlan {
+        patched,
+        diff,
+        write_plan,
+    })
 }
 
 #[cfg(test)]
@@ -173,6 +195,25 @@ mod tests {
         assert_eq!(plan.diff[0].offset, 6);
         assert_eq!(plan.diff[0].before, 0);
         assert_eq!(plan.diff[0].after, b'*');
+        assert_eq!(plan.write_plan.len(), 2);
+        assert_eq!(plan.write_plan[0].offset, 6);
+        assert_eq!(plan.write_plan[1].offset, 7);
+        assert_eq!(plan.write_plan[1].before, 0);
+        assert_eq!(plan.write_plan[1].after, 0);
+    }
+
+    #[test]
+    fn plus_replacement_has_two_byte_patch_span_and_one_changed_byte() {
+        let original = b"%i FPS\0\0%.2fms\0\0Frame : %u\0";
+        let plan = plan_patch(original, 0, 8, b"%i FPS+").unwrap();
+
+        assert_eq!(plan.diff.len(), 1);
+        assert_eq!(plan.diff[0].offset, 6);
+        assert_eq!(plan.write_plan.len(), 2);
+        assert_eq!(plan.write_plan[1].offset, 7);
+        assert_eq!(plan.write_plan[1].before, 0);
+        assert_eq!(plan.write_plan[1].after, 0);
+        assert_eq!(&plan.patched[8..], &original[8..]);
     }
 
     #[test]

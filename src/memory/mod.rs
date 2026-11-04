@@ -123,14 +123,18 @@ pub struct MetricsDryRun {
     pub status: MetricsDryRunStatus,
     pub target_string: &'static str,
     pub replacement: String,
+    pub replacement_length_including_nul: u64,
+    pub patch_bytes: u64,
     pub fits: Option<bool>,
     pub reason: Option<String>,
     pub diff: Vec<MetricsByteDiff>,
+    pub write_plan: Vec<MetricsByteDiff>,
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub struct MetricsLayoutReport {
     pub schema_version: u8,
+    pub memory_modified: bool,
     pub scan: MetricsScanReport,
     pub dry_run: MetricsDryRun,
     pub region_type: Option<&'static str>,
@@ -234,14 +238,18 @@ impl MetricsLayoutReport {
         };
         Self {
             schema_version: 1,
+            memory_modified: false,
             scan,
             dry_run: MetricsDryRun {
                 status: dry_run_status,
                 target_string: "fps_label",
                 replacement: FPS_MARKER_REPLACEMENT.to_owned(),
+                replacement_length_including_nul: FPS_MARKER_REPLACEMENT.len() as u64 + 1,
+                patch_bytes: 0,
                 fits: None,
                 reason: Some(reason),
                 diff: Vec::new(),
+                write_plan: Vec::new(),
             },
             region_type: None,
             context_address: None,
@@ -254,7 +262,7 @@ impl MetricsLayoutReport {
     }
 
     fn with_replacement(mut self, replacement: &str) -> Self {
-        self.dry_run.replacement = replacement.to_owned();
+        self.dry_run.set_replacement(replacement);
         self
     }
 
@@ -292,17 +300,29 @@ impl MetricsLayoutReport {
         if let Some(reason) = &self.dry_run.reason {
             output.push_str(&format!("Dry-run reason: {reason}\n"));
         }
+        output.push_str(&format!("Target: {}\n", self.dry_run.target_string));
+        output.push_str(&format!("Replacement: {}\n", self.dry_run.replacement));
         output.push_str(&format!(
-            "Dry-run replacement: {}\n",
-            self.dry_run.replacement
+            "Replacement length: {} bytes including NUL\n",
+            self.dry_run.replacement_length_including_nul
         ));
+        if let Some(capacity) = self.strings.first().map(|string| string.capacity_bytes) {
+            output.push_str(&format!("Capacity: {capacity} bytes\n"));
+        }
         output.push_str(&format!(
-            "Dry-run byte changes: {}\n",
-            self.dry_run.diff.len()
+            "Changed bytes: {}\nPatch span: {} bytes\nMemory modified: NO\n",
+            self.dry_run.diff.len(),
+            self.dry_run.patch_bytes
         ));
+        for change in &self.dry_run.write_plan {
+            output.push_str(&format!(
+                "Patch byte +0x{:X}: {:02X} -> {:02X}\n",
+                change.offset_from_signature, change.before, change.after
+            ));
+        }
         for change in &self.dry_run.diff {
             output.push_str(&format!(
-                "  +0x{:X}: {:02X} -> {:02X}\n",
+                "Changed byte +0x{:X}: {:02X} -> {:02X}\n",
                 change.offset_from_signature, change.before, change.after
             ));
         }
@@ -313,6 +333,13 @@ impl MetricsLayoutReport {
             ));
         }
         output
+    }
+}
+
+impl MetricsDryRun {
+    fn set_replacement(&mut self, replacement: &str) {
+        self.replacement = replacement.to_owned();
+        self.replacement_length_including_nul = replacement.len() as u64 + 1;
     }
 }
 

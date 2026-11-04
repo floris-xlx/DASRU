@@ -108,7 +108,7 @@ fn memory_layout_cli_accepts_a_parameterized_fps_label() {
             "memory",
             "inspect",
             "--metrics",
-            "--fps-label",
+            "--replacement",
             "%i FPS+",
             "--json",
         ])
@@ -118,13 +118,29 @@ fn memory_layout_cli_accepts_a_parameterized_fps_label() {
     assert_eq!(output.status.code(), Some(1));
     let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(report["dry_run"]["replacement"], "%i FPS+");
+    assert_eq!(report["dry_run"]["replacement_length_including_nul"], 8);
+    assert_eq!(report["memory_modified"], false);
     assert_eq!(report["dry_run"]["status"], "UNSUPPORTED");
+
+    let alias = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .args([
+            "memory",
+            "inspect",
+            "--metrics",
+            "--fps-label",
+            "%i FPS+",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+    let alias_report: serde_json::Value = serde_json::from_slice(&alias.stdout).unwrap();
+    assert_eq!(alias_report["dry_run"]["replacement"], "%i FPS+");
 }
 
 #[test]
 fn memory_layout_cli_rejects_labels_that_change_the_fps_format() {
     let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
-        .args(["memory", "inspect", "--metrics", "--fps-label", "FPS+é"])
+        .args(["memory", "inspect", "--metrics", "--replacement", "FPS+é"])
         .output()
         .unwrap();
 
