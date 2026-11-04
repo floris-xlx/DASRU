@@ -5,6 +5,10 @@ use std::collections::HashSet;
 use crate::{probe::ProbeReport, process::ProcessIdentity};
 
 // shortcut: these RVAs match only the registered Steam build; add per-build layouts before supporting others.
+pub(crate) const SUPPORTED_LAYOUT_BUILD_ID: &str = "steam-25755602";
+const SUPPORTED_LAYOUT_STEAM_BUILD_ID: &str = "25755602";
+pub(crate) const SUPPORTED_LAYOUT_SHA256: &str =
+    "b7aece5fe2842035efd9036a1049edd53ee5efa25564811e20c39ca18362c018";
 pub(crate) const OWNER_VTABLE_RVA: u64 = 0x335_1940;
 pub(crate) const OWNER_SETUP_RVA: u64 = 0x4A1FE0;
 pub(crate) const RENDER_FUNCTION_RVAS: [u64; 3] = [0x49B280, 0x49C303, 0x49C52E];
@@ -33,6 +37,7 @@ pub enum MetricsObjectStatus {
     AmbiguousProcess,
     IdentityInconsistent,
     UnknownBuild,
+    UnsupportedLayout,
     AccessDenied,
     UnsupportedPlatform,
     ProbeError,
@@ -106,8 +111,10 @@ pub struct MetricsObjectReport {
     pub inspection_mode: &'static str,
     pub memory_modified: bool,
     pub build_status: &'static str,
+    pub layout_status: &'static str,
     pub metrics_display_state: &'static str,
     pub update_frequency: &'static str,
+    pub candidate_validation_status: &'static str,
     pub probe: ProbeReport,
     pub process: Option<ProcessIdentity>,
     pub owner_setup_module_offset: Option<u64>,
@@ -126,7 +133,14 @@ impl MetricsObjectReport {
         build_status: &'static str,
         probe: ProbeReport,
     ) -> Self {
-        let layout_known = build_status == "EXACT_MATCH";
+        let layout_known = is_supported_metrics_layout(&probe);
+        let layout_status = if probe.status != crate::probe::ProbeStatus::ExactMatch {
+            "NOT_EVALUATED"
+        } else if layout_known {
+            "SUPPORTED"
+        } else {
+            "UNSUPPORTED"
+        };
         let process = probe.processes.first().and_then(|candidate| {
             if let crate::process::ProcessInspection::Available { identity } = &candidate.inspection
             {
@@ -142,8 +156,10 @@ impl MetricsObjectReport {
             inspection_mode: "PROCESS",
             memory_modified: false,
             build_status,
+            layout_status,
             metrics_display_state: "NOT_OBSERVED",
             update_frequency: "NOT_MEASURED",
+            candidate_validation_status: "NOT_EVALUATED",
             probe,
             process,
             owner_setup_module_offset: layout_known.then_some(OWNER_SETUP_RVA),
@@ -183,6 +199,7 @@ impl MetricsObjectReport {
             MetricsObjectStatus::AmbiguousProcess => "AMBIGUOUS_PROCESS",
             MetricsObjectStatus::IdentityInconsistent => "IDENTITY_INCONSISTENT",
             MetricsObjectStatus::UnknownBuild => "UNKNOWN_BUILD",
+            MetricsObjectStatus::UnsupportedLayout => "UNSUPPORTED_LAYOUT",
             MetricsObjectStatus::AccessDenied => "ACCESS_DENIED",
             MetricsObjectStatus::UnsupportedPlatform => "UNSUPPORTED_PLATFORM",
             MetricsObjectStatus::ProbeError => "PROBE_ERROR",
@@ -191,11 +208,13 @@ impl MetricsObjectReport {
 
     pub fn to_human_text(&self) -> String {
         let mut output = format!(
-            "Metrics object discovery: {}\nBuild: {}\nMetrics display state: {}\nUpdate frequency: {}\nMemory modified: NO\n",
+            "Metrics object discovery: {}\nBuild: {}\nLayout: {}\nMetrics display state: {}\nUpdate frequency: {}\nCandidate validation: {}\nMemory modified: NO\n",
             self.status_label(),
             self.build_status,
+            self.layout_status,
             self.metrics_display_state,
-            self.update_frequency
+            self.update_frequency,
+            self.candidate_validation_status
         );
         if let Some(process) = &self.process {
             output.push_str(&format!(
@@ -247,6 +266,35 @@ impl MetricsObjectReport {
             ));
         }
         output
+    }
+}
+
+pub(crate) fn is_supported_metrics_layout(probe: &ProbeReport) -> bool {
+    probe.status == crate::probe::ProbeStatus::ExactMatch
+        && matches!(
+            probe.build_resolution.as_ref(),
+            Some(crate::identity::BuildResolution::ExactMatch { build })
+                if build.id == SUPPORTED_LAYOUT_BUILD_ID
+                    && build.steam_build_id.as_deref() == Some(SUPPORTED_LAYOUT_STEAM_BUILD_ID)
+                    && build.sha256.eq_ignore_ascii_case(SUPPORTED_LAYOUT_SHA256)
+        )
+}
+
+#[cfg(any(windows, test))]
+pub(crate) fn scan_coverage_label(complete: bool) -> &'static str {
+    if complete {
+        "FULL_COMMITTED_READABLE_IMAGE_PRIVATE_MAPPED"
+    } else {
+        "PARTIAL"
+    }
+}
+
+#[cfg(any(windows, test))]
+pub(crate) fn candidate_validation_status(errors: &[crate::probe::ReportError]) -> &'static str {
+    if errors.is_empty() {
+        "COMPLETE"
+    } else {
+        "INCOMPLETE"
     }
 }
 
@@ -398,6 +446,55 @@ mod tests {
             classify_scan(2, false),
             MetricsObjectStatus::AmbiguousCandidate
         );
+        assert_eq!(scan_coverage_label(false), "PARTIAL");
+        assert_eq!(candidate_validation_status(&[]), "COMPLETE");
+        assert_eq!(
+            candidate_validation_status(&[crate::probe::ReportError {
+                field: "rows",
+                code: "ROW_TARGET_UNMAPPED",
+                message: "invalid pointer".to_owned(),
+            }]),
+            "INCOMPLETE"
+        );
+    }
+
+    #[test]
+    fn build_specific_layout_requires_the_verified_id_and_executable_hash() {
+        use crate::identity::{BuildRecord, BuildResolution};
+
+        let mut probe = ProbeReport::empty(crate::probe::ProbeStatus::ExactMatch, None);
+        probe.build_resolution = Some(BuildResolution::ExactMatch {
+            build: BuildRecord {
+                id: SUPPORTED_LAYOUT_BUILD_ID.to_owned(),
+                name: "verified layout".to_owned(),
+                sha256: SUPPORTED_LAYOUT_SHA256.to_owned(),
+                file_version: None,
+                product_version: None,
+                steam_build_id: Some("25755602".to_owned()),
+            },
+        });
+        assert!(is_supported_metrics_layout(&probe));
+
+        probe.status = crate::probe::ProbeStatus::UnknownBuild;
+        assert!(!is_supported_metrics_layout(&probe));
+        probe.status = crate::probe::ProbeStatus::ExactMatch;
+
+        if let Some(BuildResolution::ExactMatch { build }) = &mut probe.build_resolution {
+            build.sha256 = "00".repeat(32);
+        }
+        assert!(!is_supported_metrics_layout(&probe));
+
+        if let Some(BuildResolution::ExactMatch { build }) = &mut probe.build_resolution {
+            build.id = "another-build".to_owned();
+            build.sha256 = SUPPORTED_LAYOUT_SHA256.to_owned();
+        }
+        assert!(!is_supported_metrics_layout(&probe));
+
+        if let Some(BuildResolution::ExactMatch { build }) = &mut probe.build_resolution {
+            build.id = SUPPORTED_LAYOUT_BUILD_ID.to_owned();
+            build.steam_build_id = Some("25755603".to_owned());
+        }
+        assert!(!is_supported_metrics_layout(&probe));
     }
 
     #[test]

@@ -21,8 +21,8 @@ use super::{
     discovery::{
         MetricsObjectCandidate, MetricsObjectRegion, MetricsObjectReport, MetricsObjectScanStats,
         MetricsObjectStatus, MetricsRowPointer, OWNER_VTABLE_RVA, ROW_POINTERS, SCAN_SCOPE,
-        ascii_c_string_length, candidate_confidence, classify_scan, is_expected_label,
-        scan_pointer_chunk,
+        ascii_c_string_length, candidate_confidence, candidate_validation_status, classify_scan,
+        is_expected_label, is_supported_metrics_layout, scan_coverage_label, scan_pointer_chunk,
     },
     windows::{protection_name, readable_protection, region_type_name},
 };
@@ -57,6 +57,14 @@ pub(super) fn discover_metrics_objects(probe: ProbeReport) -> MetricsObjectRepor
             ProbeStatus::ExactMatch => unreachable!(),
         };
         return MetricsObjectReport::new(status, probe_status_label(probe.status), probe);
+    }
+    if !is_supported_metrics_layout(&probe) {
+        return error_report(
+            probe,
+            MetricsObjectStatus::UnsupportedLayout,
+            "METRICS_LAYOUT_UNSUPPORTED",
+            "the executable is recognized, but no metrics-object layout is registered for its exact build fingerprint",
+        );
     }
     if size_of::<usize>() != size_of::<u64>() {
         return error_report(
@@ -147,12 +155,12 @@ pub(super) fn discover_metrics_objects(probe: ProbeReport) -> MetricsObjectRepor
         );
     }
 
-    let (addresses, mut stats, mut errors) =
+    let (addresses, stats, mut scan_errors) =
         scan_process_for_pointer(process.raw(), vtable_address);
+    let mut candidate_errors = Vec::new();
     if addresses.len() > MAX_CANDIDATES {
-        stats.complete = false;
-        errors.push(ReportError {
-            field: "memory.scan",
+        candidate_errors.push(ReportError {
+            field: "candidate_validation",
             code: "CANDIDATE_LIMIT_REACHED",
             message: format!(
                 "more than {MAX_CANDIDATES} vtable references were found; results are truncated"
@@ -166,24 +174,22 @@ pub(super) fn discover_metrics_objects(probe: ProbeReport) -> MetricsObjectRepor
             address,
             vtable_address,
             &expected,
-            &mut errors,
+            &mut candidate_errors,
         ) {
             candidates.push(candidate);
         }
     }
-    if !errors.is_empty() {
-        stats.complete = false;
-    }
-    if !matches!(recheck_pinned_process(&pinned[0]), ProcessInspection::Available { identity } if identity == expected)
-    {
-        errors.push(ReportError {
+    let identity_consistent = matches!(recheck_pinned_process(&pinned[0]), ProcessInspection::Available { identity } if identity == expected);
+    let status = if identity_consistent {
+        classify_scan(candidates.len(), stats.complete)
+    } else {
+        scan_errors.push(ReportError {
             field: "process",
             code: "PROCESS_IDENTITY_CHANGED_DURING_SCAN",
             message: "the retained process identity changed while memory was scanned".to_owned(),
         });
-        stats.complete = false;
-    }
-    let status = classify_scan(candidates.len(), stats.complete);
+        MetricsObjectStatus::IdentityInconsistent
+    };
     let mut report = MetricsObjectReport::new(status, "EXACT_MATCH", probe);
     report.process = Some(expected);
     report.scan_stats = Some(MetricsObjectScanStats {
@@ -197,14 +203,12 @@ pub(super) fn discover_metrics_objects(probe: ProbeReport) -> MetricsObjectRepor
         mapped_regions_scanned: stats.mapped_regions,
         bytes_read: stats.bytes_read,
         failed_reads: stats.failed_reads,
-        coverage: if stats.complete {
-            "FULL_COMMITTED_READABLE_IMAGE_PRIVATE_MAPPED"
-        } else {
-            "PARTIAL"
-        },
+        coverage: scan_coverage_label(stats.complete),
     });
     report.candidates = candidates;
-    report.errors = errors;
+    report.candidate_validation_status = candidate_validation_status(&candidate_errors);
+    report.errors = scan_errors;
+    report.errors.extend(candidate_errors);
     report
 }
 
@@ -715,6 +719,30 @@ mod tests {
         assert!(!report.memory_modified);
     }
 
+    #[test]
+    fn recognized_build_without_the_verified_layout_is_refused_before_scanning() {
+        let mut probe = ProbeReport::empty(ProbeStatus::ExactMatch, None);
+        probe.build_resolution = Some(crate::identity::BuildResolution::ExactMatch {
+            build: crate::identity::BuildRecord {
+                id: "steam-25755603".to_owned(),
+                name: "future build".to_owned(),
+                sha256: "00".repeat(32),
+                file_version: None,
+                product_version: None,
+                steam_build_id: Some("25755603".to_owned()),
+            },
+        });
+
+        let report = discover_metrics_objects(probe);
+
+        assert_eq!(report.status, MetricsObjectStatus::UnsupportedLayout);
+        assert_eq!(report.layout_status, "UNSUPPORTED");
+        assert!(report.scan_stats.is_none());
+        assert!(report.candidates.is_empty());
+        assert!(report.owner_vtable_module_offset.is_none());
+        assert!(report.row_pointer_offsets.is_empty());
+    }
+
     #[cfg(target_pointer_width = "64")]
     #[test]
     fn scans_and_validates_a_synthetic_metrics_owner_read_only() {
@@ -792,10 +820,15 @@ mod tests {
         assert_eq!(candidate.valid_row_pointers, 7);
         assert!(!candidate.rows[0].expected_label_match);
         assert!(!errors.is_empty());
-        assert_eq!(
-            classify_scan(1, errors.is_empty()),
-            MetricsObjectStatus::PartialScan
+        assert!(
+            stats.complete,
+            "candidate validation must not change scan coverage"
         );
+        assert_eq!(
+            classify_scan(1, stats.complete),
+            MetricsObjectStatus::CandidatesFound
+        );
+        assert_eq!(candidate_validation_status(&errors), "INCOMPLETE");
         // SAFETY: restore the fixture slot to its original valid row string pointer.
         unsafe { invalid_slot.write(ROW_TEXTS[0].as_ptr() as usize as u64) };
     }
