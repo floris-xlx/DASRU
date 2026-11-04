@@ -11,7 +11,7 @@ use std::{
 
 use dasru::{
     identity::{BuildRegistry, ExecutableIdentity},
-    memory::inspect_metrics_layout_with_registry,
+    memory::inspect_metrics_layout_with_registry_and_replacement,
     osd::{apply_fps_marker_with_registry, restore_fps_marker_from},
 };
 
@@ -89,11 +89,14 @@ fn simulated_game_marker_is_patched_and_restored() {
     let _child = start(&executable);
     let snapshot_path = root.join("recovery.json");
 
-    let read_only = inspect_metrics_layout_with_registry(&registry);
+    let read_only = inspect_metrics_layout_with_registry_and_replacement(&registry, "%i FPS+");
     assert_eq!(
         read_only.dry_run.status,
         dasru::memory::MetricsDryRunStatus::Safe
     );
+    assert_eq!(read_only.dry_run.replacement, "%i FPS+");
+    assert_eq!(read_only.dry_run.diff.len(), 1);
+    assert_eq!(read_only.dry_run.diff[0].after, b'+');
     assert!(!snapshot_path.exists());
 
     let mut session = apply_fps_marker_with_registry(&registry, "+", true, &snapshot_path).unwrap();

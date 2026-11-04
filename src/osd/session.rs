@@ -9,7 +9,10 @@ use crate::{
     identity::{BuildRegistry, ExecutableIdentity},
     memory::{
         FPS_SIGNATURE, MetricsDryRunStatus, MetricsScanStatus,
-        transaction::{FPS_PATCH_INDEX, FPS_SLOT_ORIGINAL, apply_fps_patch, restore_fps_patch},
+        transaction::{
+            FPS_PATCH_INDEX, FPS_SLOT_ORIGINAL, apply_fps_patch, restore_fps_patch,
+            validate_after_write_or_rollback,
+        },
         writer::ExperimentalWritePermit,
     },
     probe::ProbeStatus,
@@ -195,7 +198,8 @@ pub fn apply_fps_marker_with_registry(
     if marker != "+" {
         return Err("the only supported FPS marker is +".to_owned());
     }
-    let layout = crate::memory::inspect_metrics_layout_with_registry(registry);
+    let layout =
+        crate::memory::inspect_metrics_layout_with_registry_and_replacement(registry, "%i FPS+");
     let probe = &layout.scan.probe;
     if probe.status != ProbeStatus::ExactMatch {
         return Err(format!(
@@ -216,6 +220,7 @@ pub fn apply_fps_marker_with_registry(
             .as_ref()
             .is_none_or(|stats| stats.coverage != "FULL_MODULE")
         || layout.dry_run.status != MetricsDryRunStatus::Safe
+        || layout.dry_run.replacement != "%i FPS+"
         || layout.strings.first().is_none_or(|string| {
             string.name != "fps_label"
                 || string.capacity_bytes != 8
@@ -353,28 +358,24 @@ pub fn apply_fps_marker_with_registry(
         return Err(format!("{error}{recovery}"));
     }
     let expected_signature = patched_signature();
-    let mut actual_signature = vec![0; FPS_SIGNATURE.len()];
-    let signature_read = process
-        .read_exact(signature_address, &mut actual_signature)
-        .and_then(|()| {
-            if actual_signature == expected_signature {
-                Ok(())
-            } else {
-                Err("read-back signature differs from the expected patched signature".to_owned())
+    validate_after_write_or_rollback(
+        &process,
+        signature_address,
+        patch_address,
+        region.protection,
+        snapshot_path,
+        || {
+            let mut actual_signature = vec![0; FPS_SIGNATURE.len()];
+            process.read_exact(signature_address, &mut actual_signature)?;
+            if actual_signature != expected_signature {
+                return Err(
+                    "read-back signature differs from the expected patched signature".to_owned(),
+                );
             }
-        });
-    if let Err(verification_error) = signature_read {
-        let rollback = restore_fps_patch(&process, patch_address, region.protection);
-        if rollback.is_ok() {
-            let _ = RecoverySnapshot::remove(snapshot_path);
-        }
-        return Err(format!(
-            "post-write FPS signature verification failed: {verification_error}; rollback result: {}; snapshot: {}",
-            rollback.map_or_else(|error| error.to_string(), |_| "restored".to_owned()),
-            snapshot_path.display()
-        ));
-    }
-    process.revalidate()?;
+            process.revalidate()
+        },
+        || RecoverySnapshot::remove(snapshot_path),
+    )?;
     Ok(FpsMarkerSession {
         process,
         snapshot,

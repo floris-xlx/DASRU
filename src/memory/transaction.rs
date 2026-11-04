@@ -1,4 +1,9 @@
-use super::protection::{PAGE_READWRITE, PAGE_WRITECOPY, PageProtectionGuard, PageProtector};
+use std::path::Path;
+
+use super::{
+    FPS_SIGNATURE,
+    protection::{PAGE_READWRITE, PAGE_WRITECOPY, PageProtectionGuard, PageProtector},
+};
 
 pub(crate) const FPS_SLOT_ORIGINAL: [u8; 8] = *b"%i FPS\0\0";
 pub(crate) const FPS_SLOT_PATCHED: [u8; 8] = *b"%i FPS+\0";
@@ -171,6 +176,62 @@ pub(crate) fn restore_fps_patch<T: MemoryAccess>(
         .map_err(|error| failure("restore original protection", error))
 }
 
+pub(crate) fn validate_after_write_or_rollback<T: MemoryAccess>(
+    memory: &T,
+    signature_address: u64,
+    patch_address: u64,
+    original_protection: u32,
+    snapshot_path: &Path,
+    validate_after_write: impl FnOnce() -> Result<(), String>,
+    remove_snapshot: impl FnOnce() -> Result<(), String>,
+) -> Result<(), String> {
+    let Err(validation_error) = validate_after_write() else {
+        return Ok(());
+    };
+
+    let rollback = (|| {
+        let mut observed_signature = vec![0; FPS_SIGNATURE.len()];
+        memory.read_exact(signature_address, &mut observed_signature)?;
+        let mut expected_patched_signature = FPS_SIGNATURE.to_vec();
+        expected_patched_signature[FPS_PATCH_INDEX] = FPS_SLOT_PATCHED[FPS_PATCH_INDEX];
+        if observed_signature != expected_patched_signature && observed_signature != FPS_SIGNATURE {
+            return Err(
+                "current FPS signature differs from the original and expected patched bytes"
+                    .to_owned(),
+            );
+        }
+
+        restore_fps_patch(memory, patch_address, original_protection)
+            .map_err(|error| error.to_string())?;
+        let mut restored_signature = vec![0; FPS_SIGNATURE.len()];
+        memory.read_exact(signature_address, &mut restored_signature)?;
+        if restored_signature != FPS_SIGNATURE {
+            return Err("restored FPS signature did not verify".to_owned());
+        }
+        if memory.protection_at(patch_address)? != original_protection {
+            return Err("restored page protection did not verify".to_owned());
+        }
+        Ok(())
+    })();
+
+    if let Err(rollback_error) = rollback {
+        return Err(format!(
+            "post-write validation failed: {validation_error}; rollback was not verified: {rollback_error}; recovery snapshot retained at {}",
+            snapshot_path.display()
+        ));
+    }
+
+    match remove_snapshot() {
+        Ok(()) => Err(format!(
+            "post-write validation failed: {validation_error}; rollback verified and recovery snapshot removed"
+        )),
+        Err(snapshot_error) => Err(format!(
+            "post-write validation failed: {validation_error}; rollback verified but snapshot removal failed: {snapshot_error}; recovery snapshot retained at {}",
+            snapshot_path.display()
+        )),
+    }
+}
+
 fn recover_patch_failure<T: MemoryAccess>(
     memory: &T,
     protection: &mut PageProtectionGuard<'_, T>,
@@ -222,7 +283,7 @@ fn failure(operation: &'static str, message: impl Into<String>) -> PatchTransact
 
 #[cfg(test)]
 mod tests {
-    use std::{cell::Cell, cell::RefCell};
+    use std::{cell::Cell, cell::RefCell, path::Path};
 
     use super::{MemoryAccess, apply_fps_patch, restore_fps_patch};
     use crate::memory::protection::{PAGE_READWRITE, PAGE_WRITECOPY, PageProtector};
@@ -431,5 +492,61 @@ mod tests {
 
         assert_eq!(&memory.bytes.borrow()[..8], b"%i FPS\0\0");
         assert_eq!(memory.protection.get(), READ_ONLY);
+    }
+
+    #[test]
+    fn post_write_validation_failure_rolls_back_before_returning() {
+        let memory = FakeMemory::new(b"%i FPS+\0");
+        let mut snapshot_removed = false;
+
+        let error = super::validate_after_write_or_rollback(
+            &memory,
+            BASE,
+            PATCH_ADDRESS,
+            READ_ONLY,
+            Path::new("recovery.json"),
+            || Err("injected process revalidation failure".to_owned()),
+            || {
+                snapshot_removed = true;
+                Ok(())
+            },
+        )
+        .unwrap_err();
+
+        assert!(error.contains("injected process revalidation failure"));
+        assert!(error.contains("rollback verified"));
+        assert!(snapshot_removed);
+        assert_eq!(&memory.bytes.borrow()[..8], b"%i FPS\0\0");
+        assert_eq!(
+            &memory.bytes.borrow()[8..],
+            b"%.2fms\0\0Frame : %u\0adjacent"
+        );
+        assert_eq!(memory.protection.get(), READ_ONLY);
+    }
+
+    #[test]
+    fn post_write_rollback_refuses_changed_signature_and_retains_snapshot() {
+        let memory = FakeMemory::new(b"%i FPS+\0");
+        memory.bytes.borrow_mut()[9] ^= 1;
+        let mut snapshot_removed = false;
+
+        let error = super::validate_after_write_or_rollback(
+            &memory,
+            BASE,
+            PATCH_ADDRESS,
+            READ_ONLY,
+            Path::new("recovery.json"),
+            || Err("injected process revalidation failure".to_owned()),
+            || {
+                snapshot_removed = true;
+                Ok(())
+            },
+        )
+        .unwrap_err();
+
+        assert!(error.contains("rollback was not verified"));
+        assert!(error.contains("recovery snapshot retained"));
+        assert!(!snapshot_removed);
+        assert_eq!(&memory.bytes.borrow()[..8], b"%i FPS+\0");
     }
 }

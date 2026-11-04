@@ -400,7 +400,14 @@ pub fn inspect_metrics_layout_with_replacement(replacement: &str) -> MetricsLayo
 }
 
 pub fn inspect_metrics_layout_with_registry(registry: &BuildRegistry) -> MetricsLayoutReport {
-    metrics_with_registry(registry, true, FPS_MARKER_REPLACEMENT)
+    inspect_metrics_layout_with_registry_and_replacement(registry, FPS_MARKER_REPLACEMENT)
+}
+
+pub fn inspect_metrics_layout_with_registry_and_replacement(
+    registry: &BuildRegistry,
+    replacement: &str,
+) -> MetricsLayoutReport {
+    metrics_with_registry(registry, true, replacement)
 }
 
 fn metrics_with_registry(
