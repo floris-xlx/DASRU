@@ -279,6 +279,15 @@ fn scan_process_for_pointer(handle: HANDLE, value: u64) -> (Vec<u64>, ScanStats,
     let start = system_info.lpMinimumApplicationAddress as usize as u64;
     let maximum = system_info.lpMaximumApplicationAddress as usize as u64;
     let end = maximum.saturating_add(1);
+    scan_process_for_pointer_in_range(handle, value, start, end)
+}
+
+fn scan_process_for_pointer_in_range(
+    handle: HANDLE,
+    value: u64,
+    start: u64,
+    end: u64,
+) -> (Vec<u64>, ScanStats, Vec<ReportError>) {
     let mut stats = ScanStats {
         start,
         end,
