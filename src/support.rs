@@ -1,4 +1,9 @@
-use std::{fs::OpenOptions, io::Write, path::Path, time::SystemTime};
+use std::{
+    fs::{self, File, OpenOptions},
+    io::{self, Write},
+    path::{Path, PathBuf},
+    time::SystemTime,
+};
 
 use serde::Serialize;
 use thiserror::Error;
@@ -51,8 +56,12 @@ pub enum SupportExportError {
     Serialize(#[source] serde_json::Error),
     #[error("support report destination already exists")]
     AlreadyExists,
+    #[error("support temporary file creation failed")]
+    TempCreate(#[source] io::Error),
     #[error("support report write failed")]
-    Write(#[source] std::io::Error),
+    Write(#[source] io::Error),
+    #[error("support report publication failed")]
+    Publish(#[source] io::Error),
 }
 
 impl SupportExportError {
@@ -60,26 +69,90 @@ impl SupportExportError {
         match self {
             Self::Serialize(_) => "SUPPORT_EXPORT_SERIALIZE_FAILED",
             Self::AlreadyExists => "SUPPORT_EXPORT_PATH_EXISTS",
+            Self::TempCreate(_) => "SUPPORT_EXPORT_TEMP_CREATE_FAILED",
             Self::Write(_) => "SUPPORT_EXPORT_WRITE_FAILED",
+            Self::Publish(_) => "SUPPORT_EXPORT_PUBLISH_FAILED",
         }
     }
 }
 
 pub fn export_json(path: &Path) -> Result<(), SupportExportError> {
     let json = serde_json::to_vec_pretty(&collect()).map_err(SupportExportError::Serialize)?;
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)
-        .map_err(|error| {
-            if error.kind() == std::io::ErrorKind::AlreadyExists {
-                SupportExportError::AlreadyExists
-            } else {
-                SupportExportError::Write(error)
+    let (temporary, mut file) = create_temporary_export(path)?;
+    file.write_all(&json).map_err(SupportExportError::Write)?;
+    file.flush().map_err(SupportExportError::Write)?;
+    file.sync_all().map_err(SupportExportError::Write)?;
+    drop(file);
+
+    // shortcut: destination volumes must support hard links; use platform no-replace rename if this limits installs.
+    // A same-directory hard link publishes atomically and fails if the destination already exists.
+    match fs::hard_link(&temporary.path, path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+            Err(SupportExportError::AlreadyExists)
+        }
+        Err(error) => Err(SupportExportError::Publish(error)),
+    }
+}
+
+struct TemporaryExport {
+    path: PathBuf,
+}
+
+impl Drop for TemporaryExport {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.path);
+    }
+}
+
+fn create_temporary_export(
+    destination: &Path,
+) -> Result<(TemporaryExport, File), SupportExportError> {
+    let parent = destination
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let nonce = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+
+    for attempt in 0..128 {
+        let path = parent.join(format!(
+            ".dasru-support-{}-{nonce}-{attempt}.tmp",
+            std::process::id()
+        ));
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+
+        let file = match options.open(&path) {
+            Ok(file) => file,
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(SupportExportError::TempCreate(error)),
+        };
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            if let Err(error) = file.set_permissions(fs::Permissions::from_mode(0o600)) {
+                drop(file);
+                let _ = fs::remove_file(&path);
+                return Err(SupportExportError::TempCreate(error));
             }
-        })?;
-    // shortcut: a failed write may leave a partial new file; use temp-and-publish if atomic export becomes necessary.
-    file.write_all(&json).map_err(SupportExportError::Write)
+        }
+
+        return Ok((TemporaryExport { path }, file));
+    }
+
+    Err(SupportExportError::TempCreate(io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        "could not allocate a unique temporary filename",
+    )))
 }
 
 fn collect() -> SupportReport {

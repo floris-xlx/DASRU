@@ -1,18 +1,12 @@
-use std::{fs, process::Command, time::SystemTime};
+use std::{fs, path::PathBuf, process::Command, time::SystemTime};
 
 use serde_json::Value;
 
 #[test]
 fn support_export_writes_privacy_safe_compatibility_json() {
     let secret = "dasru-support-private-sentinel";
-    let unique = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .expect("clock is after Unix epoch")
-        .as_nanos();
-    let path = std::env::temp_dir().join(format!(
-        "dasru-support-{}-{unique}.json",
-        std::process::id()
-    ));
+    let directory = unique_temp_dir("support-export");
+    let path = directory.join("support-report.json");
     let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
         .args(["support", "export"])
         .arg(&path)
@@ -89,21 +83,24 @@ fn support_export_writes_privacy_safe_compatibility_json() {
     assert!(!compatibility.contains_key("pid"));
     assert!(!compatibility.contains_key("processes"));
     assert!(!compatibility.contains_key("steam_install_dir"));
+    assert_eq!(fs::read_dir(&directory).unwrap().count(), 1);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        assert_eq!(
+            fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+    }
     fs::remove_file(path).expect("remove test report");
+    fs::remove_dir(directory).expect("remove test directory");
 }
 
 #[test]
 fn support_export_write_failure_has_a_stable_code_without_echoing_path() {
-    let unique = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .expect("clock is after Unix epoch")
-        .as_nanos();
-    let path = std::env::temp_dir()
-        .join(format!(
-            "dasru-support-missing-{}-{unique}",
-            std::process::id()
-        ))
-        .join("support.json");
+    let directory = unique_temp_dir("support-export-failure");
+    let path = directory.join("missing-parent").join("support.json");
     let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
         .args(["support", "export"])
         .arg(&path)
@@ -112,20 +109,16 @@ fn support_export_write_failure_has_a_stable_code_without_echoing_path() {
 
     assert_eq!(output.status.code(), Some(1));
     let stderr = String::from_utf8(output.stderr).expect("stderr is UTF-8");
-    assert!(stderr.contains("SUPPORT_EXPORT_WRITE_FAILED"));
+    assert!(stderr.contains("SUPPORT_EXPORT_TEMP_CREATE_FAILED"));
     assert!(!stderr.contains(path.to_string_lossy().as_ref()));
+    assert_eq!(fs::read_dir(&directory).unwrap().count(), 0);
+    fs::remove_dir(directory).expect("remove test directory");
 }
 
 #[test]
 fn support_export_does_not_replace_an_existing_file() {
-    let unique = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .expect("clock is after Unix epoch")
-        .as_nanos();
-    let path = std::env::temp_dir().join(format!(
-        "dasru-support-existing-{}-{unique}.json",
-        std::process::id()
-    ));
+    let directory = unique_temp_dir("support-export-existing");
+    let path = directory.join("support-report.json");
     let original = b"keep this file";
     fs::write(&path, original).expect("create existing output file");
     let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
@@ -137,7 +130,9 @@ fn support_export_does_not_replace_an_existing_file() {
     assert_eq!(output.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&output.stderr).contains("SUPPORT_EXPORT_PATH_EXISTS"));
     assert_eq!(fs::read(&path).expect("existing file remains"), original);
+    assert_eq!(fs::read_dir(&directory).unwrap().count(), 1);
     fs::remove_file(path).expect("remove test file");
+    fs::remove_dir(directory).expect("remove test directory");
 }
 
 #[test]
@@ -160,4 +155,14 @@ fn assert_object_keys(value: &Value, expected: &[&str]) {
         .collect::<Vec<_>>();
     actual.sort_unstable();
     assert_eq!(actual, expected);
+}
+
+fn unique_temp_dir(prefix: &str) -> PathBuf {
+    let unique = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .expect("clock is after Unix epoch")
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!("dasru-{prefix}-{}-{unique}", std::process::id()));
+    fs::create_dir(&path).expect("create test directory");
+    path
 }
