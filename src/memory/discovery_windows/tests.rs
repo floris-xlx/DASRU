@@ -18,10 +18,6 @@ static ROW_TEXTS: [&[u8]; 8] = [
 #[cfg(target_pointer_width = "64")]
 static NESTED_POINTER_TEXT: &[u8] = b"Nested metric descriptor\0";
 #[cfg(target_pointer_width = "64")]
-static mut SYNTHETIC_OWNER: [u64; SYNTHETIC_OWNER_WORDS] = [0; SYNTHETIC_OWNER_WORDS];
-#[cfg(target_pointer_width = "64")]
-static mut SYNTHETIC_OWNER_TWO: [u64; SYNTHETIC_OWNER_WORDS] = [0; SYNTHETIC_OWNER_WORDS];
-#[cfg(target_pointer_width = "64")]
 static mut SYNTHETIC_TARGET_OBJECT: [u64; TARGET_OBJECT_SIZE / size_of::<u64>()] =
     [0; TARGET_OBJECT_SIZE / size_of::<u64>()];
 #[cfg(target_pointer_width = "64")]
@@ -348,18 +344,34 @@ fn recognized_build_without_the_verified_layout_is_refused_before_scanning() {
 #[test]
 fn scans_and_validates_a_synthetic_metrics_owner_read_only() {
     let vtable_address = SYNTHETIC_VTABLE.as_ptr() as usize as u64;
-    let owner = std::ptr::addr_of_mut!(SYNTHETIC_OWNER).cast::<u64>();
-    let owner_two = std::ptr::addr_of_mut!(SYNTHETIC_OWNER_TWO).cast::<u64>();
-    // SAFETY: these test-owned static structures have space for every configured row slot.
+    let owner_size = SYNTHETIC_OWNER_WORDS * size_of::<u64>();
+    let allocation_size = owner_size * 2;
+    // SAFETY: VirtualAlloc reserves and commits a writable private fixture for the two owners.
+    let owner = unsafe {
+        windows_sys::Win32::System::Memory::VirtualAlloc(
+            std::ptr::null_mut(),
+            allocation_size,
+            windows_sys::Win32::System::Memory::MEM_COMMIT
+                | windows_sys::Win32::System::Memory::MEM_RESERVE,
+            windows_sys::Win32::System::Memory::PAGE_READWRITE,
+        )
+    }
+    .cast::<u64>();
+    assert!(!owner.is_null(), "synthetic owner allocation succeeds");
+    // SAFETY: the allocation contains two owner-sized structures.
+    let owner_two = unsafe { owner.add(SYNTHETIC_OWNER_WORDS) };
+    // SAFETY: both owner pointers address complete structures in the allocation above.
     unsafe {
         initialize_owner(owner, vtable_address);
         initialize_owner(owner_two, vtable_address);
     }
     let owner_address = owner as usize as u64;
     let owner_two_address = owner_two as usize as u64;
-    let (matches, stats, errors) = scan_process_for_pointer(
+    let (matches, stats, errors) = scan_process_for_pointer_in_range(
         unsafe { windows_sys::Win32::System::Threading::GetCurrentProcess() },
         vtable_address,
+        owner_address,
+        owner_address + allocation_size as u64,
     );
     assert_eq!(
         stats.complete,
@@ -496,4 +508,15 @@ fn scans_and_validates_a_synthetic_metrics_owner_read_only() {
     assert_eq!(candidate_validation_status(&errors), "INCOMPLETE");
     // SAFETY: restore the fixture slot to its original valid row string pointer.
     unsafe { invalid_slot.write(ROW_TEXTS[0].as_ptr() as usize as u64) };
+    // SAFETY: release the allocation created solely for this test.
+    assert_ne!(
+        unsafe {
+            windows_sys::Win32::System::Memory::VirtualFree(
+                owner.cast(),
+                0,
+                windows_sys::Win32::System::Memory::MEM_RELEASE,
+            )
+        },
+        0
+    );
 }
