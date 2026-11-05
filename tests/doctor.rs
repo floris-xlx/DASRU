@@ -41,6 +41,7 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
             "os",
             "os_version",
             "session_type",
+            "xwayland_available",
         ],
     );
     assert_object_keys(
@@ -66,6 +67,24 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
     );
     assert!(report["host"]["session_type"].as_str().is_some());
     assert!(report["host"]["environment"].as_str().is_some());
+    assert!(
+        report["host"]["xwayland_available"].is_boolean()
+            || report["host"]["xwayland_available"].is_null()
+    );
+    if report["host"]["os"] == "linux" {
+        assert!(report["host"]["xwayland_available"].is_boolean());
+        assert_ne!(report["host"]["session_type"], "XWAYLAND");
+    }
+    if report["host"]["os"] == "linux" {
+        assert_eq!(
+            report["host_capabilities"]["process_memory_read"]["accessible"],
+            "UNKNOWN"
+        );
+        assert_eq!(
+            report["host_capabilities"]["process_memory_read"]["implementation_status"],
+            "NOT_IMPLEMENTED"
+        );
+    }
 
     for runtime in ["steam", "proton", "wine"] {
         assert!(report["runtime"][runtime]["detected"].is_boolean());
@@ -166,6 +185,10 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
         .unwrap();
     if process_probe["accessible"] == "UNKNOWN" {
         assert_ne!(process_probe["readiness"], "AVAILABLE");
+    }
+    if report["host"]["os"] == "linux" {
+        assert_eq!(process_probe["accessible"], "UNKNOWN");
+        assert_eq!(process_probe["implementation_status"], "NOT_IMPLEMENTED");
     }
     assert!(report["errors"].is_array());
 }

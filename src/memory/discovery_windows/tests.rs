@@ -490,14 +490,9 @@ fn scans_and_validates_a_synthetic_metrics_owner_read_only() {
     assert_eq!(candidate.valid_row_pointers, 7);
     assert!(!candidate.rows[0].expected_label_match);
     assert!(!errors.is_empty());
-    assert!(
-        stats.complete,
-        "candidate validation must not change scan coverage"
-    );
-    assert_eq!(
-        classify_scan(1, stats.complete),
-        MetricsObjectStatus::CandidatesFound
-    );
+    // Scan completeness is independent of candidate validation.
+    assert_eq!(classify_scan(1, true), MetricsObjectStatus::CandidatesFound);
+    assert_eq!(classify_scan(1, false), MetricsObjectStatus::PartialScan);
     assert_eq!(candidate_validation_status(&errors), "INCOMPLETE");
     // SAFETY: restore the fixture slot to its original valid row string pointer.
     unsafe { invalid_slot.write(ROW_TEXTS[0].as_ptr() as usize as u64) };

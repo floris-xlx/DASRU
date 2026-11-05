@@ -25,6 +25,7 @@ pub struct HostReport {
     pub kernel_version: Option<String>,
     pub environment: &'static str,
     pub session_type: &'static str,
+    pub xwayland_available: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
@@ -79,7 +80,7 @@ pub fn inspect() -> DoctorReport {
     let (os, os_version, distribution, kernel_version) = host_version(&mut errors);
     let platform = current_platform();
     let environment = classify_environment(platform, kernel_version.as_deref());
-    let session_type = session_type(platform);
+    let session = session_detection(platform);
     let runtime = RuntimeReport {
         steam: runtime_signal(&[
             "SteamAppId",
@@ -103,7 +104,8 @@ pub fn inspect() -> DoctorReport {
             "WINEDEBUG",
         ]),
     };
-    let host_capabilities = host_capabilities(platform, session_type);
+    let host_capabilities =
+        host_capabilities(platform, session.session_type, session.xwayland_available);
     let feature_readiness = feature_readiness(platform, &host_capabilities);
 
     DoctorReport {
@@ -120,7 +122,8 @@ pub fn inspect() -> DoctorReport {
             distribution,
             kernel_version,
             environment,
-            session_type,
+            session_type: session.session_type,
+            xwayland_available: session.xwayland_available,
         },
         runtime,
         host_capabilities,
@@ -132,7 +135,7 @@ pub fn inspect() -> DoctorReport {
 impl DoctorReport {
     pub fn to_human_text(&self) -> String {
         let mut output = format!(
-            "DASRU Doctor\nHost\n  OS: {}\n  Architecture: {}\n  OS version: {}\n  Distribution: {}\n  Kernel: {}\n  Environment: {}\n  Session: {}\nRuntime\n",
+            "DASRU Doctor\nHost\n  OS: {}\n  Architecture: {}\n  OS version: {}\n  Distribution: {}\n  Kernel: {}\n  Environment: {}\n  Session: {}\n  XWayland available: {}\nRuntime\n",
             self.host.os,
             self.host.architecture,
             display_option(&self.host.os_version),
@@ -140,6 +143,7 @@ impl DoctorReport {
             display_option(&self.host.kernel_version),
             self.host.environment,
             self.host.session_type,
+            display_bool_option(self.host.xwayland_available),
         );
         for (name, signal) in [
             ("Steam", &self.runtime.steam),
@@ -202,6 +206,14 @@ fn display_option(value: &Option<String>) -> &str {
     value.as_deref().unwrap_or("NOT_DETECTED")
 }
 
+fn display_bool_option(value: Option<bool>) -> &'static str {
+    match value {
+        Some(true) => "YES",
+        Some(false) => "NO",
+        None => "NOT_APPLICABLE",
+    }
+}
+
 fn yes_no(value: bool) -> &'static str {
     if value { "YES" } else { "NO" }
 }
@@ -254,7 +266,13 @@ fn current_platform() -> HostPlatform {
     }
 }
 
-fn session_type(platform: HostPlatform) -> &'static str {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct SessionDetection {
+    session_type: &'static str,
+    xwayland_available: Option<bool>,
+}
+
+fn session_detection(platform: HostPlatform) -> SessionDetection {
     let session = env::var("XDG_SESSION_TYPE").unwrap_or_default();
     classify_session(
         platform,
@@ -269,20 +287,29 @@ fn classify_session(
     xdg_session_type: Option<&str>,
     has_display: bool,
     has_wayland: bool,
-) -> &'static str {
-    match platform {
-        HostPlatform::Windows => "WINDOWS",
+) -> SessionDetection {
+    let (session_type, is_wayland) = match platform {
+        HostPlatform::Windows => ("WINDOWS", false),
         HostPlatform::Linux => {
             let session = xdg_session_type.unwrap_or_default().to_ascii_lowercase();
-            match (session.as_str(), has_display, has_wayland) {
-                (_, true, true) | ("wayland", true, _) => "XWAYLAND",
-                (_, false, true) | ("wayland", _, _) => "WAYLAND",
-                ("x11", _, _) | (_, true, false) => "X11",
-                ("", false, false) => "HEADLESS",
-                _ => "UNKNOWN",
+            match session.as_str() {
+                "wayland" => ("WAYLAND", true),
+                "x11" => ("X11", false),
+                "" if has_wayland => ("WAYLAND", true),
+                "" if has_display => ("X11", false),
+                "" => ("HEADLESS", false),
+                _ => ("UNKNOWN", false),
             }
         }
-        HostPlatform::Other => "UNKNOWN",
+        HostPlatform::Other => ("UNKNOWN", false),
+    };
+    SessionDetection {
+        session_type,
+        xwayland_available: if platform == HostPlatform::Linux {
+            Some(is_wayland && has_display)
+        } else {
+            None
+        },
     }
 }
 
@@ -304,10 +331,14 @@ fn classify_environment(platform: HostPlatform, kernel_version: Option<&str>) ->
     }
 }
 
-fn host_capabilities(platform: HostPlatform, session: &'static str) -> HostCapabilities {
+fn host_capabilities(
+    platform: HostPlatform,
+    session: &'static str,
+    xwayland_available: Option<bool>,
+) -> HostCapabilities {
     HostCapabilities {
         process_memory_read: process_memory_capability(platform),
-        clipboard: clipboard_capability(platform, session),
+        clipboard: clipboard_capability(platform, session, xwayland_available),
         global_hotkeys: hotkey_capability(platform, session),
         wayland_global_shortcuts_portal: portal_capability(platform, session),
     }
@@ -323,7 +354,7 @@ fn process_memory_capability(platform: HostPlatform) -> Capability {
         },
         HostPlatform::Linux => Capability {
             detected: "UNKNOWN",
-            accessible: "UNAVAILABLE",
+            accessible: "UNKNOWN",
             implementation_status: "NOT_IMPLEMENTED",
             reason: "DASRU has no Linux process-memory backend; host ptrace access was not tested.".to_owned(),
         },
@@ -336,8 +367,12 @@ fn process_memory_capability(platform: HostPlatform) -> Capability {
     }
 }
 
-fn clipboard_capability(platform: HostPlatform, session: &'static str) -> Capability {
-    clipboard_capability_from_detection(platform, clipboard_utility(session))
+fn clipboard_capability(
+    platform: HostPlatform,
+    session: &'static str,
+    xwayland_available: Option<bool>,
+) -> Capability {
+    clipboard_capability_from_detection(platform, clipboard_utility(session, xwayland_available))
 }
 
 fn clipboard_capability_from_detection(
@@ -360,7 +395,7 @@ fn clipboard_capability_from_detection(
             },
             UtilityDetection::Missing => Capability {
                 detected: "NOT_DETECTED",
-                accessible: "UNAVAILABLE",
+                accessible: "UNKNOWN",
                 implementation_status: "NOT_IMPLEMENTED",
                 reason: "No session-appropriate clipboard utility was found on PATH.".to_owned(),
             },
@@ -394,7 +429,7 @@ fn hotkey_capability(platform: HostPlatform, session: &'static str) -> Capabilit
             implementation_status: "NOT_IMPLEMENTED",
             reason: "An X11 session is present; permissions and hotkey registration were not tested.".to_owned(),
         },
-        (HostPlatform::Linux, "WAYLAND" | "XWAYLAND") => Capability {
+        (HostPlatform::Linux, "WAYLAND") => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
             implementation_status: "NOT_IMPLEMENTED",
@@ -402,7 +437,7 @@ fn hotkey_capability(platform: HostPlatform, session: &'static str) -> Capabilit
         },
         (HostPlatform::Linux, _) => Capability {
             detected: "NOT_DETECTED",
-            accessible: "UNAVAILABLE",
+            accessible: "UNKNOWN",
             implementation_status: "NOT_IMPLEMENTED",
             reason: "No desktop session for global hotkeys was detected.".to_owned(),
         },
@@ -417,7 +452,7 @@ fn hotkey_capability(platform: HostPlatform, session: &'static str) -> Capabilit
 
 fn portal_capability(platform: HostPlatform, session: &'static str) -> Capability {
     match (platform, session) {
-        (HostPlatform::Linux, "WAYLAND" | "XWAYLAND") => Capability {
+        (HostPlatform::Linux, "WAYLAND") => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
             implementation_status: "NOT_IMPLEMENTED",
@@ -440,20 +475,20 @@ enum UtilityDetection {
     Unknown,
 }
 
-fn clipboard_utility(session: &'static str) -> UtilityDetection {
+fn clipboard_utility(session: &'static str, xwayland_available: Option<bool>) -> UtilityDetection {
     #[cfg(target_os = "linux")]
     {
         let utilities: &[&'static str] = match session {
+            "WAYLAND" if xwayland_available == Some(true) => &["wl-copy", "xclip", "xsel"],
             "WAYLAND" => &["wl-copy"],
             "X11" => &["xclip", "xsel"],
-            "XWAYLAND" => &["wl-copy", "xclip", "xsel"],
             _ => return UtilityDetection::Missing,
         };
         find_executable(utilities, env::var_os("PATH").as_deref())
     }
     #[cfg(not(target_os = "linux"))]
     {
-        let _ = session;
+        let _ = (session, xwayland_available);
         UtilityDetection::Unknown
     }
 }
@@ -474,7 +509,7 @@ fn feature_readiness(
         } else {
             (
                 "UNKNOWN",
-                "UNAVAILABLE",
+                "UNKNOWN",
                 "NOT_IMPLEMENTED",
                 "UNSUPPORTED_PLATFORM",
                 "DASRU process discovery is implemented on Windows only.",
@@ -492,7 +527,7 @@ fn feature_readiness(
         } else {
             (
                 "UNKNOWN",
-                "UNAVAILABLE",
+                "UNKNOWN",
                 "NOT_IMPLEMENTED",
                 "UNSUPPORTED_PLATFORM",
                 "The native OSD writer is Windows-only.",
@@ -676,24 +711,35 @@ mod tests {
     #[test]
     fn session_classification_covers_native_and_desktop_sessions() {
         assert_eq!(
-            classify_session(HostPlatform::Windows, None, false, false),
+            classify_session(HostPlatform::Windows, None, false, false).session_type,
             "WINDOWS"
         );
         assert_eq!(
-            classify_session(HostPlatform::Linux, Some("x11"), true, false),
+            classify_session(HostPlatform::Linux, Some("x11"), true, false).session_type,
             "X11"
         );
         assert_eq!(
-            classify_session(HostPlatform::Linux, Some("wayland"), false, true),
+            classify_session(HostPlatform::Linux, Some("wayland"), false, true).session_type,
             "WAYLAND"
         );
         assert_eq!(
-            classify_session(HostPlatform::Linux, Some("wayland"), true, true),
-            "XWAYLAND"
+            classify_session(HostPlatform::Linux, Some("wayland"), true, true).session_type,
+            "WAYLAND"
         );
         assert_eq!(
-            classify_session(HostPlatform::Linux, None, false, false),
+            classify_session(HostPlatform::Linux, Some("wayland"), true, true).xwayland_available,
+            Some(true)
+        );
+        let x11 = classify_session(HostPlatform::Linux, Some("x11"), true, true);
+        assert_eq!(x11.session_type, "X11");
+        assert_eq!(x11.xwayland_available, Some(false));
+        assert_eq!(
+            classify_session(HostPlatform::Linux, None, false, false).session_type,
             "HEADLESS"
+        );
+        assert_eq!(
+            classify_session(HostPlatform::Windows, None, true, true).xwayland_available,
+            None
         );
     }
 
@@ -716,7 +762,7 @@ mod tests {
     #[test]
     fn unsupported_host_is_unknown_instead_of_claiming_access() {
         assert_eq!(
-            classify_session(HostPlatform::Other, None, false, false),
+            classify_session(HostPlatform::Other, None, false, false).session_type,
             "UNKNOWN"
         );
         assert_eq!(classify_environment(HostPlatform::Other, None), "UNKNOWN");
@@ -743,7 +789,7 @@ mod tests {
         let missing =
             clipboard_capability_from_detection(HostPlatform::Linux, UtilityDetection::Missing);
         assert_eq!(missing.detected, "NOT_DETECTED");
-        assert_eq!(missing.accessible, "UNAVAILABLE");
+        assert_eq!(missing.accessible, "UNKNOWN");
         assert_eq!(missing.implementation_status, "NOT_IMPLEMENTED");
 
         let unknown =
@@ -752,9 +798,17 @@ mod tests {
         assert_eq!(unknown.accessible, "UNKNOWN");
     }
 
+    #[test]
+    fn linux_process_permission_is_unknown_without_a_backend_probe() {
+        let capability = process_memory_capability(HostPlatform::Linux);
+        assert_eq!(capability.detected, "UNKNOWN");
+        assert_eq!(capability.accessible, "UNKNOWN");
+        assert_eq!(capability.implementation_status, "NOT_IMPLEMENTED");
+    }
+
     #[cfg(target_os = "linux")]
     #[test]
-    fn missing_path_is_unknown_and_missing_tools_are_unavailable() {
+    fn clipboard_dependency_detection_handles_missing_path_and_tools() {
         assert!(matches!(
             find_executable(&["wl-copy"], None),
             UtilityDetection::Unknown
