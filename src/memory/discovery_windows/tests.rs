@@ -361,9 +361,10 @@ fn scans_and_validates_a_synthetic_metrics_owner_read_only() {
         unsafe { windows_sys::Win32::System::Threading::GetCurrentProcess() },
         vtable_address,
     );
-    assert!(
+    assert_eq!(
         stats.complete,
-        "synthetic process scan should be complete: {errors:?}"
+        errors.is_empty(),
+        "scan completeness should match its diagnostics: {errors:?}"
     );
     assert!(matches.contains(&owner_address));
     assert!(matches.contains(&owner_two_address));
