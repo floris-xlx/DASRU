@@ -24,8 +24,12 @@ mod windows;
 pub(crate) mod writer;
 
 pub use discovery::{
-    MetricsObjectCandidate, MetricsObjectRegion, MetricsObjectReport, MetricsObjectScanStats,
-    MetricsObjectStatus, MetricsRowPointer,
+    MetricsAsciiRun, MetricsChangedU32Field, MetricsNestedPointer, MetricsObjectCandidate,
+    MetricsObjectRegion, MetricsObjectReport, MetricsObjectSample, MetricsObjectScanStats,
+    MetricsObjectStatus, MetricsRowHistory, MetricsRowHistoryElement,
+    MetricsRowHistoryElementChange, MetricsRowHistorySample, MetricsRowPointer,
+    MetricsStaticDataFlow, MetricsStaticSlotRead, MetricsStaticSlotReadSummary,
+    MetricsTargetObject,
 };
 
 const BUILDS_TOML: &str = include_str!("../../data/builds.toml");

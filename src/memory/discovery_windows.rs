@@ -1,3 +1,13 @@
+mod history;
+mod objects;
+
+use history::inspect_row_history;
+#[cfg(test)]
+use history::sample_row_history_once;
+#[cfg(test)]
+use objects::{bounded_region_length, sample_remote_object};
+use objects::{inspect_target_object, now_unix_ms, sample_candidates};
+
 use std::{collections::HashSet, ffi::c_void, mem::size_of};
 
 use windows_sys::Win32::{
@@ -19,10 +29,17 @@ use crate::{
 
 use super::{
     discovery::{
-        MetricsObjectCandidate, MetricsObjectRegion, MetricsObjectReport, MetricsObjectScanStats,
-        MetricsObjectStatus, MetricsRowPointer, OWNER_VTABLE_RVA, ROW_POINTERS, SCAN_SCOPE,
-        ascii_c_string_length, candidate_confidence, candidate_validation_status, classify_scan,
-        is_expected_label, is_supported_metrics_layout, scan_coverage_label, scan_pointer_chunk,
+        MetricsChangedU32Field, MetricsNestedPointer, MetricsObjectCandidate, MetricsObjectRegion,
+        MetricsObjectReport, MetricsObjectSample, MetricsObjectScanStats, MetricsObjectStatus,
+        MetricsRowHistory, MetricsRowHistoryElement, MetricsRowHistorySample, MetricsRowPointer,
+        MetricsTargetObject, NESTED_TARGET_PREVIEW_SIZE, OWNER_VTABLE_RVA, ROW_DATA_POINTER_OFFSET,
+        ROW_HISTORY_ELEMENT_STRIDE, ROW_POINTERS, RowHistoryHeader, RowHistoryHeaderError,
+        SAMPLE_COUNT, SAMPLE_INTERVAL_MS, SCAN_SCOPE, TARGET_OBJECT_SIZE, ascii_c_string_length,
+        candidate_confidence, candidate_validation_status, changed_u32_fields, classify_scan,
+        compare_row_history_elements, find_ascii_runs, is_aligned_pointer_candidate,
+        is_expected_label, is_expected_nested_label, is_supported_metrics_layout,
+        nul_terminated_ascii, parse_row_history_header, row_history_capacity_bytes,
+        scan_coverage_label, scan_pointer_chunk, static_nested_pointer_access,
     },
     windows::{protection_name, readable_protection, region_type_name},
 };
@@ -30,6 +47,8 @@ use super::{
 const CHUNK_SIZE: usize = 1024 * 1024;
 const MAX_CANDIDATES: usize = 32;
 const TARGET_PREVIEW_SIZE: usize = 64;
+const MIN_USER_ADDRESS: u64 = 0x1_0000;
+const MAX_USER_ADDRESS: u64 = 0x0000_8000_0000_0000;
 
 struct ScanStats {
     start: u64,
@@ -179,14 +198,31 @@ pub(super) fn discover_metrics_objects(probe: ProbeReport) -> MetricsObjectRepor
             candidates.push(candidate);
         }
     }
-    let identity_consistent = matches!(recheck_pinned_process(&pinned[0]), ProcessInspection::Available { identity } if identity == expected);
+    let (
+        sampled_object_count,
+        sampled_row_history_count,
+        sampling_complete,
+        sampling_identity_consistent,
+    ) = sample_candidates(
+        process.raw(),
+        &mut candidates,
+        || matches!(recheck_pinned_process(&pinned[0]), ProcessInspection::Available { identity } if identity == expected),
+    );
+    let identity_consistent = sampling_identity_consistent
+        && matches!(recheck_pinned_process(&pinned[0]), ProcessInspection::Available { identity } if identity == expected);
     let status = if identity_consistent {
         classify_scan(candidates.len(), stats.complete)
     } else {
         scan_errors.push(ReportError {
             field: "process",
-            code: "PROCESS_IDENTITY_CHANGED_DURING_SCAN",
-            message: "the retained process identity changed while memory was scanned".to_owned(),
+            code: "PROCESS_IDENTITY_REVALIDATION_FAILED",
+            message: if sampling_identity_consistent {
+                "the retained process identity could not be verified after memory sampling"
+                    .to_owned()
+            } else {
+                "the retained process identity could not be verified between memory samples"
+                    .to_owned()
+            },
         });
         MetricsObjectStatus::IdentityInconsistent
     };
@@ -207,6 +243,30 @@ pub(super) fn discover_metrics_objects(probe: ProbeReport) -> MetricsObjectRepor
     });
     report.candidates = candidates;
     report.candidate_validation_status = candidate_validation_status(&candidate_errors);
+    report.sampling_status = if sampled_object_count == 0 && sampled_row_history_count == 0 {
+        "NO_OBJECTS"
+    } else if sampling_complete {
+        "COMPLETE"
+    } else {
+        "PARTIAL"
+    };
+    report.sampled_object_count = sampled_object_count;
+    report.requested_sample_count = if sampled_object_count == 0 {
+        0
+    } else {
+        SAMPLE_COUNT
+    };
+    report.sample_interval_ms = if sampled_object_count == 0 && sampled_row_history_count == 0 {
+        0
+    } else {
+        SAMPLE_INTERVAL_MS
+    };
+    report.sampled_row_history_count = sampled_row_history_count;
+    report.requested_row_history_sample_count = if sampled_row_history_count == 0 {
+        0
+    } else {
+        SAMPLE_COUNT
+    };
     report.errors = scan_errors;
     report.errors.extend(candidate_errors);
     report
@@ -373,6 +433,7 @@ fn inspect_owner(
     let mut valid = 0u8;
     let mut nulls = 0u8;
     let mut expected_label_matches = 0u8;
+    let mut nested_label_matches = 0u8;
     let module_end = identity
         .module_base
         .checked_add(u64::from(identity.image_size));
@@ -417,6 +478,8 @@ fn inspect_owner(
                 target_classification: "NULL",
                 expected_label_match: false,
                 target_preview_hex: None,
+                target_object: None,
+                row_history: None,
             });
             continue;
         }
@@ -439,6 +502,8 @@ fn inspect_owner(
                 target_classification: "UNMAPPED",
                 expected_label_match: false,
                 target_preview_hex: None,
+                target_object: None,
+                row_history: None,
             });
             continue;
         };
@@ -461,29 +526,38 @@ fn inspect_owner(
                 target_classification: "UNREADABLE_REGION",
                 expected_label_match: false,
                 target_preview_hex: None,
+                target_object: None,
+                row_history: None,
             });
             continue;
         }
         valid += 1;
-        let preview_length = region
-            .region_base
-            .checked_add(region.region_size)
-            .and_then(|end| end.checked_sub(target))
-            .and_then(|available| usize::try_from(available).ok())
-            .map_or(0, |available| TARGET_PREVIEW_SIZE.min(available));
-        let mut preview = vec![0u8; preview_length];
-        let preview_ok = !preview.is_empty() && read_exact(handle, target, &mut preview);
-        if !preview_ok {
-            errors.push(ReportError {
-                field: "rows",
-                code: "ROW_TARGET_PREVIEW_FAILED",
-                message: format!("could not read the bounded preview for {label} at 0x{target:X}"),
-            });
-            preview.clear();
-        }
-        let string_length = ascii_c_string_length(&preview);
-        let label_match = is_expected_label(&preview, label);
+        let target_object = inspect_target_object(
+            handle,
+            target,
+            region,
+            identity,
+            owner_address,
+            slot_address,
+            errors,
+        );
+        let preview = &target_object.baseline_bytes
+            [..TARGET_PREVIEW_SIZE.min(target_object.baseline_bytes.len())];
+        let string_length = ascii_c_string_length(preview);
+        let row_history = string_length.is_none().then(|| {
+            inspect_row_history(
+                handle,
+                slot_address,
+                target,
+                slot_region.allocation_base,
+                region.allocation_base,
+            )
+        });
+        let label_match = is_expected_label(preview, label);
         expected_label_matches += u8::from(label_match);
+        nested_label_matches += u8::from(target_object.nested_pointers.iter().any(|pointer| {
+            is_expected_nested_label(pointer.nul_terminated_ascii.as_deref(), label)
+        }));
         let classification = if string_length.is_some() {
             "NULL_TERMINATED_ASCII_STRING"
         } else {
@@ -506,7 +580,9 @@ fn inspect_owner(
             pointer_chain: vec![owner_address, slot_address, target],
             target_classification: classification,
             expected_label_match: label_match,
-            target_preview_hex: preview_ok.then(|| hex(&preview)),
+            target_preview_hex: (!preview.is_empty()).then(|| hex(preview)),
+            target_object: Some(target_object),
+            row_history,
         });
     }
     Some(MetricsObjectCandidate {
@@ -518,10 +594,13 @@ fn inspect_owner(
         valid_row_pointers: valid,
         null_row_pointers: nulls,
         expected_label_matches,
+        direct_label_matches: expected_label_matches,
+        nested_label_matches,
+        confidence_basis: "VALID_ROW_POINTERS_AND_DIRECT_LABEL_MATCHES_ONLY; NESTED_LABELS_DO_NOT_UPGRADE",
         static_setup_reference_confirmed: true,
         owner_fields_share_allocation: true,
         confidence: candidate_confidence(valid, expected_label_matches),
-        renderer_consumption: "STATIC_SETUP_REFERENCE_CONFIRMED; LIVE_RENDERER_CONSUMPTION_UNCONFIRMED",
+        renderer_consumption: "STATIC_FUNCTION_SLOT_READS_CONFIRMED; RUNTIME_RENDERER_CONSUMPTION_UNCONFIRMED",
         rows,
     })
 }
@@ -662,174 +741,5 @@ fn probe_status_label(status: ProbeStatus) -> &'static str {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[cfg(target_pointer_width = "64")]
-    const SYNTHETIC_OWNER_WORDS: usize = 0x61E350 / size_of::<u64>();
-    #[cfg(target_pointer_width = "64")]
-    static SYNTHETIC_VTABLE: [u64; 1] = [0];
-    #[cfg(target_pointer_width = "64")]
-    static ROW_TEXTS: [&[u8]; 8] = [
-        b"FPS\0",
-        b"Total\0",
-        b"Render\0",
-        b"Game\0",
-        b"GPU\0",
-        b"CPU\0",
-        b"Session\0",
-        b"RS\0",
-    ];
-    #[cfg(target_pointer_width = "64")]
-    static mut SYNTHETIC_OWNER: [u64; SYNTHETIC_OWNER_WORDS] = [0; SYNTHETIC_OWNER_WORDS];
-    #[cfg(target_pointer_width = "64")]
-    static mut SYNTHETIC_OWNER_TWO: [u64; SYNTHETIC_OWNER_WORDS] = [0; SYNTHETIC_OWNER_WORDS];
-
-    #[test]
-    fn module_offset_returns_none_for_addresses_outside_the_image() {
-        assert_eq!(module_offset(0x1000, 0x2000, Some(0x3000)), None);
-        assert_eq!(module_offset(0x2000, 0x2000, Some(0x3000)), Some(0));
-        assert_eq!(module_offset(0x3000, 0x2000, Some(0x3000)), None);
-    }
-
-    #[cfg(target_pointer_width = "64")]
-    unsafe fn initialize_owner(owner: *mut u64, vtable_address: u64) {
-        // SAFETY: caller provides one of the synthetic arrays sized for every configured slot.
-        unsafe {
-            owner.write(vtable_address);
-            for (index, (_, offset)) in ROW_POINTERS.iter().enumerate() {
-                owner
-                    .add((*offset / size_of::<u64>() as u64) as usize)
-                    .write(ROW_TEXTS[index].as_ptr() as usize as u64);
-            }
-        }
-    }
-
-    #[test]
-    fn unknown_build_never_scans_process_memory() {
-        let probe = ProbeReport::empty(ProbeStatus::UnknownBuild, Some("test".to_owned()));
-
-        let report = discover_metrics_objects(probe);
-
-        assert_eq!(report.status, MetricsObjectStatus::UnknownBuild);
-        assert!(report.scan_stats.is_none());
-        assert!(report.candidates.is_empty());
-        assert!(report.owner_vtable_module_offset.is_none());
-        assert!(report.row_pointer_offsets.is_empty());
-        assert!(!report.memory_modified);
-    }
-
-    #[test]
-    fn recognized_build_without_the_verified_layout_is_refused_before_scanning() {
-        let mut probe = ProbeReport::empty(ProbeStatus::ExactMatch, None);
-        probe.build_resolution = Some(crate::identity::BuildResolution::ExactMatch {
-            build: crate::identity::BuildRecord {
-                id: "steam-25755603".to_owned(),
-                name: "future build".to_owned(),
-                sha256: "00".repeat(32),
-                file_version: None,
-                product_version: None,
-                steam_build_id: Some("25755603".to_owned()),
-            },
-        });
-
-        let report = discover_metrics_objects(probe);
-
-        assert_eq!(report.status, MetricsObjectStatus::UnsupportedLayout);
-        assert_eq!(report.layout_status, "UNSUPPORTED");
-        assert!(report.scan_stats.is_none());
-        assert!(report.candidates.is_empty());
-        assert!(report.owner_vtable_module_offset.is_none());
-        assert!(report.row_pointer_offsets.is_empty());
-    }
-
-    #[cfg(target_pointer_width = "64")]
-    #[test]
-    fn scans_and_validates_a_synthetic_metrics_owner_read_only() {
-        let vtable_address = SYNTHETIC_VTABLE.as_ptr() as usize as u64;
-        let owner = std::ptr::addr_of_mut!(SYNTHETIC_OWNER).cast::<u64>();
-        let owner_two = std::ptr::addr_of_mut!(SYNTHETIC_OWNER_TWO).cast::<u64>();
-        // SAFETY: these test-owned static structures have space for every configured row slot.
-        unsafe {
-            initialize_owner(owner, vtable_address);
-            initialize_owner(owner_two, vtable_address);
-        }
-        let owner_address = owner as usize as u64;
-        let owner_two_address = owner_two as usize as u64;
-        let (matches, stats, errors) = scan_process_for_pointer(
-            unsafe { windows_sys::Win32::System::Threading::GetCurrentProcess() },
-            vtable_address,
-        );
-        assert!(
-            stats.complete,
-            "synthetic process scan should be complete: {errors:?}"
-        );
-        assert!(matches.contains(&owner_address));
-        assert!(matches.contains(&owner_two_address));
-
-        let identity = ProcessIdentity {
-            creation_time_filetime: 1,
-            executable_path: std::path::PathBuf::new(),
-            module_base: vtable_address - OWNER_VTABLE_RVA,
-            image_size: 0x0400_0000,
-        };
-        let process = unsafe { windows_sys::Win32::System::Threading::GetCurrentProcess() };
-        let mut candidates = Vec::new();
-        for owner_address in [owner_address, owner_two_address] {
-            let mut errors = Vec::new();
-            let candidate = inspect_owner(
-                process,
-                owner_address,
-                vtable_address,
-                &identity,
-                &mut errors,
-            )
-            .expect("synthetic owner validates");
-            assert_eq!(candidate.valid_row_pointers, 8);
-            assert_eq!(candidate.expected_label_matches, 8);
-            assert_eq!(candidate.null_row_pointers, 0);
-            assert!(candidate.rows.iter().all(|row| {
-                row.expected_label_match
-                    && row.target_classification == "NULL_TERMINATED_ASCII_STRING"
-                    && row
-                        .target_region
-                        .as_ref()
-                        .is_some_and(|region| region.protection_name.starts_with("PAGE_"))
-            }));
-            assert!(errors.is_empty());
-            candidates.push(candidate);
-        }
-        assert_eq!(
-            classify_scan(candidates.len(), stats.complete),
-            MetricsObjectStatus::AmbiguousCandidate
-        );
-
-        let invalid_slot =
-            unsafe { owner.add((ROW_POINTERS[0].1 / size_of::<u64>() as u64) as usize) };
-        // SAFETY: invalid_slot points into the synthetic owner created above.
-        unsafe { invalid_slot.write(1) };
-        let mut errors = Vec::new();
-        let candidate = inspect_owner(
-            process,
-            owner_address,
-            vtable_address,
-            &identity,
-            &mut errors,
-        )
-        .expect("invalid row target does not invalidate the owner observation");
-        assert_eq!(candidate.valid_row_pointers, 7);
-        assert!(!candidate.rows[0].expected_label_match);
-        assert!(!errors.is_empty());
-        assert!(
-            stats.complete,
-            "candidate validation must not change scan coverage"
-        );
-        assert_eq!(
-            classify_scan(1, stats.complete),
-            MetricsObjectStatus::CandidatesFound
-        );
-        assert_eq!(candidate_validation_status(&errors), "INCOMPLETE");
-        // SAFETY: restore the fixture slot to its original valid row string pointer.
-        unsafe { invalid_slot.write(ROW_TEXTS[0].as_ptr() as usize as u64) };
-    }
-}
+#[path = "discovery_windows/tests.rs"]
+mod tests;
