@@ -1,3 +1,4 @@
+pub mod doctor;
 pub mod identity;
 pub mod memory;
 pub mod osd;
