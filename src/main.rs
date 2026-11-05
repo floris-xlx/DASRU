@@ -1,6 +1,7 @@
 use std::{env, ffi::OsStr, io, path::PathBuf, process::ExitCode};
 
 use dasru::{
+    doctor::DoctorReport,
     memory::{
         discover_metrics_objects, inspect_metrics_layout, inspect_metrics_layout_with_replacement,
         scan_metrics,
@@ -12,6 +13,12 @@ use serde::Serialize;
 fn main() -> ExitCode {
     let arguments: Vec<_> = env::args_os().skip(1).collect();
     match arguments.as_slice() {
+        [command] if command == OsStr::new("doctor") => {
+            print_doctor(dasru::doctor::inspect(), false)
+        }
+        [command, option] if command == OsStr::new("doctor") && option == OsStr::new("--json") => {
+            print_doctor(dasru::doctor::inspect(), true)
+        }
         [command] if command == OsStr::new("probe") => print_probe(run_probe(), false),
         [command, option] if command == OsStr::new("probe") && option == OsStr::new("--json") => {
             print_probe(run_probe(), true)
@@ -130,6 +137,10 @@ fn print_probe(report: ProbeReport, json: bool) -> ExitCode {
     print_report(&report, &report.to_human_text(), json, report.exit_code())
 }
 
+fn print_doctor(report: DoctorReport, json: bool) -> ExitCode {
+    print_report(&report, &report.to_human_text(), json, 0)
+}
+
 fn print_metrics(report: dasru::memory::MetricsScanReport, json: bool) -> ExitCode {
     tracing_subscriber::fmt()
         .with_writer(io::stderr)
@@ -181,7 +192,7 @@ fn print_metrics_layout_for_label(label: &OsStr, json: bool) -> ExitCode {
 
 fn print_usage() -> ExitCode {
     eprintln!(
-        "Usage: dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory discover --metrics-objects [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore"
+        "Usage: dasru doctor [--json]\n       dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory discover --metrics-objects [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore"
     );
     ExitCode::from(2)
 }
@@ -191,7 +202,7 @@ fn print_report<T: Serialize>(report: &T, human: &str, json: bool, exit_code: i3
         match serde_json::to_string_pretty(&report) {
             Ok(output) => println!("{output}"),
             Err(error) => {
-                eprintln!("Could not serialize probe report: {error}");
+                eprintln!("Could not serialize report: {error}");
                 return ExitCode::FAILURE;
             }
         }

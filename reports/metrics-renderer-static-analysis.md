@@ -59,7 +59,7 @@ Wrapper `0x4A0290` also reserves `0x870` stack bytes and formats into a `0x800`-
 
 ## Runtime observations from the saved capture
 
-[`metrics-gameplay-history-final.json`](../metrics-gameplay-history-final.json) records an exact-build process inspection with full committed-readable image/private/mapped scan coverage, no failed reads, eight row histories, and five samples at 250 ms intervals. Each history had count and capacity `180`; no pointer, count, capacity, or sampled element changes were reported. The report records `memory_modified: false`.
+An uncommitted local capture from an exact-build process inspection recorded full committed-readable image/private/mapped scan coverage, no failed reads, eight row histories, and five samples at 250 ms intervals. Each history had count and capacity `180`; no pointer, count, capacity, or sampled element changes were reported, and the capture recorded `memory_modified: false`. The local artifact was intentionally not included in the repository.
 
 Two limits matter when interpreting that result:
 

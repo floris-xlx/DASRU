@@ -3,6 +3,8 @@
 DOOM: The Dark Ages SpeedRun Utility. The first slice is a read-only Windows x64 identity probe.
 
 ```text
+dasru doctor
+dasru doctor --json
 dasru probe
 dasru probe --json
 dasru inspect --exe "C:\path\to\DOOMTheDarkAges.exe"
@@ -14,6 +16,8 @@ dasru memory inspect --metrics --json
 dasru memory inspect --metrics --replacement "%i FPS+" --json
 dasru memory discover --metrics-objects --json
 ```
+
+`doctor` emits a support report with host OS/version, architecture, Linux distribution/kernel and session type (`X11`, `WAYLAND`, `XWAYLAND`, or `HEADLESS`), Steam/Proton/Wine environment signals, and host capability hints. JSON uses `schema_version: 1`. Runtime detection reports environment variable names only, never their values. Capability and feature records keep `detected`, `accessible`, and `implementation_status` separate. `UNKNOWN` means no access test was run; a detected clipboard utility or display session never marks clipboard or hotkeys as implemented. The Wayland GlobalShortcuts portal is reported as `UNKNOWN` because doctor does not query D-Bus. Checks do not open game processes, touch the clipboard, or register hotkeys. Doctor exits `0` when it emits a report and `2` for invalid CLI usage.
 
 `inspect --exe` hashes and reads version metadata from an executable without looking for a running process. Its report uses `PROCESS_NOT_EVALUATED` semantics (`process_status: NOT_EVALUATED`), with an empty process list. `probe` discovers a process by executable name, retains its Windows process handle while it hashes the executable, and reports the live process identity.
 
