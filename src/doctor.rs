@@ -47,6 +47,7 @@ pub struct HostCapabilities {
     pub process_memory_read: Capability,
     pub clipboard: Capability,
     pub global_hotkeys: Capability,
+    pub keyboard_input: Capability,
     pub wayland_global_shortcuts_portal: Capability,
 }
 
@@ -165,6 +166,7 @@ impl DoctorReport {
             ),
             ("Clipboard", &self.host_capabilities.clipboard),
             ("Global hotkeys", &self.host_capabilities.global_hotkeys),
+            ("Keyboard input", &self.host_capabilities.keyboard_input),
             (
                 "Wayland GlobalShortcuts portal",
                 &self.host_capabilities.wayland_global_shortcuts_portal,
@@ -340,6 +342,7 @@ fn host_capabilities(
         process_memory_read: process_memory_capability(platform),
         clipboard: clipboard_capability(platform, session, xwayland_available),
         global_hotkeys: hotkey_capability(platform, session),
+        keyboard_input: keyboard_input_capability(platform),
         wayland_global_shortcuts_portal: portal_capability(platform, session),
     }
 }
@@ -467,6 +470,29 @@ fn portal_capability(platform: HostPlatform, session: &'static str) -> Capabilit
     }
 }
 
+fn keyboard_input_capability(platform: HostPlatform) -> Capability {
+    match platform {
+        HostPlatform::Windows => Capability {
+            detected: "DETECTED",
+            accessible: "UNKNOWN",
+            implementation_status: "NOT_IMPLEMENTED",
+            reason: "Windows provides the SendInput API, but DASRU has not tested input access and does not inject keyboard input.".to_owned(),
+        },
+        HostPlatform::Linux => Capability {
+            detected: "UNKNOWN",
+            accessible: "UNKNOWN",
+            implementation_status: "NOT_IMPLEMENTED",
+            reason: "DASRU has no Linux keyboard-input backend; host input access was not tested.".to_owned(),
+        },
+        HostPlatform::Other => Capability {
+            detected: "UNKNOWN",
+            accessible: "UNKNOWN",
+            implementation_status: "NOT_IMPLEMENTED",
+            reason: "DASRU has no keyboard-input backend for this platform.".to_owned(),
+        },
+    }
+}
+
 #[derive(Clone, Copy)]
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 enum UtilityDetection {
@@ -577,6 +603,18 @@ fn feature_readiness(
             implementation_status: "NOT_IMPLEMENTED",
             readiness: "NOT_IMPLEMENTED",
             failure_reasons: vec!["DASRU has no global-hotkey feature."],
+        },
+        FeatureReadiness {
+            feature: "keyboard_input",
+            detected: capabilities.keyboard_input.detected,
+            accessible: capabilities.keyboard_input.accessible,
+            implementation_status: capabilities.keyboard_input.implementation_status,
+            readiness: if platform == HostPlatform::Windows {
+                "NOT_IMPLEMENTED"
+            } else {
+                "UNSUPPORTED_PLATFORM"
+            },
+            failure_reasons: vec!["DASRU does not inject keyboard input."],
         },
         FeatureReadiness {
             feature: "wayland_global_shortcuts_portal",
@@ -804,6 +842,19 @@ mod tests {
         assert_eq!(capability.detected, "UNKNOWN");
         assert_eq!(capability.accessible, "UNKNOWN");
         assert_eq!(capability.implementation_status, "NOT_IMPLEMENTED");
+    }
+
+    #[test]
+    fn keyboard_input_api_detection_does_not_claim_access_or_implementation() {
+        let windows = keyboard_input_capability(HostPlatform::Windows);
+        assert_eq!(windows.detected, "DETECTED");
+        assert_eq!(windows.accessible, "UNKNOWN");
+        assert_eq!(windows.implementation_status, "NOT_IMPLEMENTED");
+
+        let linux = keyboard_input_capability(HostPlatform::Linux);
+        assert_eq!(linux.detected, "UNKNOWN");
+        assert_eq!(linux.accessible, "UNKNOWN");
+        assert_eq!(linux.implementation_status, "NOT_IMPLEMENTED");
     }
 
     #[cfg(target_os = "linux")]

@@ -5,3 +5,4 @@ pub mod osd;
 pub mod probe;
 pub mod process;
 mod steam;
+pub mod support;
