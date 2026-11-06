@@ -32,7 +32,7 @@ GAME STATUS and GAME VERSION show actual process/build/listener evidence and a
 refresh action. Dynamic read-only values use disabled inputs.
 
 More hotkeys / advanced expands observation counters and the last event. It states
-that additional bindings are not implemented; no fake FPS-toggle bindings are
+that additional binding editing is unavailable in this window; no fake FPS-toggle bindings are
 shown. FPS limiting, freescroll, resolution scaling and trainer operations are
 explicitly unavailable, with operational controls omitted. No fabricated FPS or
 scaling values are displayed. Metrics are explicitly not collected by this UI.

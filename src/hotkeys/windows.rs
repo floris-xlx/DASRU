@@ -776,6 +776,27 @@ mod tests {
     }
 
     #[test]
+    fn multiple_bindings_activate_together_and_deactivate_together() {
+        let _lock = test_lock();
+        let bindings = [
+            binding(),
+            HotkeyBinding::parse("CTRL+ALT+SHIFT+F23").unwrap(),
+        ];
+        let mut backend = WindowsBackend::start(&bindings).unwrap();
+        let mut registrar = backend.registrar();
+
+        registrar.register(1, bindings[0]).unwrap();
+        registrar.register(2, bindings[1]).unwrap();
+        assert!(keyboard_raw_input_registered());
+        registrar.unregister(1).unwrap();
+        assert!(keyboard_raw_input_registered());
+        registrar.unregister(2).unwrap();
+        assert!(!keyboard_raw_input_registered());
+        backend.shutdown().unwrap();
+        assert!(!keyboard_raw_input_registered());
+    }
+
+    #[test]
     fn repeated_start_stop_releases_resources() {
         let _lock = test_lock();
         for _ in 0..3 {

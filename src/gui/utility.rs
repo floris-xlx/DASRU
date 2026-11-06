@@ -76,7 +76,7 @@ impl DesktopApp {
                                     .desired_width(f32::INFINITY),
                             );
                             egui::CollapsingHeader::new("More hotkeys / advanced").show(ui, |ui| {
-                                ui.label("Additional bindings are not implemented.");
+                                ui.label("Additional bindings are unavailable in this window.");
                                 egui::Grid::new("advanced_hotkeys").show(ui, |ui| {
                                     theme::value(ui, "Accepted", listener.accepted);
                                     theme::value(ui, "Rejected", listener.rejected);

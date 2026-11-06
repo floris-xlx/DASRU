@@ -77,3 +77,13 @@ uses a user-entered destination path; no overwrite prompt grants replacement.
 The path selector is an input, not a native browse dialog.
 
 The Raw Input event queue has capacity 256 and uses nonblocking sends. Overflow invalidates queued chord generations and surfaces HOTKEY_EVENT_QUEUE_OVERFLOW as a terminal runtime failure. The Windows message loop never waits for event-queue capacity.
+
+## Integration with merged PR #9
+
+The shared Windows session consumes the existing ConfiguredBinding model and
+ActionDispatcher. Configured IDs and action-generation checks survive the runtime
+extraction. Typed Action events retain CLI accepted/action output order; the GUI
+counts each accepted Observation once, rather than also counting its Action event.
+The GUI still exposes one observation binding; multi-binding configuration remains
+available through the existing CLI. PR #9's evidence stays in pr9-tdd-evidence.md;
+desktop evidence is now pr10-tdd-evidence.md.

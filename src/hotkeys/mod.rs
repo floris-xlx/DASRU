@@ -1,6 +1,8 @@
 pub mod binding;
+pub mod config;
 #[cfg(any(windows, test))]
 mod diagnostics;
+pub mod dispatch;
 pub mod keyboard;
 pub mod manager;
 pub mod runtime;
@@ -8,9 +10,11 @@ pub mod state;
 #[cfg(windows)]
 mod windows;
 
-use std::{ffi::OsString, process::ExitCode};
+use std::{ffi::OsString, path::Path, process::ExitCode};
 
 use binding::{BindingError, HotkeyBinding, validate_bindings};
+use config::{HotkeyConfig, HotkeyConfigError};
+use dispatch::ConfiguredBinding;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HotkeyErrorCode {
@@ -90,57 +94,132 @@ impl std::fmt::Display for HotkeyErrorCode {
 }
 
 pub fn run_cli(arguments: &[OsString]) -> ExitCode {
-    if arguments.first().and_then(|argument| argument.to_str()) != Some("listen") {
-        return invalid_arguments();
+    match arguments.first().and_then(|argument| argument.to_str()) {
+        Some("validate") => {
+            let Some(path) = config_argument(arguments, "validate") else {
+                return invalid_arguments();
+            };
+            let config = match HotkeyConfig::load(Path::new(path)) {
+                Ok(config) => config,
+                Err(error) => return config_error(error),
+            };
+            let bindings = match ConfiguredBinding::from_config(&config) {
+                Ok(bindings) => bindings,
+                Err(_) => {
+                    eprintln!("HOTKEY_CONFIG_UNKNOWN_ACTION");
+                    return ExitCode::from(2);
+                }
+            };
+            println!("HOTKEY_CONFIG_VALID bindings={}", bindings.len());
+            ExitCode::SUCCESS
+        }
+        Some("listen") => listen_cli(arguments),
+        _ => invalid_arguments(),
     }
+}
 
+fn config_argument<'a>(arguments: &'a [OsString], command: &str) -> Option<&'a std::ffi::OsStr> {
+    match arguments {
+        [action, flag, path] if action == command && flag == "--config" && !path.is_empty() => {
+            Some(path)
+        }
+        _ => None,
+    }
+}
+
+fn listen_cli(arguments: &[OsString]) -> ExitCode {
     let mut bindings = Vec::new();
+    let mut config_path = None;
     let mut index = 1;
     while index < arguments.len() {
-        if arguments[index].to_str() != Some("--bind") {
-            return invalid_arguments();
+        match arguments[index].to_str() {
+            Some("--bind") if config_path.is_none() => {
+                let Some(value) = arguments
+                    .get(index + 1)
+                    .and_then(|argument| argument.to_str())
+                else {
+                    return invalid_arguments();
+                };
+                match HotkeyBinding::parse(value) {
+                    Ok(binding) => bindings.push(binding),
+                    Err(error) => return binding_error(error),
+                }
+                index += 2;
+            }
+            Some("--config") if config_path.is_none() && bindings.is_empty() => {
+                let Some(path) = arguments.get(index + 1).filter(|path| !path.is_empty()) else {
+                    return invalid_arguments();
+                };
+                config_path = Some(path);
+                index += 2;
+                if index != arguments.len() {
+                    return invalid_arguments();
+                }
+            }
+            _ => return invalid_arguments(),
         }
-        let Some(value) = arguments
-            .get(index + 1)
-            .and_then(|argument| argument.to_str())
-        else {
-            return invalid_arguments();
-        };
-        match HotkeyBinding::parse(value) {
-            Ok(binding) => bindings.push(binding),
-            Err(error) => return binding_error(error),
-        }
-        index += 2;
     }
 
-    if bindings.is_empty() {
-        return invalid_arguments();
-    }
-    if let Err(error) = validate_bindings(&bindings) {
-        return binding_error(error);
-    }
+    let configured = if let Some(path) = config_path {
+        let config = match HotkeyConfig::load(Path::new(path)) {
+            Ok(config) => config,
+            Err(error) => return config_error(error),
+        };
+        match ConfiguredBinding::from_config(&config) {
+            Ok(bindings) => bindings,
+            Err(_) => {
+                eprintln!("HOTKEY_CONFIG_UNKNOWN_ACTION");
+                return ExitCode::from(2);
+            }
+        }
+    } else {
+        if bindings.is_empty() {
+            return invalid_arguments();
+        }
+        if let Err(error) = validate_bindings(&bindings) {
+            return binding_error(error);
+        }
+        bindings
+            .into_iter()
+            .enumerate()
+            .map(|(index, binding)| ConfiguredBinding {
+                id: if index == 0 {
+                    "legacy".to_owned()
+                } else {
+                    format!("legacy-{}", index + 1)
+                },
+                binding,
+                action: binding.action(),
+            })
+            .collect()
+    };
 
     #[cfg(not(windows))]
     {
-        eprintln!(
-            "HOTKEY_UNSUPPORTED_PLATFORM: Win32 global hotkeys require Windows; binding={}",
-            bindings[0]
-        );
+        let _ = configured;
+        eprintln!("HOTKEY_UNSUPPORTED_PLATFORM: Win32 raw input requires Windows");
         ExitCode::FAILURE
     }
 
     #[cfg(windows)]
     {
-        windows::run_cli(bindings)
+        windows::run_cli(configured)
     }
 }
 
 fn invalid_arguments() -> ExitCode {
-    eprintln!("HOTKEY_INVALID_ARGUMENTS: expected hotkeys listen --bind <shortcut>");
+    eprintln!(
+        "HOTKEY_INVALID_ARGUMENTS: expected hotkeys validate --config <path> or hotkeys listen --config <path> or --bind <shortcut>"
+    );
     ExitCode::from(2)
 }
 
 fn binding_error(error: BindingError) -> ExitCode {
     eprintln!("{}", error);
+    ExitCode::from(2)
+}
+
+fn config_error(error: HotkeyConfigError) -> ExitCode {
+    eprintln!("{}", error.code());
     ExitCode::from(2)
 }

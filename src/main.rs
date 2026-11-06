@@ -216,7 +216,7 @@ fn print_metrics_layout_for_label(label: &OsStr, json: bool) -> ExitCode {
 
 fn print_usage() -> ExitCode {
     eprintln!(
-        "Usage: dasru doctor [--json]\n       dasru probe [--json]\n       dasru support export <path>\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory discover --metrics-objects [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore\n       dasru hotkeys listen --bind CTRL+ALT+F9 [--bind <shortcut>]"
+        "Usage: dasru doctor [--json]\n       dasru probe [--json]\n       dasru support export <path>\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory discover --metrics-objects [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore\n       dasru hotkeys validate --config <path>\n       dasru hotkeys listen --config <path>\n       dasru hotkeys listen --bind CTRL+ALT+F9 [--bind <shortcut>]"
     );
     ExitCode::from(2)
 }

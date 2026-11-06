@@ -15,8 +15,20 @@ use std::{
 pub enum RuntimeEvent {
     State(HotkeyState),
     Observation(HotkeyEvent),
+    Action(super::dispatch::ActionEvent),
     Failure(HotkeyErrorCode),
     Summary(String),
+}
+
+#[cfg(any(windows, test))]
+pub(crate) struct RuntimeActionSink<'a, 'b>(
+    pub &'a std::cell::RefCell<&'b mut dyn FnMut(RuntimeEvent)>,
+);
+#[cfg(any(windows, test))]
+impl super::dispatch::ActionEventSink for RuntimeActionSink<'_, '_> {
+    fn emit(&mut self, event: super::dispatch::ActionEvent) {
+        self.0.borrow_mut()(RuntimeEvent::Action(event));
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -97,6 +109,14 @@ impl HotkeyRuntime {
                     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                         backend.run(binding, &stop, &mut |event| {
                             let mut snapshot = snapshot.lock().unwrap_or_else(|e| e.into_inner());
+                            if stop.load(Ordering::Acquire)
+                                && matches!(
+                                    &event,
+                                    RuntimeEvent::Observation(_) | RuntimeEvent::Action(_)
+                                )
+                            {
+                                return;
+                            }
                             match event {
                                 RuntimeEvent::State(state) => {
                                     snapshot.state = state;
@@ -117,6 +137,7 @@ impl HotkeyRuntime {
                                 }
                                 RuntimeEvent::Failure(code) => snapshot.last_error = Some(code),
                                 RuntimeEvent::Summary(summary) => snapshot.diagnostics = summary,
+                                RuntimeEvent::Action(_) => {}
                             }
                         })
                     }))
@@ -172,7 +193,12 @@ impl RuntimeBackend for NativeRuntime {
         #[cfg(windows)]
         {
             let mut failure = None;
-            let result = super::windows::run_session(vec![binding], stop, &mut |event| {
+            let configured = super::dispatch::ConfiguredBinding {
+                id: "gui-observation".into(),
+                binding,
+                action: binding.action(),
+            };
+            let result = super::windows::run_session(vec![configured], stop, &mut |event| {
                 if let RuntimeEvent::Failure(code) = &event {
                     failure = Some(*code);
                 }
@@ -189,5 +215,35 @@ impl RuntimeBackend for NativeRuntime {
             let _ = (binding, stop, sink);
             Err(HotkeyErrorCode::UnsupportedPlatform)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::hotkeys::dispatch::{ActionDispatcher, ConfiguredBinding};
+    #[test]
+    fn configured_actions_keep_their_id_and_focus_generation_fence() {
+        let binding = HotkeyBinding::parse("Ctrl+Alt+F9").unwrap();
+        let mut events = Vec::new();
+        let mut callback = |event| events.push(event);
+        {
+            let sink = std::cell::RefCell::new(&mut callback as &mut dyn FnMut(RuntimeEvent));
+            let mut dispatcher = ActionDispatcher::new(
+                vec![ConfiguredBinding {
+                    id: "configured-observe".into(),
+                    binding,
+                    action: binding.action(),
+                }],
+                RuntimeActionSink(&sink),
+            );
+            assert!(!dispatcher.dispatch(HotkeyEvent::Accepted(binding), 1, 2));
+            assert!(dispatcher.dispatch(HotkeyEvent::Accepted(binding), 2, 2));
+            dispatcher.shutdown();
+            assert!(!dispatcher.dispatch(HotkeyEvent::Accepted(binding), 2, 2));
+        }
+        assert!(
+            matches!(events.as_slice(),[RuntimeEvent::Action(event)] if event.id=="configured-observe" && event.binding==binding)
+        );
     }
 }

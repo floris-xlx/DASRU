@@ -5,6 +5,10 @@ use crate::hotkeys::{
     diagnostics::{HotkeyDiagnostics, Stage},
     manager::{ForegroundBackend, HotkeyEvent, HotkeyManager, HotkeyState, VerifiedGameProcess},
 };
+use crate::hotkeys::{
+    dispatch::{ActionDispatcher, ConfiguredBinding},
+    runtime::{RuntimeActionSink, RuntimeEvent},
+};
 use crate::{
     capability::{self, BuildEvidence, CapabilityEvidence, FeatureId, ProcessEvidence},
     identity::{BuildRegistry, BuildResolution, ExecutableIdentity},
@@ -13,6 +17,7 @@ use crate::{
         enumerate_pinned_game_processes, recheck_pinned_process,
     },
 };
+use std::cell::RefCell;
 use std::sync::mpsc;
 use std::{
     process::ExitCode,
@@ -187,7 +192,8 @@ unsafe extern "system" fn console_control(_control: u32) -> i32 {
     1
 }
 
-pub(crate) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
+pub(crate) fn run_cli(configured: Vec<ConfiguredBinding>) -> ExitCode {
+    let bindings: Vec<_> = configured.iter().map(|entry| entry.binding).collect();
     STOP_REQUESTED.store(false, Ordering::SeqCst);
     let handler = unsafe {
         // SAFETY: static callback only sets an atomic flag.
@@ -197,11 +203,20 @@ pub(crate) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
         eprintln!("HOTKEY_SHUTDOWN_FAILED");
         return ExitCode::FAILURE;
     }
-    let result = run_session(bindings.clone(), &STOP_REQUESTED, &mut |event| {
+    let result = run_session(configured, &STOP_REQUESTED, &mut |event| {
         use crate::hotkeys::runtime::RuntimeEvent;
         match event {
             RuntimeEvent::State(state) => print_runtime_state(state, &bindings),
+            // Accepted output accompanies Action below to preserve CLI ordering without duplicates.
+            RuntimeEvent::Observation(HotkeyEvent::Accepted(_)) => {}
             RuntimeEvent::Observation(event) => print_hotkey_event(event),
+            RuntimeEvent::Action(event) => {
+                print_hotkey_event(HotkeyEvent::Accepted(event.binding));
+                let action = match event.action {
+                    crate::hotkeys::binding::HotkeyAction::Observe => "observe",
+                };
+                println!("HOTKEY_ACTION_DISPATCHED id={} action={action}", event.id);
+            }
             RuntimeEvent::Failure(code) => eprintln!("{code}"),
             RuntimeEvent::Summary(summary) => println!("{summary}"),
         }
@@ -214,15 +229,16 @@ pub(crate) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
 }
 
 pub(crate) fn run_session(
-    bindings: Vec<HotkeyBinding>,
+    configured: Vec<ConfiguredBinding>,
     stop: &AtomicBool,
     sink: &mut dyn FnMut(crate::hotkeys::runtime::RuntimeEvent),
 ) -> ExitCode {
-    use crate::hotkeys::runtime::RuntimeEvent;
+    let sink = RefCell::new(sink);
+    let bindings: Vec<_> = configured.iter().map(|entry| entry.binding).collect();
     let (game, foreground) = match attach_to_game(stop) {
         Ok(attached) => attached,
         Err(code) => {
-            sink(RuntimeEvent::Failure(code));
+            sink.borrow_mut()(RuntimeEvent::Failure(code));
             return ExitCode::FAILURE;
         }
     };
@@ -231,7 +247,7 @@ pub(crate) fn run_session(
         match WindowsBackend::start_with_diagnostics(&bindings, Arc::clone(&diagnostics)) {
             Ok(backend) => backend,
             Err(code) => {
-                sink(RuntimeEvent::Failure(code));
+                sink.borrow_mut()(RuntimeEvent::Failure(code));
                 return ExitCode::FAILURE;
             }
         };
@@ -239,13 +255,14 @@ pub(crate) fn run_session(
         match HotkeyManager::new(bindings.clone(), game, backend.registrar(), foreground) {
             Ok(manager) => manager,
             Err(_) => {
-                sink(RuntimeEvent::Failure(HotkeyErrorCode::InvalidBinding));
+                sink.borrow_mut()(RuntimeEvent::Failure(HotkeyErrorCode::InvalidBinding));
                 let _ = backend.shutdown();
                 return ExitCode::FAILURE;
             }
         };
+    let mut dispatcher = ActionDispatcher::new(configured, RuntimeActionSink(&sink));
     if let Err(failure) = manager.start() {
-        sink(RuntimeEvent::Failure(failure.code));
+        sink.borrow_mut()(RuntimeEvent::Failure(failure.code));
         if failure.code != HotkeyErrorCode::RegistrationConflict {
             let _ = manager.shutdown();
             let _ = backend.shutdown();
@@ -258,7 +275,7 @@ pub(crate) fn run_session(
     report_state_change(
         manager.state(),
         &mut last_reported_state,
-        sink,
+        &sink,
         &diagnostics,
     );
     let mut exit_code = ExitCode::SUCCESS;
@@ -298,8 +315,17 @@ pub(crate) fn run_session(
                         diagnostics.increment(Stage::ChordCandidate);
                         match event {
                             HotkeyEvent::Accepted(_) => {
-                                diagnostics.increment(Stage::Accepted);
-                                sink(RuntimeEvent::Observation(event));
+                                if dispatcher.dispatch(
+                                    event,
+                                    generation,
+                                    FOCUS_GENERATION.load(Ordering::Acquire),
+                                ) {
+                                    diagnostics.increment(Stage::Accepted);
+                                    sink.borrow_mut()(RuntimeEvent::Observation(event));
+                                } else {
+                                    diagnostics.increment(Stage::StaleDropped);
+                                    manager.reset_keyboard_state();
+                                }
                             }
                             HotkeyEvent::Rejected { code, .. } => {
                                 diagnostics.increment(Stage::Rejected);
@@ -313,7 +339,7 @@ pub(crate) fn run_session(
                                 ) {
                                     diagnostics.increment(Stage::IdentityRejected);
                                 }
-                                sink(RuntimeEvent::Observation(event));
+                                sink.borrow_mut()(RuntimeEvent::Observation(event));
                             }
                         }
                     }
@@ -321,7 +347,7 @@ pub(crate) fn run_session(
                 report_state_change(
                     manager.state(),
                     &mut last_reported_state,
-                    sink,
+                    &sink,
                     &diagnostics,
                 );
             }
@@ -330,7 +356,7 @@ pub(crate) fn run_session(
                     manager.reset_keyboard_state();
                 }
                 if let Err(failure) = manager.reconcile() {
-                    sink(RuntimeEvent::Failure(failure.code));
+                    sink.borrow_mut()(RuntimeEvent::Failure(failure.code));
                     if failure.code != HotkeyErrorCode::RegistrationConflict {
                         exit_code = ExitCode::FAILURE;
                         break;
@@ -338,25 +364,25 @@ pub(crate) fn run_session(
                     report_state_change(
                         manager.state(),
                         &mut last_reported_state,
-                        sink,
+                        &sink,
                         &diagnostics,
                     );
                 } else {
                     report_state_change(
                         manager.state(),
                         &mut last_reported_state,
-                        sink,
+                        &sink,
                         &diagnostics,
                     );
                 }
             }
             Ok(BackendEvent::Failed(code)) => {
-                sink(RuntimeEvent::Failure(code));
+                sink.borrow_mut()(RuntimeEvent::Failure(code));
                 exit_code = ExitCode::FAILURE;
                 break;
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
-                sink(RuntimeEvent::Failure(
+                sink.borrow_mut()(RuntimeEvent::Failure(
                     HotkeyErrorCode::MessageLoopStartFailed,
                 ));
                 exit_code = ExitCode::FAILURE;
@@ -366,27 +392,28 @@ pub(crate) fn run_session(
     }
 
     if let Err(failure) = manager.shutdown() {
-        sink(RuntimeEvent::Failure(failure.code));
+        sink.borrow_mut()(RuntimeEvent::Failure(failure.code));
         exit_code = ExitCode::FAILURE;
     }
+    dispatcher.shutdown();
     report_state_change(
         manager.state(),
         &mut last_reported_state,
-        sink,
+        &sink,
         &diagnostics,
     );
     if let Err(code) = backend.shutdown() {
-        sink(RuntimeEvent::Failure(code));
+        sink.borrow_mut()(RuntimeEvent::Failure(code));
         exit_code = ExitCode::FAILURE;
     }
-    sink(RuntimeEvent::Summary(diagnostics.summary()));
+    sink.borrow_mut()(RuntimeEvent::Summary(diagnostics.summary()));
     exit_code
 }
 
 fn report_state_change(
     state: HotkeyState,
     last_reported: &mut Option<HotkeyState>,
-    sink: &mut dyn FnMut(crate::hotkeys::runtime::RuntimeEvent),
+    sink: &RefCell<&mut dyn FnMut(RuntimeEvent)>,
     diagnostics: &HotkeyDiagnostics,
 ) {
     if *last_reported == Some(state) {
@@ -403,7 +430,7 @@ fn report_state_change(
         _ => {}
     }
     *last_reported = Some(state);
-    sink(crate::hotkeys::runtime::RuntimeEvent::State(state));
+    sink.borrow_mut()(RuntimeEvent::State(state));
 }
 
 fn print_runtime_state(state: HotkeyState, bindings: &[HotkeyBinding]) {
