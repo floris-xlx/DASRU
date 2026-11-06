@@ -5,6 +5,17 @@ The Windows-only native `dasru-gui` executable consumes the DASRU library direct
 Default Linux builds do not compile UI dependencies. All-feature Linux builds test
 headless egui rendering and the platform-independent controllers.
 
+## Presentation - revised PR #10 direction
+
+A single fixed-width, two-column utility replaces sidebar navigation. Primary
+process, build, binding and listener controls remain in one window. Settings,
+Help and Diagnostics use separate egui dialog windows over the utility. Dialogs
+are presentation state only; opening or closing one does not reset monitoring or
+the listener. Auxiliary dialogs are not new OS windows or subprocesses.
+Legacy window widths are normalized on load without discarding other preferences
+or rewriting their file until a validated save. See gui-design.md for the current
+layout contract, which supersedes the initial sidebar specification.
+
 ## Ownership and concurrency
 
 `DesktopApp` renders projections and sends typed controller requests. It never

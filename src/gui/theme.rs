@@ -51,9 +51,9 @@ pub fn apply(ctx: &egui::Context, dark: bool) {
         &mut visuals.widgets.noninteractive,
         &mut visuals.widgets.open,
     ] {
-        widget.corner_radius = egui::CornerRadius::same(6);
+        widget.corner_radius = egui::CornerRadius::same(3);
     }
-    visuals.window_corner_radius = egui::CornerRadius::same(6);
+    visuals.window_corner_radius = egui::CornerRadius::same(3);
     ctx.set_visuals_of(selected, visuals);
 }
 pub fn value(ui: &mut egui::Ui, label: &str, value: impl ToString) {
@@ -61,7 +61,9 @@ pub fn value(ui: &mut egui::Ui, label: &str, value: impl ToString) {
     let mut value = value.to_string();
     ui.add_enabled(
         false,
-        egui::TextEdit::singleline(&mut value).desired_width(f32::INFINITY),
+        egui::TextEdit::singleline(&mut value)
+            .desired_width(f32::INFINITY)
+            .min_size(egui::vec2(180.0, 0.0)),
     );
     ui.end_row();
 }
@@ -71,7 +73,7 @@ pub fn skeleton(ui: &mut egui::Ui, width: f32) {
         egui::Sense::hover(),
     );
     ui.painter()
-        .rect_filled(rect, 6, ui.visuals().widgets.inactive.bg_fill);
+        .rect_filled(rect, 3, ui.visuals().widgets.inactive.bg_fill);
 }
 pub fn connection(ui: &mut egui::Ui, connection: Connection) {
     ui.label("Connection");
@@ -80,6 +82,7 @@ pub fn connection(ui: &mut egui::Ui, connection: Connection) {
         false,
         egui::TextEdit::singleline(&mut text)
             .text_color(connection_color(connection))
+            .min_size(egui::vec2(180.0, 0.0))
             .desired_width(f32::INFINITY),
     );
     ui.end_row();

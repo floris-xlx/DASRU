@@ -1,10 +1,10 @@
 use super::{
     DesktopApp, controller::ExportStatus, model::Connection, settings::WriteStatus, theme,
 };
-use crate::hotkeys::{binding::HotkeyBinding, manager::HotkeyState};
+use crate::hotkeys::binding::HotkeyBinding;
 
 impl DesktopApp {
-    pub(super) fn hotkey_controls(&mut self, ui: &mut egui::Ui) {
+    pub(super) fn listener_controls(&mut self, ui: &mut egui::Ui) {
         let snapshot = self
             .controller
             .as_ref()
@@ -14,37 +14,6 @@ impl DesktopApp {
             .controller
             .as_ref()
             .is_some_and(|c| c.listener_running());
-        ui.label("Observation only: a shortcut records an event and performs no game action.");
-        egui::Grid::new("hotkey_status")
-            .num_columns(2)
-            .spacing([24.0, 12.0])
-            .show(ui, |ui| {
-                theme::value(ui, "Listener", format!("{:?}", snapshot.state));
-                theme::value(
-                    ui,
-                    "Foreground",
-                    if snapshot.state == HotkeyState::Active {
-                        "Verified game foreground"
-                    } else {
-                        "Not confirmed"
-                    },
-                );
-                theme::value(ui, "Accepted observations", snapshot.accepted);
-                theme::value(ui, "Rejected observations", snapshot.rejected);
-                theme::value(
-                    ui,
-                    "Last event",
-                    snapshot
-                        .last_event
-                        .map(|e| format!("{e:?}"))
-                        .unwrap_or_else(|| "None".into()),
-                );
-            });
-        ui.label("Observation shortcut");
-        ui.add_enabled(
-            !running,
-            egui::TextEdit::singleline(&mut self.preferences.binding),
-        );
         let valid = HotkeyBinding::parse(&self.preferences.binding).is_ok();
         let verified = self.model.connection(std::time::Instant::now()) == Connection::Verified;
         let cleanup_failed = matches!(
@@ -60,7 +29,7 @@ impl DesktopApp {
         if !verified {
             ui.colored_label(
                 theme::WARNING,
-                "A verified registered game process is required before starting.",
+                "Start requires a verified registered build.",
             );
         }
         if let Some(error) = snapshot.last_error {

@@ -7,8 +7,15 @@ fn main() -> eframe::Result {
         eframe::NativeOptions {
             renderer: eframe::Renderer::Glow,
             viewport: egui::ViewportBuilder::default()
-                .with_inner_size([1000.0, 680.0])
-                .with_min_inner_size([860.0, 560.0]),
+                .with_inner_size(dasru::gui::settings::Preferences::default().size)
+                .with_min_inner_size([
+                    dasru::gui::settings::WINDOW_WIDTH,
+                    dasru::gui::settings::MIN_HEIGHT,
+                ])
+                .with_max_inner_size([
+                    dasru::gui::settings::WINDOW_WIDTH,
+                    dasru::gui::settings::MAX_HEIGHT,
+                ]),
             ..Default::default()
         },
         Box::new(|creation| {

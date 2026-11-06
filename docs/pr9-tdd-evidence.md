@@ -1,5 +1,51 @@
 # Desktop UI TDD evidence
 
+
+## Current presentation revision: compact DESRU-style utility
+
+The user's revised direction supersedes the sidebar/page specification. The
+current design contract is gui-design.md: fixed 720-point width, paired utility
+panels, one primary window, expandable hotkey details, and separate Settings,
+Help and Diagnostics dialogs. Rust services and safeguards remain authoritative.
+Earlier sidebar screenshots and measurements below are historical, not current
+visual acceptance evidence.
+
+Observed red/green cycles for this revision:
+
+- Primary-panel test failed with missing KEYBINDS and painted Dashboard/sidebar
+  labels; now all seven panel headers and three footer buttons are present.
+- Default geometry failed [1000, 680] versus [720, 700]; compact defaults now pass.
+- Dialog tests initially failed compilation with missing Dialog/open/close API;
+  open/close and 100-200% headless render tests now pass while the utility remains.
+- Legacy-width migration failed [1000, 680] versus [720, 680]; normalized load now
+  preserves binding/theme and leaves the original file untouched until save.
+- Dialog text-scale test failed because the new window inherited unscaled text;
+  shared context styling now applies the preference to dialog instructions.
+- Native screenshot revealed clipped status fields. The painted-text assertion
+  failed with NotRunning is clipped; shared minimum input sizing now passes.
+- Panel alignment, footer visibility and idle repaint-delay checks pass. The idle
+  check was a regression safeguard, not a claimed red/green failure cycle.
+
+Final local checks: 202 WSL all-target/all-feature tests passed, Windows and WSL
+Clippy passed with warnings denied, formatting passed, and Windows Rust 1.95
+all-target/all-feature check passed. New hosted CI is pending after this push;
+the prior green runs below do not by themselves validate this layout revision.
+
+Current native Windows evidence: evidence/gui-window.png shows the compact main
+utility; evidence/gui-compact-diagnostics.png shows the real Diagnostics dialog.
+The smoke test asserts a 720-logical-pixel client width. Latest debug/no-game
+sample at 96 DPI: visible startup 403.7 ms, 234.4 ms process CPU over ten seconds,
+working set 77,152,256 -> 76,828,672 bytes, maximum message response 6.28 ms,
+normal close 90.5 ms, exit code 0. See evidence/gui-smoke.json. These short samples
+are not sustained or release idle-performance acceptance.
+
+FPS limiting, freescroll, resolution scaling and trainer controls remain absent
+or explicitly unavailable. Original/custom DESRU fonts and source were not copied.
+Physical TDA hotkeys, native high-DPI/multi-monitor behavior, sustained performance
+and the previously recorded isolated close-timeout investigation remain open.
+
+## Historical foundation implementation evidence
+
 Base: 378063005c3669426b87e6d5d1343b92f8ce02eb.
 Branch: feat/desktop-ui-foundation. Draft PR #10 (#9 already existed).
 

@@ -1,15 +1,13 @@
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Screen {
-    #[default]
-    Dashboard,
-    Hotkeys,
-    Diagnostics,
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Dialog {
     Settings,
+    Help,
+    Diagnostics,
 }
 
 #[derive(Default)]
 pub struct DesktopApp {
-    screen: Screen,
+    dialog: Option<Dialog>,
     controller: Option<controller::Controller>,
     model: model::Model,
     preferences: settings::Preferences,
@@ -86,12 +84,14 @@ impl DesktopApp {
             ..Self::default()
         })
     }
-    pub fn screen(&self) -> Screen {
-        self.screen
+    pub fn dialog(&self) -> Option<Dialog> {
+        self.dialog
     }
-
-    pub fn select(&mut self, screen: Screen) {
-        self.screen = screen;
+    pub fn open_dialog(&mut self, dialog: Dialog) {
+        self.dialog = Some(dialog);
+    }
+    pub fn close_dialog(&mut self) {
+        self.dialog = None;
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) {
@@ -109,53 +109,29 @@ impl DesktopApp {
         for font in style.text_styles.values_mut() {
             font.size *= self.preferences.text_scale;
         }
+        ui.ctx().set_style_of(
+            if self.preferences.dark {
+                egui::Theme::Dark
+            } else {
+                egui::Theme::Light
+            },
+            style.clone(),
+        );
         ui.set_style(style);
         if let Some(rect) = ui.ctx().input(|input| input.viewport().inner_rect) {
-            self.preferences.size = [rect.width().max(860.0), rect.height().max(560.0)];
+            self.preferences.size = [
+                settings::WINDOW_WIDTH,
+                rect.height()
+                    .clamp(settings::MIN_HEIGHT, settings::MAX_HEIGHT),
+            ];
         }
         if let Some(rect) = ui.ctx().input(|input| input.viewport().outer_rect) {
             self.preferences.position = Some([rect.min.x, rect.min.y]);
         }
         ui.ctx()
             .request_repaint_after(std::time::Duration::from_secs(1));
-        egui::Panel::left("navigation").show(ui, |ui| {
-            ui.heading("DASRU");
-            for (screen, title) in [
-                (Screen::Dashboard, "Dashboard"),
-                (Screen::Hotkeys, "Hotkeys"),
-                (Screen::Diagnostics, "Diagnostics"),
-                (Screen::Settings, "Settings"),
-            ] {
-                if ui.selectable_label(self.screen == screen, title).clicked() {
-                    self.select(screen);
-                }
-            }
-        });
-        let listener = self
-            .controller
-            .as_ref()
-            .map(|c| c.listener_snapshot())
-            .unwrap_or_default();
-        egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading(format!("{:?}", self.screen));
-            if let Some(error) = self.error {
-                ui.colored_label(theme::ERROR, error);
-            }
-            if ui.button("Refresh").clicked()
-                && let Some(controller) = &self.controller
-            {
-                controller.refresh();
-            }
-            egui::ScrollArea::vertical().show(ui, |ui| match self.screen {
-                Screen::Dashboard => screens::dashboard(ui, &self.model, &listener),
-                Screen::Diagnostics => {
-                    screens::diagnostics(ui, &self.model, &listener);
-                    self.support_controls(ui);
-                }
-                Screen::Hotkeys => self.hotkey_controls(ui),
-                Screen::Settings => self.settings_controls(ui),
-            });
-        });
+        self.utility(ui);
+        self.show_dialog(ui.ctx());
     }
 }
 
@@ -184,9 +160,41 @@ impl DesktopApp {
 }
 pub mod controller;
 mod controls;
+mod dialogs;
 pub mod model;
 mod screens;
 pub mod services;
 pub mod settings;
 mod settings_writer;
 pub mod theme;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn separate_dialogs_inherit_the_text_scale_preference() {
+        let mut app = DesktopApp::default();
+        app.preferences.text_scale = 1.4;
+        app.open_dialog(Dialog::Help);
+        let context = egui::Context::default();
+        let mut output = context.run_ui(egui::RawInput::default(), |ui| app.show(ui));
+        output.textures_delta.clear();
+        let size = output
+            .shapes
+            .iter()
+            .find_map(|shape| match &shape.shape {
+                egui::epaint::Shape::Text(text)
+                    if text.galley.text().starts_with("Start the game") =>
+                {
+                    Some(text.galley.job.sections[0].format.font_id.size)
+                }
+                _ => None,
+            })
+            .expect("help instructions are visible in a separate dialog");
+        assert!(
+            (size - egui::Style::default().text_styles[&egui::TextStyle::Body].size * 1.4).abs()
+                < 0.01
+        );
+    }
+}
+mod utility;

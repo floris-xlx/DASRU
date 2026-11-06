@@ -6,6 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+pub const WINDOW_WIDTH: f32 = 720.0;
+pub const MIN_HEIGHT: f32 = 480.0;
+pub const MAX_HEIGHT: f32 = 1200.0;
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Preferences {
@@ -22,7 +26,7 @@ impl Default for Preferences {
         Self {
             schema_version: 1,
             dark: true,
-            size: [1000.0, 680.0],
+            size: [WINDOW_WIDTH, 700.0],
             position: None,
             text_scale: 1.0,
             binding: "Ctrl+Alt+F9".into(),
@@ -42,8 +46,8 @@ impl Preferences {
             return Err("SETTINGS_INTERVAL_INVALID");
         }
         if !self.size.iter().all(|v| v.is_finite())
-            || self.size[0] < 860.0
-            || self.size[1] < 560.0
+            || self.size[0] < 650.0
+            || self.size[1] < MIN_HEIGHT
             || self.size.iter().any(|v| *v > 16384.0)
         {
             return Err("SETTINGS_GEOMETRY_INVALID");
@@ -96,8 +100,9 @@ impl SettingsStore {
             Ok(Some(bytes)) => {
                 let parsed = serde_json::from_slice::<Preferences>(&bytes)
                     .map_err(|_| "SETTINGS_CORRUPT")
-                    .and_then(|p| {
+                    .and_then(|mut p| {
                         p.validate()?;
+                        p.size = [WINDOW_WIDTH, p.size[1].clamp(MIN_HEIGHT, MAX_HEIGHT)];
                         Ok(p)
                     });
                 store.original = Some(bytes);

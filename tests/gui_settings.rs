@@ -1,6 +1,32 @@
 #![cfg(feature = "desktop-ui")]
 use dasru::gui::settings::{Preferences, SettingsStore};
 use std::path::PathBuf;
+#[test]
+fn compact_window_defaults_replace_dashboard_geometry() {
+    let p = Preferences::default();
+    assert_eq!(p.size, [720.0, 700.0]);
+    assert!(p.validate().is_ok());
+}
+#[test]
+fn legacy_wide_window_migrates_without_losing_binding_or_overwriting_on_load() {
+    let path = path("legacy-geometry");
+    let legacy = Preferences {
+        size: [1000.0, 680.0],
+        binding: "Ctrl+Shift+F10".into(),
+        dark: false,
+        ..Default::default()
+    };
+    let bytes = serde_json::to_vec(&legacy).unwrap();
+    std::fs::write(&path, &bytes).unwrap();
+    let (mut store, p, error) = SettingsStore::load(path.clone());
+    assert!(error.is_none());
+    assert_eq!(p.size, [720.0, 680.0]);
+    assert_eq!(p.binding, legacy.binding);
+    assert!(!p.dark);
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
+    store.save(&p).unwrap();
+    std::fs::remove_file(path).unwrap();
+}
 fn path(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
         "dasru-gui-settings-{}-{name}.json",

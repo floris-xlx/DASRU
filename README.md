@@ -2,7 +2,7 @@
 
 DOOM: The Dark Ages SpeedRun Utility. Includes a read-only Windows x64 identity probe and an optional native desktop interface.
 
-On Windows, run `cargo run --locked --features desktop-ui --bin dasru-gui` (Rust 1.95 or newer). The desktop shows real process/build and capability results, controls a read-only observation shortcut, exports privacy-safe support reports, and stores validated UI preferences. It does not enable gameplay actions. See [desktop architecture](docs/gui-architecture.md) and [acceptance evidence](docs/pr9-tdd-evidence.md); the desktop remains a draft pending live acceptance.
+On Windows, run `cargo run --locked --features desktop-ui --bin dasru-gui` (Rust 1.95 or newer). The compact two-column desktop shows real process/build and hotkey status in one fixed-width utility window, with separate Settings, Help and Diagnostics dialogs. It controls a read-only observation shortcut, exports privacy-safe support reports, and stores validated UI preferences. It does not enable gameplay actions. See [desktop architecture](docs/gui-architecture.md) and [acceptance evidence](docs/pr9-tdd-evidence.md); the desktop remains a draft pending live acceptance.
 
 ```text
 dasru doctor
