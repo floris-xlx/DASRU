@@ -46,6 +46,7 @@ use super::{
     HotkeyErrorCode,
     binding::HotkeyBinding,
     diagnostics::{HotkeyDiagnostics, Stage},
+    dispatch::{ActionDispatcher, ActionEvent, ActionEventSink, ConfiguredBinding},
     manager::{
         ForegroundBackend, HotkeyEvent, HotkeyManager, HotkeyState, RegistrationBackend,
         RegistrationFailure, VerifiedGameProcess,
@@ -866,7 +867,8 @@ unsafe extern "system" fn console_control(_control: u32) -> i32 {
     1
 }
 
-pub(super) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
+pub(super) fn run_cli(configured: Vec<ConfiguredBinding>) -> ExitCode {
+    let bindings: Vec<_> = configured.iter().map(|entry| entry.binding).collect();
     let (game, foreground) = match attach_to_game() {
         Ok(attached) => attached,
         Err(code) => {
@@ -892,6 +894,7 @@ pub(super) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
                 return ExitCode::FAILURE;
             }
         };
+    let mut dispatcher = ActionDispatcher::new(configured, ConsoleActionSink);
     if let Err(failure) = manager.start() {
         eprintln!("{}", failure.code);
         if failure.code != HotkeyErrorCode::RegistrationConflict {
@@ -955,8 +958,16 @@ pub(super) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
                         diagnostics.increment(Stage::ChordCandidate);
                         match event {
                             HotkeyEvent::Accepted(_) => {
-                                diagnostics.increment(Stage::Accepted);
-                                print_hotkey_event(event);
+                                if dispatcher.dispatch(
+                                    event,
+                                    generation,
+                                    FOCUS_GENERATION.load(Ordering::Acquire),
+                                ) {
+                                    diagnostics.increment(Stage::Accepted);
+                                } else {
+                                    diagnostics.increment(Stage::StaleDropped);
+                                    manager.reset_keyboard_state();
+                                }
                             }
                             HotkeyEvent::Rejected { code, .. } => {
                                 diagnostics.increment(Stage::Rejected);
@@ -1028,6 +1039,7 @@ pub(super) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
         eprintln!("{}", failure.code);
         exit_code = ExitCode::FAILURE;
     }
+    dispatcher.shutdown();
     report_state_change(
         manager.state(),
         &mut last_reported_state,
@@ -1092,6 +1104,18 @@ fn print_hotkey_event(event: HotkeyEvent) {
     }
 }
 
+struct ConsoleActionSink;
+
+impl ActionEventSink for ConsoleActionSink {
+    fn emit(&mut self, event: ActionEvent) {
+        println!("HOTKEY_ACCEPTED binding={}", event.binding);
+        let action = match event.action {
+            super::binding::HotkeyAction::Observe => "observe",
+        };
+        println!("HOTKEY_ACTION_DISPATCHED id={} action={action}", event.id);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::{Mutex, MutexGuard};
@@ -1134,6 +1158,27 @@ mod tests {
         let mut backend = WindowsBackend::start(&[binding()]).unwrap();
         backend.registrar().register(1, binding()).unwrap();
         assert!(keyboard_raw_input_registered());
+        backend.shutdown().unwrap();
+        assert!(!keyboard_raw_input_registered());
+    }
+
+    #[test]
+    fn multiple_bindings_activate_together_and_deactivate_together() {
+        let _lock = test_lock();
+        let bindings = [
+            binding(),
+            HotkeyBinding::parse("CTRL+ALT+SHIFT+F23").unwrap(),
+        ];
+        let mut backend = WindowsBackend::start(&bindings).unwrap();
+        let mut registrar = backend.registrar();
+
+        registrar.register(1, bindings[0]).unwrap();
+        registrar.register(2, bindings[1]).unwrap();
+        assert!(keyboard_raw_input_registered());
+        registrar.unregister(1).unwrap();
+        assert!(keyboard_raw_input_registered());
+        registrar.unregister(2).unwrap();
+        assert!(!keyboard_raw_input_registered());
         backend.shutdown().unwrap();
         assert!(!keyboard_raw_input_registered());
     }
