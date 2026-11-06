@@ -17,19 +17,23 @@ Commands were run from WSL2 as required for Cargo tests:
 - `cargo clippy --locked --all-targets --target x86_64-pc-windows-gnu -- -D warnings` - passed, compiling the Windows backend and its Windows-only tests.
 - `cargo build --locked` - passed with the native Windows MSVC toolchain.
 
-The Windows-only registration tests cover successful registration and release, an existing shortcut conflict, repeated start/stop, partial-registration rollback, and message-loop termination. Cross-target compilation does not execute those tests; Windows CI must do so.
+The Windows-only registration tests cover successful registration and release, an existing shortcut conflict, repeated start/stop, partial-registration rollback, and message-loop termination. Cross-target compilation does not execute those tests; the hosted Windows run below does.
+
+Hosted run `42162658883` first exposed that two valid-binding tests wrongly expected the Linux-only `HOTKEY_UNSUPPORTED_PLATFORM` result on Windows. Those assertions now exercise the pure parser. The follow-up run `42163079270` passed on both Windows and Ubuntu, including formatting, Clippy, and `cargo test --locked`.
 
 ## Known limits and acceptance still required
 
 - `RegisterHotKey` reserves the chord system-wide while active. Focus-loss deactivation and event-time revalidation reduce interference, but a focus transition can race with Windows event delivery.
 - The listener requires exactly one accessible TDA process and a SHA-256 match to a registered executable build. Unknown builds fail closed.
 - No synthetic key input, input injection, macros, FPS-cap writes, game-memory writes, or game actions were added.
-- Physical shortcut delivery, filtering after switching windows, game restart/exit behavior, conflict behavior on the live desktop, and cleanup after listener exit require Windows + TDA acceptance. They are not established by Linux tests or cross-target compilation.
+- Linux tests and cross-target compilation do not establish real keyboard delivery or game restart/exit behavior. Focus deactivation/reactivation and release after listener exit were observed live; conflict rollback and repeated resource cleanup were covered by Windows CI. Live conflict handling and game restart/exit remain untested.
+
+The live attempt used the native Windows binary with TDA running. The listener started `ACTIVE`, observed focus loss and restoration, and a second listener successfully registered the same chord after the first exited. The physical chord produced no accepted or rejected event while TDA was foregrounded. A standalone Win32 registration probe received three `WM_HOTKEY` messages for the same physical chord with an ordinary desktop window foregrounded; no message was observed during the TDA-focused attempt. Physical delivery in TDA therefore remains a failed acceptance gate and needs investigation.
 
 ## Gate status
 
 - Gate A - TDD evidence: documented above.
 - Gate B - Local validation: WSL2 tests and format check, Linux/Windows-target Clippy, and native Windows build passed.
-- Gate C - Hosted Windows and Ubuntu CI: pending.
-- Gate D - Live Windows + TDA acceptance: pending physical-key confirmation.
+- Gate C - Hosted Windows and Ubuntu CI: passed on run `42163079270`.
+- Gate D - Live Windows + TDA acceptance: failed for physical event delivery; focus transitions and chord release were observed, but no TDA-focused `WM_HOTKEY` arrived.
 - Gate E - PR review: pending; no merge has been performed.
