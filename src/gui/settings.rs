@@ -65,6 +65,18 @@ impl Preferences {
         }
         Ok(())
     }
+    pub fn clamp_geometry_with_frame(
+        &mut self,
+        origin: [f32; 2],
+        work_area: [f32; 2],
+        frame: [f32; 2],
+    ) {
+        if frame.iter().any(|value| !value.is_finite() || *value < 0.0) {
+            self.position = None;
+            return;
+        }
+        self.clamp_geometry(origin, [work_area[0] - frame[0], work_area[1] - frame[1]]);
+    }
     pub fn clamp_geometry(&mut self, origin: [f32; 2], size: [f32; 2]) {
         if !origin.iter().chain(size.iter()).all(|v| v.is_finite())
             || size.iter().any(|v| *v <= 0.0)

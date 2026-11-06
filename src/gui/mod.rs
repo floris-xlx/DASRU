@@ -23,14 +23,60 @@ pub struct DesktopApp {
 impl DesktopApp {
     #[cfg(windows)]
     pub fn restore_window(&mut self, creation: &eframe::CreationContext<'_>) {
+        use windows_sys::Win32::{
+            Foundation::RECT,
+            Graphics::Gdi::{
+                GetMonitorInfoW, MONITOR_DEFAULTTONEAREST, MONITORINFO, MonitorFromRect,
+            },
+        };
         if let Some(window) = creation.winit_window() {
             let scale = window.scale_factor();
+            let outer = window.outer_size().to_logical::<f32>(scale);
+            let inner = window.inner_size().to_logical::<f32>(scale);
+            let frame = [
+                (outer.width - inner.width).max(0.0),
+                (outer.height - inner.height).max(0.0),
+            ];
+            if self.preferences.position.is_none()
+                && let Ok(position) = window.outer_position()
+            {
+                let position = position.to_logical::<f32>(scale);
+                self.preferences.position = Some([position.x, position.y]);
+            }
             let displays: Vec<_> = window
                 .available_monitors()
                 .map(|monitor| {
-                    let position = monitor.position().to_logical::<f32>(scale);
-                    let size = monitor.size().to_logical::<f32>(scale);
-                    ([position.x, position.y], [size.width, size.height])
+                    let position = monitor.position();
+                    let size = monitor.size();
+                    let bounds = RECT {
+                        left: position.x,
+                        top: position.y,
+                        right: position.x.saturating_add(size.width as i32),
+                        bottom: position.y.saturating_add(size.height as i32),
+                    };
+                    let mut info = MONITORINFO {
+                        cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+                        ..Default::default()
+                    };
+                    // SAFETY: both RECT and the correctly sized MONITORINFO live for these calls.
+                    let work = unsafe {
+                        let monitor = MonitorFromRect(&bounds, MONITOR_DEFAULTTONEAREST);
+                        if GetMonitorInfoW(monitor, &mut info) != 0 {
+                            info.rcWork
+                        } else {
+                            bounds
+                        }
+                    };
+                    (
+                        [
+                            work.left as f32 / scale as f32,
+                            work.top as f32 / scale as f32,
+                        ],
+                        [
+                            (work.right - work.left) as f32 / scale as f32,
+                            (work.bottom - work.top) as f32 / scale as f32,
+                        ],
+                    )
                 })
                 .collect();
             let display = self
@@ -46,7 +92,8 @@ impl DesktopApp {
                 })
                 .or(displays.first());
             if let Some((origin, size)) = display {
-                self.preferences.clamp_geometry(*origin, *size);
+                self.preferences
+                    .clamp_geometry_with_frame(*origin, *size, frame);
             }
             creation
                 .egui_ctx

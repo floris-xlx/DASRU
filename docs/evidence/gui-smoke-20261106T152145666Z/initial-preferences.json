@@ -1,0 +1,12 @@
+{
+    "schema_version":  1,
+    "dark":  true,
+    "size":  [
+                 720,
+                 1200
+             ],
+    "position":  null,
+    "text_scale":  1,
+    "binding":  "Ctrl+Alt+F9",
+    "refresh_seconds":  1
+}

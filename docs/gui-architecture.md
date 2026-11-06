@@ -88,6 +88,10 @@ return without republishing the existing file; changed preferences retain the
 durable write path. This avoids unnecessary filesystem flushes during close.
 Windows uses `MoveFileExW`; Unix test files use mode 0600. Monitor geometry is
 clamped when restoring a native window. No process IDs or executable paths persist.
+Native restoration uses the monitor work area and measured outer/client frame
+difference, keeping the entire decorated window visible rather than clamping only
+its client rectangle. A missing saved position starts from the current native
+position and is clamped by the same rule.
 
 Diagnostics only render projected fields and static error codes. Support export
 uses a user-entered destination path; no overwrite prompt grants replacement.

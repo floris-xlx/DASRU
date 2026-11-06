@@ -1,0 +1,11 @@
+powershell.exe : <workspace>\scripts\gui-smoke.ps1 : A parameter cannot be found
+that matches
+At line:3 char:1
++ & powershell -NoProfile -File scripts/gui-smoke.ps1 -ClientHeight 480 ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\floris...d that matches :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+parameter name 'ClientHeight'.
+    + CategoryInfo          : InvalidArgument: (:) [gui-smoke.ps1], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : NamedParameterNotFound,gui-smoke.ps1

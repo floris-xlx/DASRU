@@ -1,5 +1,52 @@
 # Desktop UI TDD evidence
 
+## Native geometry correction and real-game detection (2026-11-06)
+
+Requirement: restore the complete decorated window inside the visible work area,
+with footer access at supported client heights. Native RED: saved client size
+720×1200 at position [0,1400] restored to outer bounds [0,240,736,1479] on a
+5120×1440 work area. The bottom 39 pixels were offscreen. The original clamping
+counted client dimensions but omitted the native frame. Raw evidence is
+`evidence/pr10-native-restore-20261106T1512Z-red.json`.
+
+Failing Rust tests: native_geometry_keeps_decorations_inside_the_work_area and
+native_geometry_rejects_invalid_frame_evidence initially failed compilation
+because the frame-aware clamp did not exist. GREEN: the clamp validates frame
+evidence and subtracts decorations from the working bounds before applying the
+existing geometry clamp. Native restoration measures the real frame, uses the
+Windows monitor work area, and clamps the current native position when no saved
+position exists. Existing preference schema and original clamp API remain intact.
+
+Native GREEN: the identical lower-edge fixture restores to [0,201,736,1440]; a
+1200-high fixture with no saved position also fits completely. Both screenshots
+show the footer. The smoke harness now records native work area/outer bounds and
+rejects offscreen captures. Requested resize cases are placed inside that same
+work area; the earlier maximum-height capture in
+`gui-smoke-20261106T150741889Z` is retained as an invalid visual pass because its
+bottom was outside the display. It is not evidence of footer accessibility.
+
+The harness height option first failed with missing ClientHeight; native 480px,
+default 700px and 1200px cases then passed dimension assertions and normal close.
+479px was rejected before GUI launch. The corrected restoration captures are
+`gui-smoke-20261106T152140608Z` and `gui-smoke-20261106T152145666Z`. Fixtures used
+isolated LOCALAPPDATA. Rust 1.95 WSL regressions: 253 pass; native formatting,
+warnings-as-errors Clippy and locked release GUI build pass. Rustfmt only in the
+refactor step. All raw RED/GREEN outputs are retained under `evidence/`.
+
+TDA became available after the controlled launch attempts. Direct executable
+inspection reported EXACT_MATCH/MATCH; its initial launcher process returned 53,
+but later checks observed the real game running. Both corrected GUI captures show
+Verified process/build and steam-25755602; a fresh independent core probe also
+reports EXACT_MATCH, executable EXACT_MATCH and Steam MATCH. This establishes
+real GUI detection, not physical hotkey acceptance. No synthetic game keys were
+sent. Two game-present, listener-inactive native closes pass. Physical chords,
+foreground dispatch and active-listener cleanup remain pending.
+
+Gate C now includes native minimum/maximum-height and offscreen-restore evidence;
+125–200% DPI and mixed-monitor acceptance remain pending. No layout redesign or
+new gameplay feature was introduced. Gate A still retains the unexplained
+historical timeout. Older no-game-only gate summaries below are historical.
+
 ## Hardening outcome (2026-11-06; code head 98cf29c)
 
 Native negative acceptance was extended on evidence head 85c1ff0 without changing

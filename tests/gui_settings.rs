@@ -109,6 +109,34 @@ fn geometry_is_clamped_to_visible_monitor() {
 }
 
 #[test]
+fn native_geometry_keeps_decorations_inside_the_work_area() {
+    let mut preferences = Preferences {
+        size: [720.0, 1200.0],
+        position: Some([5000.0, 1400.0]),
+        ..Default::default()
+    };
+    preferences.clamp_geometry_with_frame([0.0, 0.0], [5120.0, 1392.0], [16.0, 39.0]);
+    let [x, y] = preferences.position.unwrap();
+    assert!(x >= 0.0 && y >= 0.0);
+    assert!(x + preferences.size[0] + 16.0 <= 5120.0);
+    assert!(y + preferences.size[1] + 39.0 <= 1392.0);
+    assert_eq!(preferences.size, [720.0, 1200.0]);
+    preferences.validate().unwrap();
+}
+
+#[test]
+fn native_geometry_rejects_invalid_frame_evidence() {
+    for frame in [[-1.0, 39.0], [16.0, f32::NAN]] {
+        let mut preferences = Preferences {
+            position: Some([9000.0, 9000.0]),
+            ..Default::default()
+        };
+        preferences.clamp_geometry_with_frame([0.0, 0.0], [1920.0, 1080.0], frame);
+        assert_eq!(preferences.position, None);
+    }
+}
+
+#[test]
 fn background_writer_flushes_final_preferences_on_close() {
     let path = path("writer");
     let _ = std::fs::remove_file(&path);

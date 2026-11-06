@@ -1,0 +1,9 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 13.68s
+     Running tests/gui_settings.rs (target/debug/deps/gui_settings-bdf05db930c537ae)
+
+running 2 tests
+test native_geometry_rejects_invalid_frame_evidence ... ok
+test native_geometry_keeps_decorations_inside_the_work_area ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s

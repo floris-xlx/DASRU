@@ -74,6 +74,12 @@ restore it on each monitor. Disconnect the saved monitor and relaunch: the title
 bar and footer must remain accessible. With one monitor, mark this PENDING.
 Headless rendering at equivalent scales is regression evidence only.
 
+The native harness accepts `-ClientHeight 480` through `1200`; omitted height
+preserves the application's restored height. It places requested resizes inside
+the current work area and checks the complete outer rectangle before capturing.
+Use isolated LOCALAPPDATA fixtures for offscreen saved positions and absent
+positions; retain both the input fixture and returned outer/work-area rectangles.
+
 ## D: release performance
 
 For controlled no-game/inactive-listener measurements:

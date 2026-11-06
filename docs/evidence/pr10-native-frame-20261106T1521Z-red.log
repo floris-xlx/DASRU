@@ -1,0 +1,27 @@
+   Compiling dasru v0.1.0 (<workspace>)
+error[E0599]: no method named `clamp_geometry_with_frame` found for struct `Preferences` in the current scope
+   --> tests/gui_settings.rs:118:17
+    |
+118 |     preferences.clamp_geometry_with_frame([0.0, 0.0], [5120.0, 1392.0], [16.0, 39.0]);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: there is a method `clamp_geometry` with a similar name, but with different arguments
+   --> src/gui/settings.rs:68:5
+    |
+ 68 |     pub fn clamp_geometry(&mut self, origin: [f32; 2], size: [f32; 2]) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `clamp_geometry_with_frame` found for struct `Preferences` in the current scope
+   --> tests/gui_settings.rs:131:21
+    |
+131 |         preferences.clamp_geometry_with_frame([0.0, 0.0], [1920.0, 1080.0], frame);
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: there is a method `clamp_geometry` with a similar name, but with different arguments
+   --> src/gui/settings.rs:68:5
+    |
+ 68 |     pub fn clamp_geometry(&mut self, origin: [f32; 2], size: [f32; 2]) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `dasru` (test "gui_settings") due to 2 previous errors
