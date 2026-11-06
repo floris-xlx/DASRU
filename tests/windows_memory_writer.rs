@@ -173,7 +173,7 @@ fn duplicate_game_processes_are_refused_before_snapshot_creation() {
         Ok(_) => panic!("duplicate game processes must be refused"),
     };
 
-    assert!(error.contains("AmbiguousProcess"));
+    assert!(error.contains("multiple game processes were found"));
     assert!(!snapshot_path.exists());
     drop(_second);
     drop(_first);
