@@ -691,24 +691,8 @@ pub fn run_experimental_session(marker: &str, experimental_opt_in: bool) -> Resu
                     .to_owned(),
             );
         }
-        if let Err(error) = session.revalidate_identity() {
-            return Err(error);
-        }
+        session.revalidate_identity()?;
         thread::sleep(Duration::from_millis(100));
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::ExperimentalSessionLock;
-
-    #[test]
-    fn experimental_session_lock_rejects_a_concurrent_thread() {
-        let lock = ExperimentalSessionLock::acquire().unwrap();
-        let second = std::thread::spawn(|| ExperimentalSessionLock::acquire().is_err());
-        assert!(second.join().unwrap());
-        drop(lock);
-        assert!(ExperimentalSessionLock::acquire().is_ok());
     }
 }
 
@@ -754,5 +738,19 @@ unsafe extern "system" fn console_control(event: u32) -> i32 {
         1
     } else {
         0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ExperimentalSessionLock;
+
+    #[test]
+    fn experimental_session_lock_rejects_a_concurrent_thread() {
+        let lock = ExperimentalSessionLock::acquire().unwrap();
+        let second = std::thread::spawn(|| ExperimentalSessionLock::acquire().is_err());
+        assert!(second.join().unwrap());
+        drop(lock);
+        assert!(ExperimentalSessionLock::acquire().is_ok());
     }
 }
