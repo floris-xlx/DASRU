@@ -1,5 +1,6 @@
 pub mod capability;
 pub mod doctor;
+pub mod hotkeys;
 pub mod identity;
 pub mod memory;
 pub mod osd;

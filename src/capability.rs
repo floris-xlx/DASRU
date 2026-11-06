@@ -37,6 +37,8 @@ pub enum CapabilityReason {
     PartialCoverage,
     UnsupportedArchitecture,
     CollectionFailed,
+    RegistrationConflict,
+    RegistrationFailed,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -148,6 +150,15 @@ pub enum LayoutEvidence {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HotkeyRegistrationEvidence {
+    NotEvaluated,
+    Inactive,
+    Active,
+    Conflict,
+    Failed,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CapabilityEvidence {
     pub platform: Platform,
     pub architecture: Architecture,
@@ -159,6 +170,7 @@ pub struct CapabilityEvidence {
     pub report_collected: Option<bool>,
     pub destination_writable: Option<bool>,
     pub experimental_opt_in: bool,
+    pub hotkey_registration: HotkeyRegistrationEvidence,
 }
 
 impl Default for CapabilityEvidence {
@@ -174,6 +186,7 @@ impl Default for CapabilityEvidence {
             report_collected: None,
             destination_writable: None,
             experimental_opt_in: false,
+            hotkey_registration: HotkeyRegistrationEvidence::NotEvaluated,
         }
     }
 }
@@ -586,10 +599,102 @@ pub fn evaluate(feature: FeatureId, evidence: &CapabilityEvidence) -> Capability
                 ),
             }
         }
-        FeatureId::GlobalHotkeys | FeatureId::KeyboardInput | FeatureId::Clipboard => decision(
+        FeatureId::GlobalHotkeys => global_hotkey_decision(evidence),
+        FeatureId::KeyboardInput | FeatureId::Clipboard => decision(
             Status::Unsupported,
             Reason::NotImplemented,
             Impl::NotImplemented,
+            Access::Unavailable,
+            Auth::Denied,
+        ),
+    }
+}
+
+fn global_hotkey_decision(evidence: &CapabilityEvidence) -> CapabilityDecision {
+    use Accessibility as Access;
+    use Authorization as Auth;
+    use CapabilityReason as Reason;
+    use FeatureStatus as Status;
+    use HotkeyRegistrationEvidence as Registration;
+    use ImplementationStatus as Impl;
+
+    if evidence.platform != Platform::Windows {
+        return decision(
+            Status::Unsupported,
+            Reason::UnsupportedPlatform,
+            Impl::Implemented,
+            Access::Unavailable,
+            Auth::Denied,
+        );
+    }
+    if let Some(failure) = process_failure(evidence.process, Impl::Implemented) {
+        return failure;
+    }
+    if evidence.process == ProcessEvidence::NotEvaluated {
+        return decision(
+            Status::Unknown,
+            Reason::NotEvaluated,
+            Impl::Implemented,
+            Access::Unknown,
+            Auth::NotRequired,
+        );
+    }
+    match evidence.build {
+        BuildEvidence::Unknown => {
+            return decision(
+                Status::Unsupported,
+                Reason::UnknownBuild,
+                Impl::Implemented,
+                Access::Unavailable,
+                Auth::NotRequired,
+            );
+        }
+        BuildEvidence::Inconsistent => {
+            return decision(
+                Status::Unsupported,
+                Reason::IdentityChanged,
+                Impl::Implemented,
+                Access::Unavailable,
+                Auth::NotRequired,
+            );
+        }
+        BuildEvidence::NotEvaluated => {
+            return decision(
+                Status::Unknown,
+                Reason::NotEvaluated,
+                Impl::Implemented,
+                Access::Unknown,
+                Auth::NotRequired,
+            );
+        }
+        BuildEvidence::ExactMatch => {}
+    }
+    match evidence.hotkey_registration {
+        Registration::NotEvaluated | Registration::Inactive => decision(
+            Status::Unknown,
+            Reason::NotEvaluated,
+            Impl::Implemented,
+            Access::Unknown,
+            Auth::NotRequired,
+        ),
+        Registration::Active => decision(
+            Status::Supported,
+            Reason::Available,
+            Impl::Implemented,
+            Access::Available,
+            Auth::NotRequired,
+        ),
+        Registration::Conflict => decision(
+            Status::Unsupported,
+            Reason::RegistrationConflict,
+            Impl::Implemented,
+            Access::Unavailable,
+            Auth::Denied,
+        ),
+        Registration::Failed => decision(
+            Status::Unsupported,
+            Reason::RegistrationFailed,
+            Impl::Implemented,
             Access::Unavailable,
             Auth::Denied,
         ),
@@ -913,11 +1018,13 @@ mod tests {
             platform: Platform::Windows,
             ..CapabilityEvidence::default()
         };
-        for feature in [
-            FeatureId::GlobalHotkeys,
-            FeatureId::KeyboardInput,
-            FeatureId::Clipboard,
-        ] {
+        let hotkeys = evaluate(FeatureId::GlobalHotkeys, &windows);
+        assert_eq!(hotkeys.status, FeatureStatus::Unknown);
+        assert_eq!(hotkeys.reason, CapabilityReason::NotEvaluated);
+        assert_eq!(hotkeys.implementation, ImplementationStatus::Implemented);
+        assert!(!hotkeys.is_authorized());
+
+        for feature in [FeatureId::KeyboardInput, FeatureId::Clipboard] {
             let decision = evaluate(feature, &windows);
             assert_eq!(decision.status, FeatureStatus::Unsupported);
             assert_eq!(decision.reason, CapabilityReason::NotImplemented);

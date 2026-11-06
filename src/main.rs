@@ -12,6 +12,12 @@ use serde::Serialize;
 
 fn main() -> ExitCode {
     let arguments: Vec<_> = env::args_os().skip(1).collect();
+    if arguments
+        .first()
+        .is_some_and(|argument| argument == OsStr::new("hotkeys"))
+    {
+        return dasru::hotkeys::run_cli(&arguments[1..]);
+    }
     match arguments.as_slice() {
         [command] if command == OsStr::new("doctor") => {
             print_doctor(dasru::doctor::inspect(), false)
@@ -210,7 +216,7 @@ fn print_metrics_layout_for_label(label: &OsStr, json: bool) -> ExitCode {
 
 fn print_usage() -> ExitCode {
     eprintln!(
-        "Usage: dasru doctor [--json]\n       dasru probe [--json]\n       dasru support export <path>\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory discover --metrics-objects [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore"
+        "Usage: dasru doctor [--json]\n       dasru probe [--json]\n       dasru support export <path>\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory discover --metrics-objects [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore\n       dasru hotkeys listen --bind CTRL+ALT+F9 [--bind <shortcut>]"
     );
     ExitCode::from(2)
 }
