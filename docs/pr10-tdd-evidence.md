@@ -1,5 +1,59 @@
 # Desktop UI TDD evidence
 
+## Production hardening baseline (2026-11-06)
+
+Fetched origin before changing behavior. Main remains
+`4e637752b9241cff7805e6ee9baf72c649557e10`; PR head remains
+`7c037af8b653159eefaf700b883833f2aa2ac18c`. Branch is
+`feat/desktop-ui-foundation`, checkout clean, PR #10 draft and mergeable.
+
+Fresh baseline: 234 WSL tests passed with the installed stable Rust 1.99.1.
+The full output is preserved in the timestamped
+`evidence/pr10-hardening-baseline-7c037af-*-wsl-tests.log`, with local paths
+redacted. This is new baseline evidence, not new fix coverage. Rust 1.95.0 was
+also installed in WSL for the hardening checks. A clean native Windows
+`cargo +1.95.0 build --release --locked --features desktop-ui --bin dasru-gui`
+passed. The GUI dependencies remain pinned at 0.37.0, MSRV 1.95; locked build
+made no manifest or lockfile changes. Baseline release SHA-256:
+`FE523F24670D7E90BEADD11D07C936ECD3EF5FF53A2579879E0783B5A9E36E35`.
+
+Baseline hosted runs 42199588921 and 42199582667 passed Windows and Ubuntu,
+including Rust 1.95 formatting, warnings-as-errors Clippy, tests and Windows
+release GUI build. These do not validate subsequent hardening commits.
+
+The requested Cargo/CI, GUI, hotkey, smoke and architecture/design/evidence
+surfaces were inspected. Existing tests cover state projection, freshness,
+coalescing, panic conversion, shared dispatch IDs, late observations, atomic
+preferences, support redaction/no-overwrite and real Windows registration
+cleanup. Missing deterministic fault coverage includes startup completion-channel
+failure, outstanding export cancellation, full settings queue, and preserving
+cleanup errors beyond the disappearing UI.
+
+### Initial ownership audit - hypotheses, not a timeout explanation
+
+| Owner | Current cancellation and wait | Finding |
+|---|---|---|
+| Controller | cancel flag + condition-variable wake; synchronous join | Joins outside shared locks, but OS/process/file calls and in-flight export can delay it; queued export status can remain Pending after close |
+| HotkeyRuntime | stop flag; synchronous join | Keeps high-level owner, but inner Win32 fallback can still detach its worker |
+| WindowsBackend | posted stop message; 3s completion waits | Shutdown early errors retain the handle only until Drop; Drop ignores retry errors. abort_startup joins only on successful completion receipt, detaching on timeout/disconnect |
+| SettingsWriter | final bounded-channel send; join | No shared status lock held while waiting; OS write/sync/replace and full queue can delay finish |
+| DesktopApp | on_exit -> controller then settings | Cleanup errors only stored on an app about to be destroyed; later settings error can replace earlier cleanup error |
+| eframe/Glow | on_exit then painter destruction and event-loop return | Renderer/window teardown occurs after app cleanup; app-completed markers alone cannot prove process exit |
+| Smoke harness | WM_CLOSE; process wait; failure cleanup | Existing fixed filenames overwrite history; no phase trace; failed tests forcibly clean up their owned process, which is not evidence of graceful cleanup |
+
+Cancellation is cooperative. No hard wall-clock bound exists for uninterruptible
+OS calls or resource-owner joins. The historical 15-second timeout is still
+unexplained; no Gate A PASS is claimed from this audit.
+
+| Gate | Baseline status |
+|---|---|
+| A Shutdown | FAIL - known ownership/error-reporting gaps; historical timeout unresolved |
+| B Physical GUI/TDA | PENDING - no observed GUI physical session; TDA not running at preflight |
+| C Native displays | PENDING - historical 100% capture/headless scaling do not establish all native scenarios |
+| D Sustained release performance | PENDING - no fifteen-minute release series yet |
+| E Reliability review | PENDING - baseline regressions pass, critical shutdown findings open |
+| F Distribution/final CI | PENDING - baseline CI green, notices/license/final-head review still required |
+
 ## Current presentation revision: compact DESRU-style utility
 
 The user's revised direction supersedes the sidebar/page specification. The
