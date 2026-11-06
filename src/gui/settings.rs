@@ -130,6 +130,9 @@ impl SettingsStore {
         }
         let bytes =
             serde_json::to_vec_pretty(preferences).map_err(|_| "SETTINGS_SERIALIZE_FAILED")?;
+        if self.original.as_deref() == Some(bytes.as_slice()) {
+            return Ok(());
+        }
         let parent = self
             .path
             .parent()

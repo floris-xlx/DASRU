@@ -160,16 +160,17 @@ impl DesktopApp {
         {
             return result;
         }
+        tracing::info!(target: "dasru::shutdown", phase = "SHUTDOWN_REQUESTED");
         let mut result = Ok(());
         if let Some(controller) = &mut self.controller
             && let Err(error) = controller.shutdown()
         {
             result = Err(error);
         }
-        if let Some(mut writer) = self.writer.take()
-            && let Err(error) = writer.finish(self.preferences.clone())
-        {
-            result = result.and(Err(error));
+        if let Some(mut writer) = self.writer.take() {
+            let flush = writer.finish(self.preferences.clone());
+            tracing::info!(target: "dasru::shutdown", phase = "SETTINGS_FLUSH_COMPLETED", success = flush.is_ok(), code = flush.err());
+            result = result.and(flush);
         }
         if let Err(error) = result {
             self.error = Some(error);
@@ -178,6 +179,7 @@ impl DesktopApp {
             .shutdown_report
             .lock()
             .unwrap_or_else(|e| e.into_inner()) = Some(result);
+        tracing::info!(target: "dasru::shutdown", phase = "APP_SHUTDOWN_COMPLETED", success = result.is_ok(), code = result.err());
         result
     }
 }
@@ -189,6 +191,7 @@ mod screens;
 pub mod services;
 pub mod settings;
 mod settings_writer;
+pub mod shutdown_trace;
 pub mod theme;
 
 #[cfg(test)]

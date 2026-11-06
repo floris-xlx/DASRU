@@ -25,6 +25,20 @@ separate preferences thread. Close invalidates monitor generations, signals
 cancellation, joins hotkey and monitor owners, and flushes final valid preferences.
 No child CLI process is launched. No modification session is created.
 
+The native entrypoint retains the app's terminal cleanup report after eframe
+destroys the UI and returns a nonzero status on cleanup failure. Repeated app
+shutdown returns the recorded result. Queued exports are cancelled at shutdown;
+an export already running finishes before its worker is joined, without starting
+another probe. Raw Input startup and shutdown notification deadlines never permit
+detaching the message-loop owner: the join remains mandatory even after an error.
+
+Optional `dasru-gui --shutdown-trace <new-file>` records static phase codes and
+success flags with monotonic timestamps. Its subscriber accepts only the
+`dasru::shutdown` target and creates a new file without overwriting evidence.
+Trace writes happen outside shared controller locks. `EFRAME_RETURNED` follows
+renderer/window teardown; `APP_SHUTDOWN_COMPLETED` alone does not prove process
+exit. Opt-in synchronous diagnostic file I/O can itself add measurement overhead.
+
 The monitor has one coalesced refresh slot and one support-export slot, rather
 than an unbounded update queue. Snapshots are latest values behind short locks;
 blocking operations happen outside those locks. Panics become structured codes.
@@ -69,6 +83,9 @@ Only theme, window geometry, text scale, observation binding and bounded refresh
 interval are persisted. Corrupt/unknown-schema files are preserved, defaults are
 used, and saving is disabled for that launch. External file changes are rejected.
 Writes use a same-directory temporary file, sync, and atomic replacement.
+After validation and the external-change check, identical serialized preferences
+return without republishing the existing file; changed preferences retain the
+durable write path. This avoids unnecessary filesystem flushes during close.
 Windows uses `MoveFileExW`; Unix test files use mode 0600. Monitor geometry is
 clamped when restoring a native window. No process IDs or executable paths persist.
 

@@ -68,6 +68,34 @@ fn invalid_schema_binding_and_interval_are_rejected() {
     p.text_scale = f32::NAN;
     assert!(p.validate().is_err());
 }
+
+#[test]
+fn unchanged_preferences_avoid_republication_without_skipping_conflict_checks() {
+    let path = path("unchanged");
+    let _ = std::fs::remove_file(&path);
+    let (mut store, preferences, _) = SettingsStore::load(path.clone());
+    store.save(&preferences).unwrap();
+    let original_time =
+        std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(946684800);
+    std::fs::OpenOptions::new()
+        .write(true)
+        .open(&path)
+        .unwrap()
+        .set_modified(original_time)
+        .unwrap();
+    store.save(&preferences).unwrap();
+    let after = std::fs::metadata(&path).unwrap().modified().unwrap();
+    std::fs::write(&path, b"external change").unwrap();
+    let conflict = store.save(&preferences);
+    let bytes = std::fs::read(&path).unwrap();
+    std::fs::remove_file(path).unwrap();
+    assert_eq!(
+        after, original_time,
+        "unchanged preferences were unnecessarily republished"
+    );
+    assert_eq!(conflict, Err("SETTINGS_CHANGED_EXTERNALLY"));
+    assert_eq!(bytes, b"external change");
+}
 #[test]
 fn geometry_is_clamped_to_visible_monitor() {
     let mut p = Preferences {

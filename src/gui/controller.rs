@@ -230,6 +230,7 @@ impl Controller {
     }
 
     pub fn shutdown(&mut self) -> Result<(), &'static str> {
+        let joining = self.worker.is_some();
         {
             let _pending = self
                 .shared
@@ -249,9 +250,18 @@ impl Controller {
                 .shutdown();
             self.shared.wake.notify_one();
         }
+        if joining {
+            tracing::info!(target: "dasru::shutdown", phase = "MONITOR_CANCEL_REQUESTED");
+            tracing::info!(target: "dasru::shutdown", phase = "HOTKEY_STOP_REQUESTED");
+        }
         let hotkeys = self.hotkeys.stop().map_err(|error| error.as_str());
+        if joining {
+            tracing::info!(target: "dasru::shutdown", phase = "HOTKEY_STOP_COMPLETED", success = hotkeys.is_ok(), code = hotkeys.err());
+        }
         if let Some(worker) = self.worker.take() {
-            worker.join().map_err(|_| "WORKER_SHUTDOWN_FAILED")?;
+            let joined = worker.join().map_err(|_| "WORKER_SHUTDOWN_FAILED");
+            tracing::info!(target: "dasru::shutdown", phase = "MONITOR_JOIN_COMPLETED", success = joined.is_ok(), code = joined.err());
+            joined?;
         }
         hotkeys
     }

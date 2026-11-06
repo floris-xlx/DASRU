@@ -2,9 +2,10 @@
 
 #[cfg(windows)]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dasru::gui::shutdown_trace::configure(std::env::args_os().skip(1))?;
     let mut app = dasru::gui::DesktopApp::monitored()?;
     let shutdown = app.shutdown_report();
-    eframe::run_native(
+    let native = eframe::run_native(
         "DASRU",
         eframe::NativeOptions {
             renderer: eframe::Renderer::Glow,
@@ -24,7 +25,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             app.restore_window(creation);
             Ok(Box::new(app))
         }),
-    )?;
+    );
+    tracing::info!(target: "dasru::shutdown", phase = "EFRAME_RETURNED", success = native.is_ok());
+    native?;
     let result = shutdown
         .lock()
         .unwrap_or_else(|e| e.into_inner())

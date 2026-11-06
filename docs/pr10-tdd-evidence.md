@@ -145,6 +145,62 @@ Regression checks: 245 WSL Rust 1.95 all-target/all-feature tests passed; native
 Windows warnings-as-errors Clippy passed. Commit: `Cancel queued GUI work and
 retain terminal cleanup failures`.
 
+### A4 - opt-in timing and repeated native release closes
+
+New `--shutdown-trace <new-file>` uses the existing tracing dependency, an
+exact-target filter, static phase codes and monotonic timestamps. RED:
+`trace_contains_phases_without_unrelated_sensitive_events` found an unrelated
+fixture event; `app_shutdown_has_one_terminal_phase_on_repeated_close` found no
+terminal phase. A further RED test found three controller cancellation markers
+across explicit close/repeat/Drop instead of one. GREEN: all five trace tests
+pass, including invalid arguments and destination no-overwrite safeguards.
+Refactor: diagnostic writes stay outside shared controller locks. EFRAME_RETURNED
+separates application cleanup from subsequent renderer/window teardown.
+
+Smoke harness RED: a copied harness in an isolated scratch directory ran the
+release executable but labelled it debug. Historical evidence was not overwritten
+for this test. The harness now defaults to release, records binary hash/head/dirty
+state, creates a new timestamped directory per run, checks exit and shutdown
+phases, supports bounded extended samples, and leaves failed processes available
+for diagnosis instead of counting forced termination as cleanup. GREEN: repeated
+runs assert release metadata and preserve hashes of the historical evidence files.
+
+Native Windows 10 Pro 19045, i9-14900K (24 cores/32 logical CPUs), one 5120×1440
+monitor at 96 DPI. Eleven instrumented release runs without TDA/listener passed:
+one ten-second sample, then five one-second transition samples before and five
+after the unchanged-preferences fix below. Per-run JSON, screenshot, samples and
+trace are retained in `evidence/gui-smoke-20261106T*/`. The first release sample
+showed 488ms startup, 2.31% of one core, 67.5–69.9MB working set and 6.1ms maximum
+WM_NULL response. These short samples are not sustained acceptance.
+
+Three pre-optimization closes took 1.68–2.31s. One trace placed ~2.22s in settings
+flush; two had delay between the first phase and cancellation logging. Synchronous
+diagnostic writes/scheduling can add overhead; these traces do not prove the
+cause of the historical >15s close. No new >15s timeout was observed.
+
+### A3 follow-up - avoid unchanged-settings durable publication
+
+Requirement: avoid unnecessary I/O after measured shutdown cost while preserving
+validation and conflict protection. RED:
+`unchanged_preferences_avoid_republication_without_skipping_conflict_checks`
+failed because a second identical save replaced the file and changed its fixed
+modification time. Minimal GREEN: compare serialized bytes only after validation
+and reading/checking the original destination. Identical content returns without
+republishing; externally changed content still fails and is preserved. All seven
+preferences tests pass. Refactor: rustfmt. Five subsequent native normal closes
+took 89–106ms, startups 491–512ms, WM_NULL responses <=6.94ms; all exit codes zero
+and all required phases recorded. No listener registration was exercised.
+
+Final checks for this slice: 251 WSL Rust 1.95 tests pass; native Rust 1.95 fmt,
+warnings-as-errors Clippy and locked release build pass. Raw outputs are under
+`evidence/pr10-*-20261106T1350Z-*.log`. No dependencies/lockfile changed.
+
+Gate A remains FAIL: the historical >15s timeout is unexplained and active-game
+close cases are unobserved. The policy retains resource owners and reports errors;
+it makes no hard deadline for stalled OS I/O. B remains PENDING (TDA absent), C
+partially observed at native 100% only. The exact outstanding physical/DPI/perf
+procedure is in [pr10-native-acceptance.md](pr10-native-acceptance.md).
+
 ## Current presentation revision: compact DESRU-style utility
 
 The user's revised direction supersedes the sidebar/page specification. The

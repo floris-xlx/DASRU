@@ -1,5 +1,10 @@
-param([string]$Executable = "$PSScriptRoot/../target/debug/dasru-gui.exe")
+[CmdletBinding()]
+param(
+    [string]$Executable,
+    [ValidateRange(1,86400)][int]$SampleSeconds = 10
+)
 $ErrorActionPreference = 'Stop'
+if (!$Executable) { $Executable = Join-Path $PSScriptRoot '../target/release/dasru-gui.exe' }
 Add-Type -AssemblyName System.Drawing
 Add-Type @'
 using System;
@@ -25,13 +30,20 @@ public static class GuiSmokeNative {
     [DllImport("user32.dll")] public static extern IntPtr SendMessageTimeout(IntPtr window,uint message,IntPtr wparam,IntPtr lparam,uint flags,uint timeout,out IntPtr result);
 }
 '@
-$evidence = Join-Path $PSScriptRoot '../docs/evidence'
-New-Item -ItemType Directory -Force $evidence | Out-Null
+$runName = 'gui-smoke-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ')
+$evidence = Join-Path $PSScriptRoot "../docs/evidence/$runName"
+New-Item -ItemType Directory $evidence -ErrorAction Stop | Out-Null
+$trace = Join-Path (Resolve-Path -LiteralPath $evidence).Path 'shutdown.log'
 $timer = [Diagnostics.Stopwatch]::StartNew()
 $gameAtStart=@(Get-Process -Name 'DOOMTheDarkAges' -ErrorAction SilentlyContinue).Count -gt 0
 $startInfo=New-Object Diagnostics.ProcessStartInfo
 $startInfo.FileName=(Resolve-Path -LiteralPath $Executable).Path
 $startInfo.UseShellExecute=$false
+$startInfo.Arguments='--shutdown-trace "' + $trace + '"'
+$binaryHash=(Get-FileHash -LiteralPath $startInfo.FileName -Algorithm SHA256).Hash
+$profile=Split-Path (Split-Path $startInfo.FileName -Parent) -Leaf
+$sourceHead=git -C "$PSScriptRoot/.." rev-parse HEAD
+$trackedDirty=[bool](git -C "$PSScriptRoot/.." status --porcelain --untracked-files=no)
 $app=[Diagnostics.Process]::Start($startInfo)
 $processHandle=$app.Handle
 
@@ -62,27 +74,39 @@ try {
     finally { $graphics.Dispose(); $bitmap.Dispose() }
     $app.Refresh(); $cpuBefore=$app.TotalProcessorTime.TotalMilliseconds; $memoryBefore=$app.WorkingSet64
     $response = [IntPtr]::Zero
-    $latencies = @()
-    for ($sample=0; $sample -lt 10; $sample++) {
+    $samples = New-Object 'Collections.Generic.List[object]'
+    $observation=[Diagnostics.Stopwatch]::StartNew()
+    for ($sample=0; $sample -lt $SampleSeconds; $sample++) {
         $probe=[Diagnostics.Stopwatch]::StartNew()
         if ([GuiSmokeNative]::SendMessageTimeout($handle,0,[IntPtr]::Zero,[IntPtr]::Zero,2,500,[ref]$response) -eq [IntPtr]::Zero) { throw 'GUI stopped responding' }
-        $latencies += $probe.Elapsed.TotalMilliseconds
+        $latency=$probe.Elapsed.TotalMilliseconds
+        $app.Refresh()
+        $samples.Add([ordered]@{elapsed_ms=$observation.Elapsed.TotalMilliseconds;cpu_ms=$app.TotalProcessorTime.TotalMilliseconds;working_set=$app.WorkingSet64;message_response_ms=$latency})
         Start-Sleep -Seconds 1
     }
+    $observedMs=$observation.Elapsed.TotalMilliseconds
     $app.Refresh(); $cpuAfter=$app.TotalProcessorTime.TotalMilliseconds; $memoryAfter=$app.WorkingSet64
     $dpi=[GuiSmokeNative]::GetDpiForWindow($handle)
     $close=[Diagnostics.Stopwatch]::StartNew()
     if (![GuiSmokeNative]::PostMessage($handle,16,[IntPtr]::Zero,[IntPtr]::Zero)) { throw 'Could not request normal window close' }
     if (!$app.WaitForExit(15000)) { throw 'GUI shutdown exceeded 15 seconds' }
-    $report=[ordered]@{success=$true;configuration='Windows native debug build; listener not started';game_running_at_start=$gameAtStart;client_width_logical=$logicalWidth;startup_ms=$startup;dpi=$dpi;sample_seconds=10;cpu_ms=($cpuAfter-$cpuBefore);working_set_before=$memoryBefore;working_set_after=$memoryAfter;maximum_message_response_ms=($latencies|Measure-Object -Maximum).Maximum;shutdown_ms=$close.Elapsed.TotalMilliseconds;exit_code=$app.ExitCode;print_window_succeeded=$captured}
+    $close.Stop()
     if ($app.ExitCode -ne 0) { throw "GUI exit code $($app.ExitCode)" }
+    $phases=Get-Content -LiteralPath $trace
+    foreach ($phase in @('SHUTDOWN_REQUESTED','HOTKEY_STOP_REQUESTED','HOTKEY_STOP_COMPLETED','MONITOR_CANCEL_REQUESTED','MONITOR_JOIN_COMPLETED','SETTINGS_FLUSH_COMPLETED','APP_SHUTDOWN_COMPLETED','EFRAME_RETURNED')) {
+        if (!($phases -match ('phase="' + $phase + '"'))) { throw "Missing shutdown phase: $phase" }
+    }
+    if ($phases -match 'success=false') { throw 'Cleanup phase reported failure' }
+    $samples | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $evidence 'samples.json')
+    $report=[ordered]@{success=$true;configuration="Windows native $profile build; listener not started";source_head=$sourceHead;source_tracked_dirty=$trackedDirty;binary_sha256=$binaryHash;game_running_at_start=$gameAtStart;client_width_logical=$logicalWidth;startup_ms=$startup;dpi=$dpi;sample_seconds=$SampleSeconds;observed_ms=$observedMs;cpu_ms=($cpuAfter-$cpuBefore);one_core_cpu_percent=(100.0*($cpuAfter-$cpuBefore)/$observedMs);working_set_before=$memoryBefore;working_set_after=$memoryAfter;maximum_working_set=($samples.working_set|Measure-Object -Maximum).Maximum;maximum_message_response_ms=($samples.message_response_ms|Measure-Object -Maximum).Maximum;shutdown_ms=$close.Elapsed.TotalMilliseconds;exit_code=$app.ExitCode;shutdown_phases_complete=$true;listener_cleanup='not exercised; listener never started';print_window_succeeded=$captured}
     $report | ConvertTo-Json | Set-Content (Join-Path $evidence 'gui-smoke.json')
     $report | ConvertTo-Json
 } catch {
-    @{success=$false;error=$_.Exception.Message;game_running_at_start=$gameAtStart} | ConvertTo-Json | Set-Content (Join-Path $evidence 'gui-smoke.json')
+    @{success=$false;error=$_.Exception.Message;game_running_at_start=$gameAtStart;source_head=$sourceHead;binary_sha256=$binaryHash} | ConvertTo-Json | Set-Content (Join-Path $evidence 'gui-smoke.json')
     throw
 } finally {
     $app.Refresh()
-    if (!$app.HasExited) { Stop-Process -Id $app.Id }
+    # Keep a stalled process available for diagnosis; forced termination is not cleanup evidence.
+    if (!$app.HasExited) { Write-Warning 'GUI remains running after failure; inspect and close it manually.' }
     $app.Dispose()
 }

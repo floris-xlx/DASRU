@@ -1,0 +1,11 @@
+  13.549678800s  INFO dasru::shutdown: phase="SHUTDOWN_REQUESTED"
+  13.549775300s  INFO dasru::shutdown: phase="MONITOR_CANCEL_REQUESTED"
+  13.549788900s  INFO dasru::shutdown: phase="HOTKEY_STOP_REQUESTED"
+  13.549795100s  INFO dasru::shutdown: phase="HOTKEY_STOP_COMPLETED" success=true
+  13.549942800s  INFO dasru::shutdown: phase="MONITOR_JOIN_COMPLETED" success=true
+  13.568207800s  INFO dasru::shutdown: phase="SETTINGS_FLUSH_COMPLETED" success=true
+  13.568242100s  INFO dasru::shutdown: phase="APP_SHUTDOWN_COMPLETED" success=true
+  13.568336600s  INFO dasru::shutdown: phase="MONITOR_CANCEL_REQUESTED"
+  13.568344700s  INFO dasru::shutdown: phase="HOTKEY_STOP_REQUESTED"
+  13.568350300s  INFO dasru::shutdown: phase="HOTKEY_STOP_COMPLETED" success=true
+  13.577577300s  INFO dasru::shutdown: phase="EFRAME_RETURNED" success=true
