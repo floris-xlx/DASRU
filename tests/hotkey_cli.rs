@@ -41,6 +41,18 @@ fn text(output: &Output) -> String {
     )
 }
 
+#[test]
+fn top_level_usage_lists_configurable_hotkey_commands() {
+    let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
+        .output()
+        .expect("DASRU CLI starts");
+    let output_text = text(&output);
+
+    assert_eq!(output.status.code(), Some(2), "{output_text}");
+    assert!(output_text.contains("hotkeys validate --config <path>"));
+    assert!(output_text.contains("hotkeys listen --config <path>"));
+}
+
 const VALID_CONFIG: &str = r#"
 schema_version = 1
 
