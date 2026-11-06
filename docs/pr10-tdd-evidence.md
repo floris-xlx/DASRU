@@ -2,6 +2,10 @@
 
 ## Hardening outcome (2026-11-06; code head 98cf29c)
 
+Native negative acceptance was extended on evidence head 85c1ff0 without changing
+runtime code. See the isolated conflict check below; physical acceptance remains
+pending as explicitly requested by the unavailable operator.
+
 PR #10 remains a draft and is not ready for review/merge. No new branch or game
 feature was introduced. Fetched main is still
 `4e637752b9241cff7805e6ee9baf72c649557e10`, an ancestor of this PR branch.
@@ -75,6 +79,31 @@ No dependency, font, artwork or lockfile was added by hardening. PE imports iden
 x64 MSVC/Universal CRT and OpenGL requirements. SPDX/font checks do not resolve
 the existing README project-license/provenance caveat or constitute final
 redistribution clearance; no project license was selected on the owner's behalf.
+
+### Additional native shutdown failure check (2026-11-06 14:21 UTC)
+
+Requirement: a final preferences conflict must preserve the external file and
+remain a failure after UI destruction. This extends the earlier RED/GREEN retained
+report fix with native negative acceptance; no new behavior or RED cycle is claimed.
+
+The release executable ran through the existing smoke harness in a hidden
+PowerShell helper with only its child `LOCALAPPDATA` redirected to an isolated
+temporary directory. After the actual test GUI became visible, the test created
+`DASRU/preferences.json` containing `external-conflict-fixture` there, then allowed
+the harness to request ordinary WM_CLOSE. Real application data was not used.
+
+Observed: monitor/hotkey-owner joins completed, final preferences flush reported
+SETTINGS_CHANGED_EXTERNALLY, APP_SHUTDOWN_COMPLETED retained success=false and the
+same code, EFRAME_RETURNED reported success=true, and the GUI exited with code 1.
+The external fixture remained unchanged and no GUI process survived. TDA was absent
+and the listener was never started; active Raw Input cleanup is not established.
+
+Evidence: `evidence/gui-smoke-20261106T142110283Z/`. Its `gui-smoke.json` deliberately
+has success=false and GUI exit code 1. `expected-failure-check.json` has
+test_passed=true solely because the expected application failure was preserved.
+This is not a successful-cleanup run and does not add to the twelve normal-close
+passes. Binary SHA-256 remains 4F8B21AA7AEB9410C0E7A1200B1AC43099DDA17387C20A58E224B36E5C0AE17E.
+The original >15s timeout was not reproduced or explained; Gate A stays FAIL.
 
 Code head 98cf29c passed [hosted CI run 42228762994](https://github.com/floris-xlx/DASRU/actions/runs/42228762994):
 Windows 271 tests pass (one intentionally ignored child-process fixture), Ubuntu

@@ -101,6 +101,17 @@ call is an unresolved exception for review, not a PASS.
 
 ## Failures and evidence
 
+For the final-preferences conflict case, run the smoke harness in a child
+PowerShell process whose ProcessStartInfo.EnvironmentVariables["LOCALAPPDATA"]
+points to a new isolated temporary directory. Wait until its test-owned DASRU
+window is visible (the settings store has then loaded), create
+`DASRU/preferences.json` in that temporary directory with known fixture bytes,
+and let the harness request ordinary close. Require the fixture to remain exact,
+GUI exit code 1, SETTINGS_CHANGED_EXTERNALLY on both failed flush and final app
+phases, EFRAME_RETURNED, and no surviving GUI process. Keep the raw smoke report
+as success=false and record the expected-failure assertion separately. Do not
+redirect or modify the user's actual preferences for this test.
+
 On timeout preserve the trace and process for diagnosis; record the last completed
 phase and outstanding owner. Do not forcibly terminate threads or silently detach
 workers. Filesystem/process calls and joins cannot promise a hard wall-clock bound.
