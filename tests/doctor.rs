@@ -198,6 +198,7 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
     if report["host"]["os"] == "linux" {
         assert_eq!(process_probe["accessible"], "UNKNOWN");
         assert_eq!(process_probe["implementation_status"], "NOT_IMPLEMENTED");
+        assert_eq!(process_probe["readiness"], "UNSUPPORTED_PLATFORM");
     }
     assert!(report["errors"].is_array());
 }

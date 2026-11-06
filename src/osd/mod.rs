@@ -25,9 +25,6 @@ pub fn restore_fps_marker() -> Result<String, String> {
     #[cfg(windows)]
     {
         let path = snapshot::default_path()?;
-        if !path.exists() {
-            return Ok("No pending FPS marker recovery snapshot".to_owned());
-        }
         restore_fps_marker_from(&path)
     }
     #[cfg(not(windows))]
