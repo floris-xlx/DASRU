@@ -54,6 +54,35 @@ unexplained; no Gate A PASS is claimed from this audit.
 | E Reliability review | PENDING - baseline regressions pass, critical shutdown findings open |
 | F Distribution/final CI | PENDING - baseline CI green, notices/license/final-head review still required |
 
+### A2/A3 - startup-abort thread ownership
+
+Requirement: shutdown never leaves a listener owner detached.
+
+Observed defect: `abort_startup` discarded its live `JoinHandle` when the
+completion notification timed out or disconnected. Extracted that existing
+notification/join sequence unchanged into the platform-independent private
+`hotkeys::worker` module so WSL can exercise the actual production path.
+
+Failing tests: `startup_abort_joins_after_completion_disconnect` and
+`startup_abort_joins_after_completion_timeout`. Both failed on Rust 1.95 with
+`cleanup detached a live resource owner`. Channel-controlled workers are released
+and joined before assertions even in the failing run; no injected keyboard input
+or game is involved. The 100ms receive deadline detects an early return, rather
+than claiming a wall-clock shutdown bound.
+
+Minimal implementation: join the owned thread regardless of completion-channel
+outcome. Startup still returns its original startup error. GREEN: both tests
+passed. Refactor: rustfmt only. Native Windows Rust 1.95 all-target/all-feature
+check passed. Raw RED/GREEN outputs are retained under `docs/evidence/`.
+Regression: 236 Rust 1.95 WSL all-target/all-feature tests passed; native Windows
+warnings-as-errors Clippy passed. Commit: `Fix startup cleanup retaining the Raw
+Input worker owner` (this section is committed with the fix).
+
+This fixes a demonstrated ownership error, not the unexplained historical
+normal-close timeout. Joining can wait on an uninterruptible OS call. The separate
+normal-shutdown fallback and final cleanup-error reporting remain under review;
+Gate A remains FAIL.
+
 ## Current presentation revision: compact DESRU-style utility
 
 The user's revised direction supersedes the sidebar/page specification. The

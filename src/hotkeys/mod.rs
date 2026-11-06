@@ -9,6 +9,8 @@ pub mod runtime;
 pub mod state;
 #[cfg(windows)]
 mod windows;
+#[cfg(any(windows, test))]
+mod worker;
 
 use std::{ffi::OsString, path::Path, process::ExitCode};
 

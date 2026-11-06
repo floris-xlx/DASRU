@@ -244,9 +244,7 @@ fn abort_startup(
             PostThreadMessageW(thread_id, STOP_MESSAGE, 0, 0);
         }
     }
-    if completed.recv_timeout(SHUTDOWN_TIMEOUT).is_ok() {
-        let _ = worker.join();
-    }
+    super::worker::finish_startup_abort(worker, completed, SHUTDOWN_TIMEOUT);
 }
 
 impl Drop for WindowsBackend {
