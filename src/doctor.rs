@@ -440,7 +440,7 @@ fn hotkey_capability(platform: HostPlatform, session: &'static str) -> Capabilit
             detected: "DETECTED",
             accessible: "UNKNOWN",
             implementation_status,
-            reason: "Windows supports global-hotkey registration, but doctor registered no hotkeys and DASRU has no hotkey feature.".to_owned(),
+            reason: "Windows supports global-hotkey registration, but the listener was not started and registration was not tested.".to_owned(),
         },
         (HostPlatform::Linux, "X11") => Capability {
             detected: "DETECTED",
@@ -464,14 +464,13 @@ fn hotkey_capability(platform: HostPlatform, session: &'static str) -> Capabilit
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
             implementation_status,
-            reason: "DASRU has no global-hotkey integration for this platform.".to_owned(),
+            reason: "DASRU does not provide a global-hotkey backend for this platform.".to_owned(),
         },
     }
 }
 
 fn portal_capability(platform: HostPlatform, session: &'static str) -> Capability {
-    let implementation_status =
-        capability_decision(FeatureId::GlobalHotkeys, platform).implementation_status();
+    let implementation_status = "NOT_IMPLEMENTED";
     match (platform, session) {
         (HostPlatform::Linux, "WAYLAND") => Capability {
             detected: "UNKNOWN",
@@ -628,7 +627,9 @@ fn feature_readiness(
             accessible: capabilities.global_hotkeys.accessible,
             implementation_status: global_hotkeys.implementation_status(),
             readiness: global_hotkeys.diagnostic_readiness(),
-            failure_reasons: vec!["DASRU has no global-hotkey feature."],
+            failure_reasons: vec![
+                "The listener was not started, so current registration state is unknown.",
+            ],
         },
         FeatureReadiness {
             feature: "keyboard_input",

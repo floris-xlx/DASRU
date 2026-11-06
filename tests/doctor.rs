@@ -171,7 +171,7 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
             .iter()
             .find(|entry| entry["feature"] == "global_hotkeys")
             .unwrap()["implementation_status"],
-        "NOT_IMPLEMENTED"
+        "IMPLEMENTED"
     );
     assert_eq!(
         features
@@ -187,6 +187,15 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
             .unwrap();
         assert_ne!(entry["readiness"], "AVAILABLE");
         assert_ne!(entry["accessible"], "VERIFIED");
+    }
+    let hotkeys = features
+        .iter()
+        .find(|entry| entry["feature"] == "global_hotkeys")
+        .unwrap();
+    if report["host"]["os"] == "windows" {
+        assert_eq!(hotkeys["readiness"], "NOT_PROBED");
+    } else {
+        assert_eq!(hotkeys["readiness"], "UNSUPPORTED_PLATFORM");
     }
     let process_probe = features
         .iter()

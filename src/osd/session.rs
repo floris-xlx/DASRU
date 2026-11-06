@@ -307,6 +307,8 @@ fn capability_failure(reason: CapabilityReason) -> &'static str {
         CapabilityReason::UnsupportedLayout => "complete unique FPS layout validation did not pass",
         CapabilityReason::PartialCoverage => "full-module memory coverage is required",
         CapabilityReason::CollectionFailed => "support diagnostics could not be collected",
+        CapabilityReason::RegistrationConflict => "a requested global hotkey is already registered",
+        CapabilityReason::RegistrationFailed => "global hotkey registration failed",
     }
 }
 
