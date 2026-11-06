@@ -136,6 +136,51 @@ fn support_export_does_not_replace_an_existing_file() {
 }
 
 #[test]
+fn concurrent_support_exports_publish_only_one_file() {
+    let directory = unique_temp_dir("support-export-concurrent");
+    let path = directory.join("support-report.json");
+    let barrier = std::sync::Arc::new(std::sync::Barrier::new(2));
+    let threads = (0..2)
+        .map(|_| {
+            let barrier = barrier.clone();
+            let path = path.clone();
+            std::thread::spawn(move || {
+                barrier.wait();
+                Command::new(env!("CARGO_BIN_EXE_dasru"))
+                    .args(["support", "export"])
+                    .arg(path)
+                    .output()
+                    .expect("support export command starts")
+            })
+        })
+        .collect::<Vec<_>>();
+    let outputs = threads
+        .into_iter()
+        .map(|thread| thread.join().expect("export thread completes"))
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        outputs
+            .iter()
+            .filter(|output| output.status.success())
+            .count(),
+        1
+    );
+    assert_eq!(
+        outputs
+            .iter()
+            .filter(|output| output.status.code() == Some(1))
+            .count(),
+        1
+    );
+    let report = fs::read(&path).expect("one report was published");
+    serde_json::from_slice::<Value>(&report).expect("published report is valid JSON");
+    assert_eq!(fs::read_dir(&directory).unwrap().count(), 1);
+    fs::remove_file(path).unwrap();
+    fs::remove_dir(directory).unwrap();
+}
+
+#[test]
 fn support_export_requires_an_output_path() {
     let output = Command::new(env!("CARGO_BIN_EXE_dasru"))
         .args(["support", "export"])

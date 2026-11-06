@@ -79,8 +79,7 @@ impl SupportExportError {
 pub fn export_json(path: &Path) -> Result<(), SupportExportError> {
     let json = serde_json::to_vec_pretty(&collect()).map_err(SupportExportError::Serialize)?;
     let (temporary, mut file) = create_temporary_export(path)?;
-    file.write_all(&json).map_err(SupportExportError::Write)?;
-    file.flush().map_err(SupportExportError::Write)?;
+    write_temporary(&mut file, &json)?;
     file.sync_all().map_err(SupportExportError::Write)?;
     drop(file);
 
@@ -93,6 +92,11 @@ pub fn export_json(path: &Path) -> Result<(), SupportExportError> {
         }
         Err(error) => Err(SupportExportError::Publish(error)),
     }
+}
+
+fn write_temporary(file: &mut impl Write, json: &[u8]) -> Result<(), SupportExportError> {
+    file.write_all(json).map_err(SupportExportError::Write)?;
+    file.flush().map_err(SupportExportError::Write)
 }
 
 struct TemporaryExport {
@@ -225,6 +229,7 @@ mod tests {
         doctor::DoctorError,
         identity::{BuildRecord, ExecutableIdentity},
         probe::ReportError,
+        process::{ProcessCandidate, ProcessIdentity, ProcessInspection},
     };
 
     use super::*;
@@ -246,13 +251,27 @@ mod tests {
             path: PathBuf::from(sentinel),
             sha256: "a".repeat(64),
             size: 1024,
-            file_version: None,
-            product_version: None,
+            file_version: Some(sentinel.to_owned()),
+            product_version: Some(sentinel.to_owned()),
             version_info_error: Some(sentinel.to_owned()),
         });
         probe.steam_install_dir = Some(sentinel.to_owned());
         probe.steam_build_id = Some("25755602".to_owned());
         probe.expected_steam_build_id = Some("25755602".to_owned());
+        probe.steam_build_id_error = Some(sentinel.to_owned());
+        probe.reason = Some(sentinel.to_owned());
+        probe.processes.push(ProcessCandidate {
+            pid: 123456,
+            reported_name: sentinel.to_owned(),
+            inspection: ProcessInspection::Available {
+                identity: ProcessIdentity {
+                    creation_time_filetime: 1,
+                    executable_path: PathBuf::from(sentinel),
+                    module_base: 2,
+                    image_size: 3,
+                },
+            },
+        });
         probe.errors.push(ReportError {
             field: "executable.path",
             code: "TEST_PROBE_ERROR",
@@ -261,10 +280,10 @@ mod tests {
         probe.build_resolution = Some(BuildResolution::ExactMatch {
             build: BuildRecord {
                 id: "steam-25755602".to_owned(),
-                name: "DOOM: The Dark Ages test build".to_owned(),
+                name: sentinel.to_owned(),
                 sha256: "a".repeat(64),
-                file_version: None,
-                product_version: None,
+                file_version: Some(sentinel.to_owned()),
+                product_version: Some(sentinel.to_owned()),
                 steam_build_id: Some("25755602".to_owned()),
             },
         });
@@ -289,5 +308,42 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn write_failure_removes_the_staged_file() {
+        struct FailingWriter;
+
+        impl Write for FailingWriter {
+            fn write(&mut self, _: &[u8]) -> io::Result<usize> {
+                Err(io::Error::other("private write failure"))
+            }
+
+            fn flush(&mut self) -> io::Result<()> {
+                Ok(())
+            }
+        }
+
+        let directory = std::env::temp_dir().join(format!(
+            "dasru-support-write-failure-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&directory).unwrap();
+        let destination = directory.join("report.json");
+        let temporary_path;
+        let result = {
+            let (temporary, _file) = create_temporary_export(&destination).unwrap();
+            temporary_path = temporary.path.clone();
+            write_temporary(&mut FailingWriter, b"report")
+        };
+
+        assert!(matches!(result, Err(SupportExportError::Write(_))));
+        assert!(!temporary_path.exists());
+        assert_eq!(fs::read_dir(&directory).unwrap().count(), 0);
+        fs::remove_dir(directory).unwrap();
     }
 }
