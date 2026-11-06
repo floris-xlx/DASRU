@@ -27,7 +27,13 @@ public static class GuiSmokeNative {
 $evidence = Join-Path $PSScriptRoot '../docs/evidence'
 New-Item -ItemType Directory -Force $evidence | Out-Null
 $timer = [Diagnostics.Stopwatch]::StartNew()
-$app = Start-Process -FilePath (Resolve-Path -LiteralPath $Executable) -PassThru
+$gameAtStart=@(Get-Process -Name 'DOOMTheDarkAges' -ErrorAction SilentlyContinue).Count -gt 0
+$startInfo=New-Object Diagnostics.ProcessStartInfo
+$startInfo.FileName=(Resolve-Path -LiteralPath $Executable).Path
+$startInfo.UseShellExecute=$false
+$app=[Diagnostics.Process]::Start($startInfo)
+$processHandle=$app.Handle
+
 try {
     if (!$app.WaitForInputIdle(15000)) { throw 'GUI did not become input-idle' }
     for ($attempt=0; $attempt -lt 75; $attempt++) {
@@ -63,10 +69,13 @@ try {
     $close=[Diagnostics.Stopwatch]::StartNew()
     if (![GuiSmokeNative]::PostMessage($handle,16,[IntPtr]::Zero,[IntPtr]::Zero)) { throw 'Could not request normal window close' }
     if (!$app.WaitForExit(15000)) { throw 'GUI shutdown exceeded 15 seconds' }
-    $report=[ordered]@{configuration='Windows native debug build; game running; listener not started';startup_ms=$startup;dpi=$dpi;sample_seconds=10;cpu_ms=($cpuAfter-$cpuBefore);working_set_before=$memoryBefore;working_set_after=$memoryAfter;maximum_message_response_ms=($latencies|Measure-Object -Maximum).Maximum;shutdown_ms=$close.Elapsed.TotalMilliseconds;exit_code=$app.ExitCode;print_window_succeeded=$captured}
+    $report=[ordered]@{success=$true;configuration='Windows native debug build; listener not started';game_running_at_start=$gameAtStart;startup_ms=$startup;dpi=$dpi;sample_seconds=10;cpu_ms=($cpuAfter-$cpuBefore);working_set_before=$memoryBefore;working_set_after=$memoryAfter;maximum_message_response_ms=($latencies|Measure-Object -Maximum).Maximum;shutdown_ms=$close.Elapsed.TotalMilliseconds;exit_code=$app.ExitCode;print_window_succeeded=$captured}
     if ($app.ExitCode -ne 0) { throw "GUI exit code $($app.ExitCode)" }
     $report | ConvertTo-Json | Set-Content (Join-Path $evidence 'gui-smoke.json')
     $report | ConvertTo-Json
+} catch {
+    @{success=$false;error=$_.Exception.Message;game_running_at_start=$gameAtStart} | ConvertTo-Json | Set-Content (Join-Path $evidence 'gui-smoke.json')
+    throw
 } finally {
     $app.Refresh()
     if (!$app.HasExited) { Stop-Process -Id $app.Id }

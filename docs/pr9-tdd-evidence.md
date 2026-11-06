@@ -50,23 +50,39 @@ to match title, visibility and minimum dimensions. A navigation-message experime
 was removed because posted button messages did not reliably select coordinates.
 Only the final inspected screenshot and corresponding JSON are retained.
 
-Final debug-build sample at 96 DPI (100%): startup to visible window 437.9 ms;
-10-second sample consumed 3125 ms process CPU (0.3125 of one logical CPU), working
-set 86,937,600 ? 88,244,224 bytes; maximum WM_NULL response 9.84 ms; normal shutdown
-140.2 ms, exit code 0. Sampling includes initial monitoring and rendering, so it
-is not a release idle-CPU benchmark or a sustained-memory stability test.
-The screenshot shows actual Verified process status and registered build
-`steam-25755602`. See `evidence/gui-window.png` and `evidence/gui-smoke.json`.
+The earlier game-running debug sample at 96 DPI showed actual Verified process
+status and registered build `steam-25755602`; retain its inspected screenshot as
+`evidence/gui-game-running.png`. That capture predates the final layout rows.
+
+Two final-source debug runs with no game, at 96 DPI, passed visible-window,
+message responsiveness and normal-close checks. Startup was 417.4 / 382.8 ms;
+10-second CPU samples consumed 187.5 / 281.25 ms; maximum message response was
+5.94 / 5.73 ms; normal shutdown took 1116.4 / 121.8 ms, both exit code 0.
+Working sets stayed approximately 74-77 MB during these short runs. See
+`evidence/gui-smoke-repeat-1.json`, `evidence/gui-smoke-repeat-2.json`, and the
+final no-game screenshot `evidence/gui-window.png`. These are short debug runs,
+not release performance or sustained focus-cycle memory acceptance.
+
+One intervening smoke run exceeded the 15-second process-wait limit. Temporary
+diagnostics subsequently showed application, monitor and settings cleanup all
+completed; the diagnostics were removed. A separate run exposed null ExitCode
+from PowerShell Start-Process. The harness now explicitly retains a managed
+process handle, records real game presence and writes failure JSON instead of
+leaving stale passing metrics. Two repeats pass, but the isolated timeout's root
+cause is not conclusively established; extended shutdown acceptance remains open.
 
 ## Hosted CI and remaining acceptance
 
-Bootstrap commit b5ad467 passed hosted Windows and Ubuntu checks, including the
-Windows release build. Those results do not validate the subsequent implementation;
-latest-commit hosted results must be checked after pushing.
+Source revision 2c2bdfa passed hosted Windows and Ubuntu CI on Rust 1.95:
+https://github.com/floris-xlx/DASRU/actions/runs/42191220518
+The Windows job executed Raw Input unregister/repeated-start-stop tests, the new
+overflow test, atomic settings tests and the release GUI build. These are backend
+resource tests, not proof of physical GUI/TDA shortcut acceptance. The subsequent
+smoke-harness/evidence-only revision must also be checked after pushing.
 
 Merge remains blocked pending physical GUI hotkey dispatch/focus/hold/release,
 listener stop/window-close Raw Input cleanup against TDA, game exit/restart,
-unknown executable/access-failure live cases, no-game native launch, native
+unknown executable/access-failure live cases, native
 125-200% DPI and monitor moves, release idle/memory-cycle performance, final
 redistribution notices/project-license decision and PR review. The GUI exports to
 a user-entered path; a native browse dialog is not implemented. Raw Input events now use a bounded 256-event queue; overload invalidates queued focus generations and terminates dispatch. OS I/O and an in-flight support export may delay close, although
@@ -75,4 +91,4 @@ executable hashing now cooperatively cancels between chunks.
 No FPS limiting, input injection, macros, automation, OSD writes or memory writes
 were added. This document records evidence and open gates, not a completion claim.
 
-Additional regression: a pre-existing temporary settings file is preserved on creation collision (RED missing publish helper; GREEN ownership-aware publication). The Windows overflow test first failed compilation with missing overload state/error code; it now compiles locally and awaits hosted execution. Windows orchestration was moved into windows/session.rs to keep the backend module below 1,000 lines.
+Additional regression: a pre-existing temporary settings file is preserved on creation collision (RED missing publish helper; GREEN ownership-aware publication). The Windows overflow test first failed compilation with missing overload state/error code; it compiles locally and passed hosted Windows execution. Windows orchestration was moved into windows/session.rs to keep the backend module below 1,000 lines.

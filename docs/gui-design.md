@@ -22,5 +22,5 @@ a project-license decision; README currently explicitly selects no DASRU license
 
 Headless tests exercise all screens at 100%, 125%, 150% and 200% scaling.
 This establishes renderability, not pixel-level Windows DPI acceptance. Native
-100% screenshots and smoke measurements are in `docs/evidence`. Physical shortcut,
+100% game-running and no-game screenshots and smoke measurements are in `docs/evidence`. Physical shortcut,
 high-DPI and monitor-move acceptance remain open.
