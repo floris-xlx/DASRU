@@ -1,0 +1,32 @@
+[
+    {
+        "sample_range":  "0-179",
+        "mean_working_set_bytes":  70769026.844444439,
+        "minimum_working_set_bytes":  67702784,
+        "maximum_working_set_bytes":  71999488
+    },
+    {
+        "sample_range":  "180-359",
+        "mean_working_set_bytes":  74262664.533333331,
+        "minimum_working_set_bytes":  71122944,
+        "maximum_working_set_bytes":  76263424
+    },
+    {
+        "sample_range":  "360-539",
+        "mean_working_set_bytes":  75568810.666666672,
+        "minimum_working_set_bytes":  75341824,
+        "maximum_working_set_bytes":  76500992
+    },
+    {
+        "sample_range":  "540-719",
+        "mean_working_set_bytes":  75537203.2,
+        "minimum_working_set_bytes":  75411456,
+        "maximum_working_set_bytes":  76419072
+    },
+    {
+        "sample_range":  "720-899",
+        "mean_working_set_bytes":  75442722.13333334,
+        "minimum_working_set_bytes":  75005952,
+        "maximum_working_set_bytes":  76386304
+    }
+]

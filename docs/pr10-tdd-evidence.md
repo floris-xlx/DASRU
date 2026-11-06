@@ -1,5 +1,93 @@
 # Desktop UI TDD evidence
 
+## Hardening outcome (2026-11-06; code head 98cf29c)
+
+PR #10 remains a draft and is not ready for review/merge. No new branch or game
+feature was introduced. Fetched main is still
+`4e637752b9241cff7805e6ee9baf72c649557e10`, an ancestor of this PR branch.
+
+| Gate | Current result |
+|---|---|
+| A Shutdown | FAIL - ownership/error gaps fixed and twelve no-game release closes pass, but historical >15s timeout remains unexplained; active-game close cases pending |
+| B Real TDA | PENDING - operator explicitly unavailable; no physical shortcut/focus/restart acceptance observed |
+| C Display | PENDING - real 720px native 100% capture passes on one 5120×1440 monitor; 125–200%, practical lower resolutions and monitor transitions untested |
+| D Performance | PENDING - sustained no-game release sample passes; game/listener modes and repeated physical transitions untested |
+| E Reliability | PENDING - automated regression/review checks pass; critical lifecycle/live gates A/B still open |
+| F Distribution | BLOCKED - technical dependency/font/runtime review recorded; existing project-license/provenance clearance remains unresolved |
+
+### Sustained release evidence
+
+`evidence/gui-smoke-20261106T135136703Z/` records 900 raw samples over
+910.075 seconds on clean code head 98cf29c, binary SHA-256
+`4F8B21AA7AEB9410C0E7A1200B1AC43099DDA17387C20A58E224B36E5C0AE17E`.
+No TDA and no listener were running; no game input was sent. Startup: 470.65ms;
+process CPU: 19.859s, 2.182% of one logical core; working set: 67.70MB initially,
+75.39MB finally, 76.50MB peak; maximum sampled WM_NULL response: 6.00ms; normal
+close: 91.18ms; exit code zero with every shutdown phase present. MB here are
+decimal bytes/1,000,000. This is a no-game observation, not proof of active input
+registration cleanup or leak freedom across game/focus cycles.
+
+Three-minute working-set window means: 70.77, 74.26, 75.57, 75.54, 75.44MB.
+After warmup the last nine minutes show no sustained rise. The derived
+`memory-windows.json` was corrected for a PowerShell nested-array grouping error;
+the original 900 raw samples were not modified. Native conditions: Windows 10 Pro
+19045, i9-14900K, 32 logical CPUs, single 5120×1440 display at 96 DPI.
+
+The installed Steam manifest reports build 25755602. One normal Steam launch was
+requested after the idle run; subsequent checks observed no TDA process, Steam's
+Running=0 and Updating=0. The operator then confirmed physical acceptance was
+unavailable. No repeated launches or synthetic key input were used. Both the GUI
+and game were absent at the final local process check. Current physical accepted
+counts, focus transitions, game restart and active-listener cleanup are untested.
+Follow [the exact manual procedure](pr10-native-acceptance.md) when available.
+
+### Regression, privacy and dependency review
+
+Seventeen Rust tests were added in this phase (251 passing WSL tests versus the
+234 baseline). Eleven demonstrated failing cases are recorded below, including
+the compile-time missing retained-report API; six additional safeguards already
+passed when introduced and are explicitly regression evidence. The release smoke
+profile assertion also failed before its fix. Test commands used WSL2 throughout.
+
+Rust 1.95 fmt, WSL/native warnings-as-errors Clippy, WSL all-target/all-feature
+tests, native release GUI and CLI builds pass. Actual native CLI checks accepted
+two configured observe bindings, rejected an unknown action with exit 2 and
+HOTKEY_CONFIG_UNKNOWN_ACTION, and reported NO_PROCESS from probe. Existing PR #9
+configuration, action IDs, generation fencing and CLI output order remain intact.
+
+Reviewed the complete source diff against main, including GUI/controller/runtime,
+Windows session extraction, core cancellation changes and MSRV Clippy edits.
+Process/build projections remain fail-closed; fresh native attachment, pinned
+identity and foreground checks remain authoritative. Cache metadata is not
+authorization and expires at 30s. Queue bounds/overflow fencing, repeat suppression,
+single observation counting and post-stop rejection remain covered. No GUI call
+to game-memory writers, input injection or a CLI subprocess was introduced.
+Preferences retain schema/validation, corrupt-file preservation, conflict checks
+and atomic changed-value publication. Support export retains the core redaction
+and create-new/no-overwrite implementation. No additional defect was demonstrated
+in this review; unresolved acceptance/lifecycle limitations remain explicit above.
+
+`evidence/pr10-distribution-review-20261106T1403Z.json` records locked Windows
+metadata: all 129 registry packages occur in the existing 130-entry inventory;
+none lack license metadata and the highest declared dependency MSRV is 1.95.
+All five bundled font notice texts match epaint_default_fonts 0.37.0 verbatim.
+No dependency, font, artwork or lockfile was added by hardening. PE imports identify
+x64 MSVC/Universal CRT and OpenGL requirements. SPDX/font checks do not resolve
+the existing README project-license/provenance caveat or constitute final
+redistribution clearance; no project license was selected on the owner's behalf.
+
+Code head 98cf29c passed [hosted CI run 42228762994](https://github.com/floris-xlx/DASRU/actions/runs/42228762994):
+Windows 271 tests pass (one intentionally ignored child-process fixture), Ubuntu
+251 pass, both fmt/Clippy pass, and Windows release GUI build passes. The evidence
+commit after this code head has no runtime changes; its own final-head hosted
+checks are verified after pushing and linked in the PR description.
+
+Hardening commits: baseline 2f625b0; startup owner 1136d30; terminal owner 85b67f1;
+queued work/retained errors 20a6938; trace/unchanged preferences 98cf29c. No merge
+or force push was performed. Remaining gates require actual game/operator/display
+acceptance and final licensing/provenance review; compilation is not substituted
+for those results.
+
 ## Production hardening baseline (2026-11-06)
 
 Fetched origin before changing behavior. Main remains
