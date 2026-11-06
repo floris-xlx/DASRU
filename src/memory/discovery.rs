@@ -665,13 +665,13 @@ pub(crate) fn find_ascii_runs(bytes: &[u8]) -> Vec<MetricsAsciiRun> {
     for (offset, byte) in bytes.iter().copied().chain(std::iter::once(0)).enumerate() {
         if (0x20..=0x7E).contains(&byte) {
             start.get_or_insert(offset);
-        } else if let Some(run_start) = start.take() {
-            if offset - run_start >= 4 {
-                runs.push(MetricsAsciiRun {
-                    offset: u16::try_from(run_start).unwrap_or(u16::MAX),
-                    text: String::from_utf8_lossy(&bytes[run_start..offset]).into_owned(),
-                });
-            }
+        } else if let Some(run_start) = start.take()
+            && offset - run_start >= 4
+        {
+            runs.push(MetricsAsciiRun {
+                offset: u16::try_from(run_start).unwrap_or(u16::MAX),
+                text: String::from_utf8_lossy(&bytes[run_start..offset]).into_owned(),
+            });
         }
     }
     runs
@@ -709,7 +709,7 @@ fn hex_bytes(bytes: &[u8]) -> String {
 
 #[cfg(any(windows, test))]
 pub(crate) fn is_aligned_pointer_candidate(value: u64, minimum: u64, maximum: u64) -> bool {
-    value >= minimum && value < maximum && value % 8 == 0
+    value >= minimum && value < maximum && value.is_multiple_of(8)
 }
 
 #[cfg(any(windows, test))]
@@ -811,7 +811,7 @@ pub(crate) fn row_history_capacity_bytes(
     if header.data_address == 0 {
         return Err(RowHistoryHeaderError::NullDataAddress);
     }
-    if header.data_address % 8 != 0 {
+    if !header.data_address.is_multiple_of(8) {
         return Err(RowHistoryHeaderError::MisalignedDataAddress);
     }
     let length = u64::from(header.capacity)

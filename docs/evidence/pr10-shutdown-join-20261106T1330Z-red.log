@@ -1,0 +1,32 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.42s
+     Running unittests src/lib.rs (target/debug/deps/dasru-c811eb6fdce50d1f)
+
+running 6 tests
+test hotkeys::worker::tests::shutdown_preserves_backend_cleanup_failure ... ok
+test hotkeys::worker::tests::shutdown_reports_owner_panic ... ok
+test hotkeys::worker::tests::shutdown_joins_owner_after_notification_timeout ... FAILED
+test hotkeys::worker::tests::shutdown_joins_owner_after_notification_failure ... FAILED
+test hotkeys::worker::tests::startup_abort_joins_after_completion_timeout ... ok
+test hotkeys::worker::tests::startup_abort_joins_after_completion_disconnect ... ok
+
+failures:
+
+---- hotkeys::worker::tests::shutdown_joins_owner_after_notification_timeout stdout ----
+
+thread 'hotkeys::worker::tests::shutdown_joins_owner_after_notification_timeout' (128634) panicked at src/hotkeys/worker.rs:90:9:
+shutdown returned with a live owner
+
+---- hotkeys::worker::tests::shutdown_joins_owner_after_notification_failure stdout ----
+
+thread 'hotkeys::worker::tests::shutdown_joins_owner_after_notification_failure' (128633) panicked at src/hotkeys/worker.rs:90:9:
+shutdown returned with a live owner
+
+
+failures:
+    hotkeys::worker::tests::shutdown_joins_owner_after_notification_failure
+    hotkeys::worker::tests::shutdown_joins_owner_after_notification_timeout
+
+test result: FAILED. 4 passed; 2 failed; 0 ignored; 0 measured; 97 filtered out; finished in 0.10s
+
+error: test failed, to rerun pass `--lib`

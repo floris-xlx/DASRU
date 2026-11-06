@@ -1,0 +1,15 @@
+   Compiling serde_core v1.0.229
+   Compiling toml_datetime v0.7.5+spec-1.1.0
+   Compiling serde_spanned v1.1.2
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.154
+   Compiling toml v0.9.12+spec-1.1.0
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.53s
+     Running unittests src/lib.rs (target/debug/deps/dasru-c811eb6fdce50d1f)
+
+running 2 tests
+test hotkeys::worker::tests::startup_abort_joins_after_completion_disconnect ... ok
+test hotkeys::worker::tests::startup_abort_joins_after_completion_timeout ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 97 filtered out; finished in 0.10s

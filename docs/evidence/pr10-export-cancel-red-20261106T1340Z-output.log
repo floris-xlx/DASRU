@@ -1,0 +1,28 @@
+   Compiling unicode-general-category v1.1.0
+   Compiling epaint v0.37.0
+   Compiling egui v0.37.0
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 18.71s
+     Running tests/gui_controller.rs (target/debug/deps/gui_controller-03fc53335b3a964b)
+
+running 2 tests
+test slow_worker_is_nonblocking_refreshes_coalesce_and_shutdown_cancels ... ok
+test shutdown_cancels_queued_export_and_rejects_new_work ... FAILED
+
+failures:
+
+---- shutdown_cancels_queued_export_and_rejects_new_work stdout ----
+
+thread 'shutdown_cancels_queued_export_and_rejects_new_work' (132359) panicked at tests/gui_controller.rs:110:5:
+assertion `left == right` failed
+  left: Pending
+ right: Failed("SUPPORT_EXPORT_CANCELLED")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    shutdown_cancels_queued_export_and_rejects_new_work
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test gui_controller`

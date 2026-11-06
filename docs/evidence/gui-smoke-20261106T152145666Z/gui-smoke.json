@@ -1,0 +1,39 @@
+{
+    "success":  true,
+    "configuration":  "Windows native release build; listener not started",
+    "source_head":  "1792a93d396676c817961d5d66579f5ef084fc4f",
+    "source_tracked_dirty":  true,
+    "binary_sha256":  "AD8393FD7039E5C38CDBF67AC3C346A2F50D4E9B742E5003FFBCAE79A437C842",
+    "game_running_at_start":  true,
+    "client_width_logical":  720,
+    "startup_ms":  514.53460000000007,
+    "dpi":  96,
+    "sample_seconds":  1,
+    "observed_ms":  1024.6143,
+    "cpu_ms":  0,
+    "one_core_cpu_percent":  0,
+    "working_set_before":  67592192,
+    "working_set_after":  67604480,
+    "maximum_working_set":  67592192,
+    "maximum_message_response_ms":  5.9342000000000006,
+    "shutdown_ms":  109.68,
+    "exit_code":  0,
+    "shutdown_phases_complete":  true,
+    "listener_cleanup":  "not exercised; listener never started",
+    "print_window_succeeded":  true,
+    "client_height_logical":  1200,
+    "requested_client_height":  null,
+    "outer_bounds":  {
+                         "Left":  156,
+                         "Top":  156,
+                         "Right":  892,
+                         "Bottom":  1395
+                     },
+    "work_area":  {
+                      "Left":  0,
+                      "Top":  0,
+                      "Right":  5120,
+                      "Bottom":  1440
+                  },
+    "entire_window_visible":  true
+}

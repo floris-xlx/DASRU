@@ -1,0 +1,11 @@
+{
+    "windows_dependency_packages":  143,
+    "msrv_above_1_95":  [
+
+                        ],
+    "selected_async_runtimes":  [
+
+                                ],
+    "project_license_clearance":  "PENDING",
+    "redistribution_material_review":  "PENDING"
+}

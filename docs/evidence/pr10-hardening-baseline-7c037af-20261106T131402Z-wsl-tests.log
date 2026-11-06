@@ -1,0 +1,378 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 28.75s
+     Running unittests src/lib.rs (target/debug/deps/dasru-50ae06ddaae9ac20)
+
+running 99 tests
+test capability::tests::experimental_status_is_separate_from_explicit_authorization ... ok
+test capability::tests::read_only_inspection_and_scanning_do_not_require_a_known_build ... ok
+test capability::tests::offline_inspection_and_export_require_their_inputs_to_be_evaluated ... ok
+test capability::tests::process_probe_requires_a_supported_process_backend ... ok
+test capability::tests::unsupported_layout_and_partial_memory_never_authorize_a_write ... ok
+test capability::tests::unknown_build_never_supports_build_specific_features ... ok
+test capability::tests::os_apis_do_not_claim_unimplemented_inputs ... ok
+test capability::tests::memory_features_require_the_supported_windows_architecture ... ok
+test capability::tests::process_failures_fail_closed_for_memory_features ... ok
+test doctor::tests::unsupported_host_is_unknown_instead_of_claiming_access ... ok
+test hotkeys::diagnostics::tests::diagnostic_stage_counters_are_independent_and_saturating ... ok
+test doctor::tests::keyboard_input_api_detection_does_not_claim_access_or_implementation ... ok
+test doctor::tests::a_clipboard_utility_never_means_accessible_or_implemented ... ok
+test doctor::tests::wayland_session_does_not_claim_global_shortcuts_portal_availability ... ok
+test doctor::tests::linux_process_permission_is_unknown_without_a_backend_probe ... ok
+test identity::executable::tests::preserves_version_metadata_read_errors_separately_from_absence ... ok
+test doctor::tests::clipboard_dependency_detection_handles_missing_path_and_tools ... ok
+test identity::executable::tests::cancelled_hash_does_not_open_a_file ... ok
+test memory::discovery::tests::high_confidence_requires_valid_slots_and_expected_labels ... ok
+test doctor::tests::runtime_environment_missing_signals_are_structured_not_detected ... ok
+test capability::tests::probe_translation_distinguishes_unknown_builds_from_unreadable_executables ... ok
+test memory::discovery::tests::build_specific_layout_requires_the_verified_id_and_executable_hash ... ok
+test gui::settings::tests::temporary_collision_never_removes_someone_elses_file ... ok
+test memory::discovery::tests::nested_pointer_candidates_must_be_aligned_and_inside_user_range ... ok
+test doctor::tests::session_classification_covers_native_and_desktop_sessions ... ok
+test memory::discovery::tests::no_match_is_distinct_from_an_incomplete_scan ... ok
+test memory::discovery::tests::reports_the_committed_readable_region_scope ... ok
+test memory::discovery::tests::nested_label_matches_do_not_change_direct_label_confidence ... ok
+test memory::discovery::tests::expected_label_match_requires_the_exact_bounded_string ... ok
+test memory::discovery::tests::row_history_validation_bounds_count_capacity_and_address_span ... ok
+test memory::discovery::tests::row_history_header_decodes_pointer_count_and_capacity ... ok
+test memory::discovery::tests::second_level_analysis_finds_bounded_ascii_runs ... ok
+test memory::discovery::tests::row_data_pointer_has_exact_build_static_helper_evidence ... ok
+test memory::discovery::tests::verified_render_disassembly_reads_every_owner_slot ... ok
+test memory::layout::tests::expanded_fps_label_is_unsupported_before_adjacent_row_bytes_change ... ok
+test memory::discovery::tests::string_classifier_requires_printable_ascii_and_terminator ... ok
+test memory::discovery::tests::sample_comparison_reports_changed_aligned_words_as_raw_views ... ok
+test identity::executable::tests::cancellation_is_checked_between_hash_chunks ... ok
+test memory::discovery::tests::pointer_match_requires_natural_alignment_and_reports_absolute_address ... ok
+test memory::scan::tests::failed_partial_reads_are_gaps_and_cannot_supply_matches ... ok
+test memory::scan::tests::finds_a_signature_split_across_adjacent_chunks ... ok
+test memory::scan::tests::does_not_bridge_an_unreadable_region ... ok
+test memory::scan::tests::returns_overlapping_matches_without_duplicates ... ok
+test memory::discovery::tests::partial_read_clears_overlap_and_never_completes_a_pointer_match ... ok
+test memory::layout::tests::reports_fps_string_terminators_and_conservative_capacities ... ok
+test memory::layout::tests::missing_terminator_does_not_expand_the_last_string_capacity ... ok
+test memory::scan::tests::short_read_is_a_gap_even_if_the_api_reports_success ... ok
+test memory::tests::complete_scans_classify_match_counts ... ok
+test memory::tests::fps_signature_matches_the_known_tdaunlocker_bytes ... ok
+test memory::tests::incomplete_scans_are_never_classified_as_unique_or_empty ... ok
+test memory::discovery::tests::row_history_diff_separates_changed_added_and_removed_elements ... ok
+test doctor::tests::os_release_parser_extracts_only_distribution_name ... ok
+test hotkeys::keyboard::tests::replay_accepts_one_current_chord_and_discards_queued_old_generation ... ok
+test memory::tests::partial_read_accounting_counts_missing_and_untrusted_bytes_once ... ok
+test memory::tests::successful_read_bytes_are_the_only_bytes_counted_as_scanned ... ok
+test hotkeys::runtime::tests::configured_actions_keep_their_id_and_focus_generation_fence ... ok
+test memory::layout::tests::plus_replacement_has_two_byte_patch_span_and_one_changed_byte ... ok
+test memory::layout::tests::default_fps_marker_changes_only_the_seventh_payload_byte ... ok
+test memory::discovery::tests::static_data_flow_keeps_runtime_and_renderer_claims_unconfirmed ... ok
+test memory::tests::partial_inspection_with_multiple_observed_matches_is_ambiguous ... ok
+test memory::tests::invalid_registry_is_reported_as_a_structured_scanner_error ... ok
+test memory::transaction::tests::failed_partial_write_attempts_and_verifies_recovery ... ok
+test memory::transaction::tests::incorrect_original_bytes_are_refused_before_snapshot_or_write ... ok
+test memory::transaction::tests::page_protection_change_failure_does_not_modify_target_bytes ... ok
+test hotkeys::diagnostics::tests::summary_reports_only_bounded_stage_counts ... ok
+test doctor::tests::wsl2_is_reported_as_environment_separate_from_display_session ... ok
+test memory::transaction::tests::patch_changes_only_the_marker_byte_and_recovery_restores_it ... ok
+test memory::layout::tests::dry_run_patch_changes_only_its_bounded_slot ... ok
+test memory::transaction::tests::post_write_rollback_refuses_changed_signature_and_retains_snapshot ... ok
+test memory::transaction::tests::post_write_validation_failure_rolls_back_before_returning ... ok
+test memory::transaction::tests::protection_restore_failure_rolls_back_the_byte_and_retries_protection ... ok
+test memory::transaction::tests::readback_mismatch_attempts_and_verifies_recovery ... ok
+test memory::transaction::tests::recovery_accepts_readwrite_protection_after_copy_on_write ... ok
+test memory::transaction::tests::recovery_refuses_unexpected_target_bytes_and_is_idempotent_after_restore ... ok
+test memory::writer::tests::experimental_write_requires_opt_in_and_a_registered_build ... ok
+test probe::tests::ambiguous_process_report_keeps_every_candidate_without_selecting_one ... ok
+test osd::snapshot::tests::snapshot_validation_rejects_changed_expected_bytes_and_out_of_module_offsets ... ok
+test osd::snapshot::tests::schema_one_snapshots_without_registered_build_ids_remain_recoverable ... ok
+test osd::snapshot::tests::snapshot_round_trips_and_cannot_be_overwritten ... ok
+test probe::tests::human_and_json_outputs_report_the_same_executable_identity ... ok
+test probe::tests::reports_unreadable_steam_manifest_without_claiming_a_build_id ... ok
+test session::state::tests::attachment_and_verified_stop_follow_the_lifecycle ... ok
+test session::state::tests::exited_process_discards_its_obsolete_recovery_state ... ok
+test session::state::tests::failed_attachment_returns_to_detached_and_invalid_events_are_typed ... ok
+test process::tests::falls_back_to_normalized_path_equality_when_canonicalization_fails ... ok
+test session::state::tests::identity_change_during_attachment_returns_to_detached ... ok
+test session::state::tests::identity_or_restore_failures_retain_recovery_information ... ok
+test session::state::tests::repeated_stop_and_restore_requests_are_safe ... ok
+test session::tests::obsolete_recovery_can_be_discarded_after_process_exit ... ok
+test session::tests::concurrent_sessions_cannot_reserve_the_same_patch ... ok
+test session::tests::reservations_are_bound_to_creation_identity_and_patch_offset ... ok
+test session::tests::unresolved_reservation_blocks_new_attach_but_allows_recovery ... ok
+test steam::tests::reports_no_build_id_for_non_steam_install_paths ... ok
+test steam::tests::parses_the_top_level_build_id_for_doom_the_dark_ages ... ok
+test steam::tests::rejects_mismatched_or_malformed_appmanifests ... ok
+test steam::tests::locates_the_manifest_in_the_steam_library_containing_the_executable ... ok
+test support::tests::write_failure_removes_the_staged_file ... ok
+test gui::tests::separate_dialogs_inherit_the_text_scale_preference ... ok
+test support::tests::support_report_preserves_compatibility_and_redacts_paths_and_error_messages ... ok
+
+test result: ok. 99 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running unittests src/main.rs (target/debug/deps/dasru-e33499abb21f41e3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/dasru-gui.rs (target/debug/deps/dasru_gui-cf07ca97c4fa18cc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/doctor.rs (target/debug/deps/doctor-52077538b45e42b3)
+
+running 4 tests
+test doctor_rejects_unknown_options_with_usage_exit_code ... ok
+test doctor_reports_environment_signals_without_serializing_their_values ... ok
+test doctor_json_reports_host_signals_separately_from_feature_implementation ... ok
+test doctor_human_output_is_a_support_report ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+     Running tests/gui_bootstrap.rs (target/debug/deps/gui_bootstrap-c5791da7409946f3)
+
+running 7 tests
+test application_initializes_without_game_or_open_dialog ... ok
+test unsupported_and_verified_states_use_distinct_colors ... ok
+test compact_utility_shows_primary_panels_without_sidebar ... ok
+test dark_theme_tokens_apply_even_when_windows_prefers_light ... ok
+test utility_idle_does_not_request_continuous_repainting ... ok
+test dialogs_open_and_close_without_replacing_primary_controls ... ok
+test compact_utility_and_dialogs_render_at_supported_scaling ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+     Running tests/gui_controller.rs (target/debug/deps/gui_controller-4cd8c507b577b19c)
+
+running 2 tests
+test slow_worker_is_nonblocking_refreshes_coalesce_and_shutdown_cancels ... ok
+test panic_is_a_structured_failure_and_does_not_crash_caller ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/gui_hotkeys.rs (target/debug/deps/gui_hotkeys-89a101bba9268891)
+
+running 4 tests
+test window_owner_drop_stops_runtime ... ok
+test duplicate_start_is_rejected_and_stop_joins_resource_owner ... ok
+test stop_discards_an_in_flight_late_observation ... ok
+test cleanup_failure_is_not_reported_as_success ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/gui_monitor.rs (target/debug/deps/gui_monitor-53d575b1101ced83)
+
+running 1 test
+test unchanged_identity_avoids_hashing_and_changed_identity_reverifies ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+     Running tests/gui_settings.rs (target/debug/deps/gui_settings-ae078ad991ceb9fd)
+
+running 6 tests
+test geometry_is_clamped_to_visible_monitor ... ok
+test compact_window_defaults_replace_dashboard_geometry ... ok
+test invalid_schema_binding_and_interval_are_rejected ... ok
+test missing_settings_default_valid_round_trip_and_corrupt_is_preserved ... ok
+test legacy_wide_window_migrates_without_losing_binding_or_overwriting_on_load ... ok
+test background_writer_flushes_final_preferences_on_close ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/gui_state.rs (target/debug/deps/gui_state-4f813b5aa62ec85b)
+
+running 5 tests
+test expired_verified_data_is_stale_and_shutdown_rejects_pending_results ... ok
+test process_change_clears_old_verification_while_hashing ... ok
+test stale_results_cannot_replace_newer_state_and_failures_remain_visible ... ok
+test worker_error_never_keeps_verified_connection ... ok
+test starts_disconnected_and_only_exact_evidence_verifies ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/gui_support.rs (target/debug/deps/gui_support-7d8f61fc0ab2cb19)
+
+running 1 test
+test export_runs_off_thread_and_preserves_no_overwrite ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+
+     Running tests/hotkey_bindings.rs (target/debug/deps/hotkey_bindings-7ad2321a635298e0)
+
+running 10 tests
+test accepts_valid_modifier_shortcut ... ok
+test normalizes_equivalent_bindings ... ok
+test rejects_reserved_f12 ... ok
+test rejects_duplicate_modifiers ... ok
+test rejects_invalid_virtual_key ... ok
+test rejects_reserved_windows_shortcuts ... ok
+test rejects_unmodified_gameplay_keys ... ok
+test rejects_duplicate_bindings_regardless_of_modifier_order ... ok
+test hotkeys_command_does_not_start_without_a_verified_process ... ok
+test rejects_known_reserved_shortcuts ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/hotkey_capability.rs (target/debug/deps/hotkey_capability-b7bd6a8ce9659a74)
+
+running 8 tests
+test active_registration_for_unknown_build_is_unsupported ... ok
+test active_registration_without_verified_process_is_not_supported ... ok
+test capability_is_supported_only_after_hotkey_registration_succeeds ... ok
+test failed_process_evidence_blocks_hotkey_support ... ok
+test hotkey_capability_tracks_registration_lifecycle_state ... ok
+test hotkeys_are_implemented_but_unprobed_without_a_live_registration ... ok
+test hotkeys_remain_unsupported_off_windows ... ok
+test keyboard_input_remains_unimplemented ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/hotkey_cli.rs (target/debug/deps/hotkey_cli-20ef5008a074e062)
+
+running 6 tests
+test top_level_usage_lists_configurable_hotkey_commands ... ok
+test config_read_error_does_not_print_local_path ... ok
+test config_and_legacy_binding_are_ambiguous ... ok
+test validate_rejects_unknown_action_before_startup ... ok
+test configured_listener_validates_before_backend_startup ... ok
+test validates_config_and_exits_cleanly ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/hotkey_config.rs (target/debug/deps/hotkey_config-d2228db3517de77a)
+
+running 11 tests
+test rejects_oversized_config ... ok
+test rejects_unknown_schema_version ... ok
+test rejects_duplicate_active_shortcuts_after_normalization ... ok
+test parses_valid_versioned_config ... ok
+test rejects_more_than_sixteen_enabled_bindings ... ok
+test ignores_disabled_bindings ... ok
+test rejects_unknown_actions ... ok
+test rejects_unknown_schema_fields ... ok
+test rejects_reserved_shortcuts ... ok
+test rejects_empty_active_configuration ... ok
+test rejects_duplicate_binding_ids_including_disabled_entries ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/hotkey_dispatch.rs (target/debug/deps/hotkey_dispatch-7888c4d002c38519)
+
+running 13 tests
+test clears_modifier_state_on_focus_loss ... ok
+test rejects_changed_process_identity ... ok
+test dispatches_nothing_after_shutdown ... ok
+test rejects_disabled_action ... ok
+test rejects_stale_focus_generation ... ok
+test dispatches_exactly_once_per_keypress_and_suppresses_held_repeat ... ok
+test rejects_unconfigured_shortcut ... ok
+test preserves_action_identity_after_shortcut_normalization ... ok
+test dispatches_secondary_shortcut_to_its_configured_id ... ok
+test resolves_primary_binding_to_action ... ok
+test does_not_dispatch_unconfigured_or_disabled_shortcuts ... ok
+test rejects_events_when_unfocused ... ok
+test resolves_secondary_binding_to_action ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/hotkey_input_events.rs (target/debug/deps/hotkey_input_events-45f67ffbf477f915)
+
+running 4 tests
+test focus_loss_clears_pressed_keys_and_modifiers ... ok
+test reports_keyboard_make_and_break_events ... ok
+test suppresses_auto_repeat_and_unmatched_break_events ... ok
+test tracks_modifier_state_across_left_and_right_keys ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/hotkey_lifecycle.rs (target/debug/deps/hotkey_lifecycle-e2c9897e703c6a65)
+
+running 26 tests
+test identity_change_requires_new_verification ... ok
+test conflict_is_not_retried_until_focus_changes ... ok
+test disabled_engine_never_registers ... ok
+test focus_loss_deactivates_bindings ... ok
+test focus_reactivation_does_not_reuse_stale_modifier_state ... ok
+test ambiguous_or_unreadable_process_never_activates ... ok
+test accepts_event_from_verified_foreground_game ... ok
+test focus_loss_before_chord_dispatch_rejects_keyboard_event ... ok
+test focus_reactivation_requires_fresh_verification ... ok
+test invalid_state_transition_returns_a_typed_error ... ok
+test partial_registration_failure_unregisters_earlier_bindings ... ok
+test physical_binding_make_is_delivered_once_and_repeats_are_suppressed ... ok
+test process_exit_disables_bindings ... ok
+test raw_input_registration_failure_keeps_its_structured_error_code ... ok
+test registration_error_enters_error_state ... ok
+test registration_failure_enters_error_state ... ok
+test rejects_ambiguous_game_processes ... ok
+test rejects_event_from_unrelated_foreground_window ... ok
+test rejects_null_foreground_window ... ok
+test rejects_event_when_process_revalidation_fails ... ok
+test rejects_same_pid_with_changed_creation_identity ... ok
+test repeated_focus_cycles_release_every_registration ... ok
+test repeated_shutdown_is_idempotent ... ok
+test unknown_build_never_activates ... ok
+test verified_foreground_process_activates_bindings ... ok
+test verified_process_outside_foreground_starts_inactive ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/identity.rs (target/debug/deps/identity-9a1570074ecc5956)
+
+running 8 tests
+test process_name_is_only_an_exact_case_insensitive_candidate_filter ... ok
+test hashes_the_entire_executable_file ... ok
+test rejects_malformed_registered_hashes ... ok
+test reports_unknown_hash_even_when_steam_metadata_is_absent ... ok
+test rejects_conflicting_version_metadata_for_a_registered_hash ... ok
+test rejects_duplicate_registered_hashes ... ok
+test recognizes_a_registered_build_only_by_sha256 ... ok
+test reports_unknown_build_when_only_steam_metadata_matches_the_registry ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/offline_inspect.rs (target/debug/deps/offline_inspect-ce79d81652948625)
+
+running 9 tests
+test invalid_cli_usage_returns_exit_code_two ... ok
+test memory_layout_cli_rejects_labels_that_change_the_fps_format ... ok
+test unreadable_optional_steam_metadata_is_reported_separately_from_executable_identity ... ok
+test steam_build_mismatch_does_not_downgrade_executable_identity ... ok
+test failed_offline_inspection_returns_a_nonzero_code_and_structured_error ... ok
+test memory_layout_cli_reports_unsupported_platform_without_a_process ... ok
+test metrics_object_cli_reports_unsupported_platform_without_a_process ... ok
+test inspect_json_reports_offline_identity_without_a_process ... ok
+test memory_layout_cli_accepts_a_parameterized_fps_label ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/session.rs (target/debug/deps/session-09c07b65d41dbf76)
+
+running 5 tests
+test absent_ambiguous_denied_and_changed_processes_cannot_enable_memory_features ... ok
+test attached_process_exit_passes_through_stopping ... ok
+test identity_change_and_failed_restore_keep_the_lifecycle_degraded ... ok
+test unknown_build_layout_and_missing_opt_in_fail_closed ... ok
+test process_exit_clears_recovery_and_patch_reservation_is_recoverable ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/support.rs (target/debug/deps/support-17c8c9fd443aa89f)
+
+running 5 tests
+test support_export_requires_an_output_path ... ok
+test support_export_writes_privacy_safe_compatibility_json ... ok
+test support_export_write_failure_has_a_stable_code_without_echoing_path ... ok
+test concurrent_support_exports_publish_only_one_file ... ok
+test support_export_does_not_replace_an_existing_file ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+     Running tests/windows_memory_writer.rs (target/debug/deps/windows_memory_writer-c917c53cb708620a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/windows_probe.rs (target/debug/deps/windows_probe-f66ee5035b3e34e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

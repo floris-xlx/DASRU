@@ -1,0 +1,50 @@
+{
+  "source_head": "98cf29c414eaa2fa21c44abf92693e0d34fef63e",
+  "target": "x86_64-pc-windows-msvc",
+  "cargo_metadata_locked_offline": true,
+  "registry_packages": 129,
+  "existing_license_inventory_entries": 130,
+  "registry_packages_missing_from_inventory": 0,
+  "registry_packages_without_license_metadata": 0,
+  "maximum_declared_dependency_rust_version": "1.95",
+  "new_dependency_or_lockfile_changes_in_hardening": false,
+  "font_notices_verbatim_matched_to_epaint_default_fonts_0_37_0": [
+    "egui-icons.txt",
+    "emoji-icon-font-mit-license.txt",
+    "Hack-Regular.txt",
+    "OFL.txt",
+    "UFL.txt"
+  ],
+  "release_executable_sha256": "4F8B21AA7AEB9410C0E7A1200B1AC43099DDA17387C20A58E224B36E5C0AE17E",
+  "release_architecture": "COFF-x86-64",
+  "pe_import_names": [
+    "kernel32.dll",
+    "api-ms-win-core-synch-l1-2-0.dll",
+    "version.dll",
+    "user32.dll",
+    "dwmapi.dll",
+    "ole32.dll",
+    "gdi32.dll",
+    "shell32.dll",
+    "bcryptprimitives.dll",
+    "ntdll.dll",
+    "OPENGL32.dll",
+    "imm32.dll",
+    "uxtheme.dll",
+    "VCRUNTIME140.dll",
+    "api-ms-win-crt-math-l1-1-0.dll",
+    "api-ms-win-crt-string-l1-1-0.dll",
+    "api-ms-win-crt-runtime-l1-1-0.dll",
+    "api-ms-win-crt-stdio-l1-1-0.dll",
+    "api-ms-win-crt-locale-l1-1-0.dll",
+    "api-ms-win-crt-heap-l1-1-0.dll"
+  ],
+  "deployment_requirements": [
+    "Windows 10/11 x64",
+    "Compatible x64 Microsoft Visual C++ runtime and Universal CRT",
+    "Working OpenGL driver for the selected Glow renderer"
+  ],
+  "project_license_selected": false,
+  "project_license_provenance_review": "PENDING: existing README licensing caveat remains unresolved",
+  "redistribution_review": "PENDING: SPDX inventory and font notice checks are technical evidence, not final project or distribution clearance"
+}

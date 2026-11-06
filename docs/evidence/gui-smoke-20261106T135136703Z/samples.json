@@ -1,0 +1,5402 @@
+[
+    {
+        "elapsed_ms":  6.3682000000000007,
+        "cpu_ms":  390.625,
+        "working_set":  67702784,
+        "message_response_ms":  5.9967000000000006
+    },
+    {
+        "elapsed_ms":  1032.4177,
+        "cpu_ms":  406.25,
+        "working_set":  67784704,
+        "message_response_ms":  0.096700000000000008
+    },
+    {
+        "elapsed_ms":  2036.5888,
+        "cpu_ms":  421.875,
+        "working_set":  67825664,
+        "message_response_ms":  0.071000000000000008
+    },
+    {
+        "elapsed_ms":  3048.0557000000003,
+        "cpu_ms":  437.5,
+        "working_set":  67862528,
+        "message_response_ms":  0.2586
+    },
+    {
+        "elapsed_ms":  4055.4485,
+        "cpu_ms":  468.75,
+        "working_set":  70000640,
+        "message_response_ms":  0.0844
+    },
+    {
+        "elapsed_ms":  5063.1879,
+        "cpu_ms":  500,
+        "working_set":  70053888,
+        "message_response_ms":  0.0702
+    },
+    {
+        "elapsed_ms":  6070.0077,
+        "cpu_ms":  515.625,
+        "working_set":  70066176,
+        "message_response_ms":  0.1666
+    },
+    {
+        "elapsed_ms":  7089.7635,
+        "cpu_ms":  546.875,
+        "working_set":  70086656,
+        "message_response_ms":  0.0952
+    },
+    {
+        "elapsed_ms":  8095.4606,
+        "cpu_ms":  562.5,
+        "working_set":  70111232,
+        "message_response_ms":  0.07980000000000001
+    },
+    {
+        "elapsed_ms":  9114.5805,
+        "cpu_ms":  578.125,
+        "working_set":  70127616,
+        "message_response_ms":  0.0689
+    },
+    {
+        "elapsed_ms":  10133.7574,
+        "cpu_ms":  593.75,
+        "working_set":  70152192,
+        "message_response_ms":  0.0886
+    },
+    {
+        "elapsed_ms":  11139.6136,
+        "cpu_ms":  625,
+        "working_set":  70176768,
+        "message_response_ms":  0.0675
+    },
+    {
+        "elapsed_ms":  12149.644,
+        "cpu_ms":  640.625,
+        "working_set":  70234112,
+        "message_response_ms":  0.0699
+    },
+    {
+        "elapsed_ms":  13169.1399,
+        "cpu_ms":  656.25,
+        "working_set":  71135232,
+        "message_response_ms":  0.0937
+    },
+    {
+        "elapsed_ms":  14176.6614,
+        "cpu_ms":  671.875,
+        "working_set":  70279168,
+        "message_response_ms":  0.0699
+    },
+    {
+        "elapsed_ms":  15182.628400000001,
+        "cpu_ms":  687.5,
+        "working_set":  70316032,
+        "message_response_ms":  0.0772
+    },
+    {
+        "elapsed_ms":  16190.4716,
+        "cpu_ms":  718.75,
+        "working_set":  70332416,
+        "message_response_ms":  0.078300000000000008
+    },
+    {
+        "elapsed_ms":  17200.6433,
+        "cpu_ms":  734.375,
+        "working_set":  70336512,
+        "message_response_ms":  0.0712
+    },
+    {
+        "elapsed_ms":  18206.9448,
+        "cpu_ms":  765.625,
+        "working_set":  70348800,
+        "message_response_ms":  0.0995
+    },
+    {
+        "elapsed_ms":  19217.162500000002,
+        "cpu_ms":  781.25,
+        "working_set":  70361088,
+        "message_response_ms":  0.065700000000000008
+    },
+    {
+        "elapsed_ms":  20222.347700000002,
+        "cpu_ms":  812.5,
+        "working_set":  70365184,
+        "message_response_ms":  0.0818
+    },
+    {
+        "elapsed_ms":  21241.692900000002,
+        "cpu_ms":  828.125,
+        "working_set":  70373376,
+        "message_response_ms":  0.0693
+    },
+    {
+        "elapsed_ms":  22257.317300000002,
+        "cpu_ms":  843.75,
+        "working_set":  70389760,
+        "message_response_ms":  0.067
+    },
+    {
+        "elapsed_ms":  23269.6158,
+        "cpu_ms":  859.375,
+        "working_set":  70402048,
+        "message_response_ms":  0.0777
+    },
+    {
+        "elapsed_ms":  24278.1006,
+        "cpu_ms":  875,
+        "working_set":  70418432,
+        "message_response_ms":  0.4021
+    },
+    {
+        "elapsed_ms":  25286.718500000003,
+        "cpu_ms":  906.25,
+        "working_set":  70426624,
+        "message_response_ms":  0.0743
+    },
+    {
+        "elapsed_ms":  26298.0016,
+        "cpu_ms":  921.875,
+        "working_set":  70434816,
+        "message_response_ms":  0.1149
+    },
+    {
+        "elapsed_ms":  27306.659200000002,
+        "cpu_ms":  953.125,
+        "working_set":  70451200,
+        "message_response_ms":  0.0757
+    },
+    {
+        "elapsed_ms":  28317.5135,
+        "cpu_ms":  968.75,
+        "working_set":  70463488,
+        "message_response_ms":  0.2151
+    },
+    {
+        "elapsed_ms":  29323.711600000002,
+        "cpu_ms":  1000,
+        "working_set":  70475776,
+        "message_response_ms":  0.07980000000000001
+    },
+    {
+        "elapsed_ms":  30335.8211,
+        "cpu_ms":  1031.25,
+        "working_set":  70488064,
+        "message_response_ms":  0.080700000000000008
+    },
+    {
+        "elapsed_ms":  31342.5328,
+        "cpu_ms":  1046.875,
+        "working_set":  70492160,
+        "message_response_ms":  0.066700000000000009
+    },
+    {
+        "elapsed_ms":  32361.3011,
+        "cpu_ms":  1062.5,
+        "working_set":  70500352,
+        "message_response_ms":  0.089900000000000008
+    },
+    {
+        "elapsed_ms":  33378.5238,
+        "cpu_ms":  1093.75,
+        "working_set":  70508544,
+        "message_response_ms":  0.66260000000000008
+    },
+    {
+        "elapsed_ms":  34391.7074,
+        "cpu_ms":  1125,
+        "working_set":  70512640,
+        "message_response_ms":  0.080200000000000007
+    },
+    {
+        "elapsed_ms":  35401.1085,
+        "cpu_ms":  1156.25,
+        "working_set":  70520832,
+        "message_response_ms":  0.2073
+    },
+    {
+        "elapsed_ms":  36412.824100000005,
+        "cpu_ms":  1171.875,
+        "working_set":  70529024,
+        "message_response_ms":  0.0897
+    },
+    {
+        "elapsed_ms":  37431.7548,
+        "cpu_ms":  1203.125,
+        "working_set":  70537216,
+        "message_response_ms":  0.06720000000000001
+    },
+    {
+        "elapsed_ms":  38442.907100000004,
+        "cpu_ms":  1203.125,
+        "working_set":  70545408,
+        "message_response_ms":  0.1899
+    },
+    {
+        "elapsed_ms":  39451.605200000005,
+        "cpu_ms":  1218.75,
+        "working_set":  70549504,
+        "message_response_ms":  0.0877
+    },
+    {
+        "elapsed_ms":  40472.8049,
+        "cpu_ms":  1250,
+        "working_set":  70561792,
+        "message_response_ms":  0.10160000000000001
+    },
+    {
+        "elapsed_ms":  41484.2679,
+        "cpu_ms":  1265.625,
+        "working_set":  70565888,
+        "message_response_ms":  0.0694
+    },
+    {
+        "elapsed_ms":  42503.968400000005,
+        "cpu_ms":  1296.875,
+        "working_set":  70574080,
+        "message_response_ms":  0.065200000000000008
+    },
+    {
+        "elapsed_ms":  43508.9044,
+        "cpu_ms":  1328.125,
+        "working_set":  70602752,
+        "message_response_ms":  0.067
+    },
+    {
+        "elapsed_ms":  44527.707500000004,
+        "cpu_ms":  1359.375,
+        "working_set":  70610944,
+        "message_response_ms":  0.0609
+    },
+    {
+        "elapsed_ms":  45542.545000000006,
+        "cpu_ms":  1390.625,
+        "working_set":  70619136,
+        "message_response_ms":  0.1438
+    },
+    {
+        "elapsed_ms":  46561.1835,
+        "cpu_ms":  1406.25,
+        "working_set":  70623232,
+        "message_response_ms":  0.12560000000000002
+    },
+    {
+        "elapsed_ms":  47580.4686,
+        "cpu_ms":  1421.875,
+        "working_set":  70631424,
+        "message_response_ms":  0.12150000000000001
+    },
+    {
+        "elapsed_ms":  48599.4123,
+        "cpu_ms":  1437.5,
+        "working_set":  70639616,
+        "message_response_ms":  0.0897
+    },
+    {
+        "elapsed_ms":  49612.0362,
+        "cpu_ms":  1453.125,
+        "working_set":  70643712,
+        "message_response_ms":  0.13290000000000002
+    },
+    {
+        "elapsed_ms":  50623.8421,
+        "cpu_ms":  1468.75,
+        "working_set":  70651904,
+        "message_response_ms":  0.0648
+    },
+    {
+        "elapsed_ms":  51642.831000000006,
+        "cpu_ms":  1484.375,
+        "working_set":  70660096,
+        "message_response_ms":  0.080200000000000007
+    },
+    {
+        "elapsed_ms":  52662.8664,
+        "cpu_ms":  1515.625,
+        "working_set":  70647808,
+        "message_response_ms":  0.079
+    },
+    {
+        "elapsed_ms":  53674.0196,
+        "cpu_ms":  1546.875,
+        "working_set":  70656000,
+        "message_response_ms":  0.11280000000000001
+    },
+    {
+        "elapsed_ms":  54683.7784,
+        "cpu_ms":  1578.125,
+        "working_set":  70664192,
+        "message_response_ms":  0.0877
+    },
+    {
+        "elapsed_ms":  55690.609200000006,
+        "cpu_ms":  1593.75,
+        "working_set":  70668288,
+        "message_response_ms":  0.1577
+    },
+    {
+        "elapsed_ms":  56699.509000000005,
+        "cpu_ms":  1625,
+        "working_set":  70623232,
+        "message_response_ms":  0.0878
+    },
+    {
+        "elapsed_ms":  57704.019,
+        "cpu_ms":  1640.625,
+        "working_set":  70627328,
+        "message_response_ms":  0.062
+    },
+    {
+        "elapsed_ms":  58723.943100000004,
+        "cpu_ms":  1671.875,
+        "working_set":  70635520,
+        "message_response_ms":  0.0614
+    },
+    {
+        "elapsed_ms":  59730.827800000006,
+        "cpu_ms":  1703.125,
+        "working_set":  70643712,
+        "message_response_ms":  0.0935
+    },
+    {
+        "elapsed_ms":  60735.7451,
+        "cpu_ms":  1718.75,
+        "working_set":  70647808,
+        "message_response_ms":  0.0724
+    },
+    {
+        "elapsed_ms":  61741.637,
+        "cpu_ms":  1750,
+        "working_set":  70656000,
+        "message_response_ms":  0.0653
+    },
+    {
+        "elapsed_ms":  62752.6287,
+        "cpu_ms":  1765.625,
+        "working_set":  70664192,
+        "message_response_ms":  0.3175
+    },
+    {
+        "elapsed_ms":  63758.1027,
+        "cpu_ms":  1781.25,
+        "working_set":  70668288,
+        "message_response_ms":  0.12430000000000001
+    },
+    {
+        "elapsed_ms":  64776.3818,
+        "cpu_ms":  1812.5,
+        "working_set":  70676480,
+        "message_response_ms":  0.26430000000000003
+    },
+    {
+        "elapsed_ms":  65785.5922,
+        "cpu_ms":  1812.5,
+        "working_set":  71561216,
+        "message_response_ms":  0.3078
+    },
+    {
+        "elapsed_ms":  66804.231800000009,
+        "cpu_ms":  1828.125,
+        "working_set":  70688768,
+        "message_response_ms":  0.08
+    },
+    {
+        "elapsed_ms":  67810.2969,
+        "cpu_ms":  1843.75,
+        "working_set":  70696960,
+        "message_response_ms":  0.0983
+    },
+    {
+        "elapsed_ms":  68815.2157,
+        "cpu_ms":  1875,
+        "working_set":  70701056,
+        "message_response_ms":  0.0651
+    },
+    {
+        "elapsed_ms":  69824.0772,
+        "cpu_ms":  1890.625,
+        "working_set":  70709248,
+        "message_response_ms":  0.29600000000000004
+    },
+    {
+        "elapsed_ms":  70829.85040000001,
+        "cpu_ms":  1921.875,
+        "working_set":  70717440,
+        "message_response_ms":  0.0828
+    },
+    {
+        "elapsed_ms":  71837.8045,
+        "cpu_ms":  1953.125,
+        "working_set":  70721536,
+        "message_response_ms":  0.09290000000000001
+    },
+    {
+        "elapsed_ms":  72847.749000000011,
+        "cpu_ms":  1968.75,
+        "working_set":  70729728,
+        "message_response_ms":  0.070500000000000007
+    },
+    {
+        "elapsed_ms":  73856.8432,
+        "cpu_ms":  1984.375,
+        "working_set":  70737920,
+        "message_response_ms":  0.074900000000000008
+    },
+    {
+        "elapsed_ms":  74863.7967,
+        "cpu_ms":  2015.625,
+        "working_set":  70742016,
+        "message_response_ms":  0.1325
+    },
+    {
+        "elapsed_ms":  75871.3371,
+        "cpu_ms":  2046.875,
+        "working_set":  70750208,
+        "message_response_ms":  0.093300000000000008
+    },
+    {
+        "elapsed_ms":  76884.2644,
+        "cpu_ms":  2062.5,
+        "working_set":  70758400,
+        "message_response_ms":  0.10590000000000001
+    },
+    {
+        "elapsed_ms":  77889.3404,
+        "cpu_ms":  2078.125,
+        "working_set":  70762496,
+        "message_response_ms":  0.066700000000000009
+    },
+    {
+        "elapsed_ms":  78897.597300000009,
+        "cpu_ms":  2109.375,
+        "working_set":  70774784,
+        "message_response_ms":  0.30660000000000004
+    },
+    {
+        "elapsed_ms":  79905.17760000001,
+        "cpu_ms":  2140.625,
+        "working_set":  70787072,
+        "message_response_ms":  0.079700000000000007
+    },
+    {
+        "elapsed_ms":  80915.5992,
+        "cpu_ms":  2171.875,
+        "working_set":  70795264,
+        "message_response_ms":  0.1545
+    },
+    {
+        "elapsed_ms":  81921.817900000009,
+        "cpu_ms":  2187.5,
+        "working_set":  70799360,
+        "message_response_ms":  0.12200000000000001
+    },
+    {
+        "elapsed_ms":  82932.44230000001,
+        "cpu_ms":  2218.75,
+        "working_set":  70807552,
+        "message_response_ms":  0.0654
+    },
+    {
+        "elapsed_ms":  83938.439200000008,
+        "cpu_ms":  2234.375,
+        "working_set":  70815744,
+        "message_response_ms":  0.060200000000000004
+    },
+    {
+        "elapsed_ms":  84948.8379,
+        "cpu_ms":  2250,
+        "working_set":  70819840,
+        "message_response_ms":  0.2957
+    },
+    {
+        "elapsed_ms":  85969.05290000001,
+        "cpu_ms":  2265.625,
+        "working_set":  70828032,
+        "message_response_ms":  0.080800000000000011
+    },
+    {
+        "elapsed_ms":  86988.6268,
+        "cpu_ms":  2281.25,
+        "working_set":  70836224,
+        "message_response_ms":  0.082
+    },
+    {
+        "elapsed_ms":  88008.2988,
+        "cpu_ms":  2296.875,
+        "working_set":  70840320,
+        "message_response_ms":  0.0697
+    },
+    {
+        "elapsed_ms":  89014.4975,
+        "cpu_ms":  2312.5,
+        "working_set":  70848512,
+        "message_response_ms":  0.059300000000000005
+    },
+    {
+        "elapsed_ms":  90019.8846,
+        "cpu_ms":  2328.125,
+        "working_set":  70856704,
+        "message_response_ms":  0.1453
+    },
+    {
+        "elapsed_ms":  91039.5876,
+        "cpu_ms":  2359.375,
+        "working_set":  70860800,
+        "message_response_ms":  0.0625
+    },
+    {
+        "elapsed_ms":  92046.4348,
+        "cpu_ms":  2375,
+        "working_set":  70868992,
+        "message_response_ms":  0.0674
+    },
+    {
+        "elapsed_ms":  93055.0435,
+        "cpu_ms":  2406.25,
+        "working_set":  70873088,
+        "message_response_ms":  0.073900000000000007
+    },
+    {
+        "elapsed_ms":  94061.09090000001,
+        "cpu_ms":  2421.875,
+        "working_set":  70881280,
+        "message_response_ms":  0.0965
+    },
+    {
+        "elapsed_ms":  95081.15400000001,
+        "cpu_ms":  2437.5,
+        "working_set":  70889472,
+        "message_response_ms":  0.4031
+    },
+    {
+        "elapsed_ms":  96090.821000000011,
+        "cpu_ms":  2468.75,
+        "working_set":  70893568,
+        "message_response_ms":  0.0782
+    },
+    {
+        "elapsed_ms":  97096.956,
+        "cpu_ms":  2484.375,
+        "working_set":  70901760,
+        "message_response_ms":  0.1043
+    },
+    {
+        "elapsed_ms":  98104.7783,
+        "cpu_ms":  2515.625,
+        "working_set":  70909952,
+        "message_response_ms":  0.083600000000000008
+    },
+    {
+        "elapsed_ms":  99112.011,
+        "cpu_ms":  2531.25,
+        "working_set":  70914048,
+        "message_response_ms":  0.083
+    },
+    {
+        "elapsed_ms":  100124.22880000001,
+        "cpu_ms":  2562.5,
+        "working_set":  70922240,
+        "message_response_ms":  0.06720000000000001
+    },
+    {
+        "elapsed_ms":  101133.14850000001,
+        "cpu_ms":  2578.125,
+        "working_set":  70930432,
+        "message_response_ms":  0.0635
+    },
+    {
+        "elapsed_ms":  102140.2518,
+        "cpu_ms":  2593.75,
+        "working_set":  70934528,
+        "message_response_ms":  0.06770000000000001
+    },
+    {
+        "elapsed_ms":  103147.56940000001,
+        "cpu_ms":  2609.375,
+        "working_set":  70942720,
+        "message_response_ms":  0.0853
+    },
+    {
+        "elapsed_ms":  104166.24840000001,
+        "cpu_ms":  2640.625,
+        "working_set":  70950912,
+        "message_response_ms":  0.066
+    },
+    {
+        "elapsed_ms":  105171.6204,
+        "cpu_ms":  2671.875,
+        "working_set":  70955008,
+        "message_response_ms":  0.0659
+    },
+    {
+        "elapsed_ms":  106176.829,
+        "cpu_ms":  2687.5,
+        "working_set":  70963200,
+        "message_response_ms":  0.396
+    },
+    {
+        "elapsed_ms":  107190.8068,
+        "cpu_ms":  2703.125,
+        "working_set":  70967296,
+        "message_response_ms":  0.11910000000000001
+    },
+    {
+        "elapsed_ms":  108205.9832,
+        "cpu_ms":  2718.75,
+        "working_set":  70975488,
+        "message_response_ms":  0.1695
+    },
+    {
+        "elapsed_ms":  109210.6193,
+        "cpu_ms":  2718.75,
+        "working_set":  71860224,
+        "message_response_ms":  0.0551
+    },
+    {
+        "elapsed_ms":  110224.12520000001,
+        "cpu_ms":  2734.375,
+        "working_set":  70987776,
+        "message_response_ms":  0.1277
+    },
+    {
+        "elapsed_ms":  111244.1986,
+        "cpu_ms":  2750,
+        "working_set":  70995968,
+        "message_response_ms":  0.1526
+    },
+    {
+        "elapsed_ms":  112248.8708,
+        "cpu_ms":  2781.25,
+        "working_set":  71004160,
+        "message_response_ms":  0.0637
+    },
+    {
+        "elapsed_ms":  113267.94380000001,
+        "cpu_ms":  2812.5,
+        "working_set":  71008256,
+        "message_response_ms":  0.0935
+    },
+    {
+        "elapsed_ms":  114274.19600000001,
+        "cpu_ms":  2828.125,
+        "working_set":  71016448,
+        "message_response_ms":  0.095
+    },
+    {
+        "elapsed_ms":  115280.9419,
+        "cpu_ms":  2843.75,
+        "working_set":  71024640,
+        "message_response_ms":  0.14800000000000002
+    },
+    {
+        "elapsed_ms":  116287.5994,
+        "cpu_ms":  2875,
+        "working_set":  71028736,
+        "message_response_ms":  0.1532
+    },
+    {
+        "elapsed_ms":  117306.99100000001,
+        "cpu_ms":  2890.625,
+        "working_set":  71028736,
+        "message_response_ms":  0.063800000000000009
+    },
+    {
+        "elapsed_ms":  118319.17030000001,
+        "cpu_ms":  2906.25,
+        "working_set":  71028736,
+        "message_response_ms":  0.0635
+    },
+    {
+        "elapsed_ms":  119327.98240000001,
+        "cpu_ms":  2921.875,
+        "working_set":  71032832,
+        "message_response_ms":  0.1019
+    },
+    {
+        "elapsed_ms":  120344.5317,
+        "cpu_ms":  2953.125,
+        "working_set":  71041024,
+        "message_response_ms":  0.18000000000000002
+    },
+    {
+        "elapsed_ms":  121354.6008,
+        "cpu_ms":  2984.375,
+        "working_set":  71041024,
+        "message_response_ms":  0.0961
+    },
+    {
+        "elapsed_ms":  122359.8635,
+        "cpu_ms":  3000,
+        "working_set":  71041024,
+        "message_response_ms":  0.068600000000000008
+    },
+    {
+        "elapsed_ms":  123369.5136,
+        "cpu_ms":  3031.25,
+        "working_set":  71041024,
+        "message_response_ms":  0.0567
+    },
+    {
+        "elapsed_ms":  124374.7776,
+        "cpu_ms":  3046.875,
+        "working_set":  71041024,
+        "message_response_ms":  0.07010000000000001
+    },
+    {
+        "elapsed_ms":  125386.6177,
+        "cpu_ms":  3078.125,
+        "working_set":  71041024,
+        "message_response_ms":  0.0664
+    },
+    {
+        "elapsed_ms":  126393.04130000001,
+        "cpu_ms":  3093.75,
+        "working_set":  71041024,
+        "message_response_ms":  0.18130000000000002
+    },
+    {
+        "elapsed_ms":  127399.20400000001,
+        "cpu_ms":  3109.375,
+        "working_set":  71041024,
+        "message_response_ms":  0.077
+    },
+    {
+        "elapsed_ms":  128409.84730000001,
+        "cpu_ms":  3125,
+        "working_set":  71041024,
+        "message_response_ms":  0.0658
+    },
+    {
+        "elapsed_ms":  129416.3971,
+        "cpu_ms":  3156.25,
+        "working_set":  71041024,
+        "message_response_ms":  0.0634
+    },
+    {
+        "elapsed_ms":  130428.71810000001,
+        "cpu_ms":  3187.5,
+        "working_set":  71041024,
+        "message_response_ms":  0.0824
+    },
+    {
+        "elapsed_ms":  131448.5609,
+        "cpu_ms":  3203.125,
+        "working_set":  71073792,
+        "message_response_ms":  0.06770000000000001
+    },
+    {
+        "elapsed_ms":  132458.766,
+        "cpu_ms":  3218.75,
+        "working_set":  71073792,
+        "message_response_ms":  0.0695
+    },
+    {
+        "elapsed_ms":  133467.6953,
+        "cpu_ms":  3234.375,
+        "working_set":  71122944,
+        "message_response_ms":  0.088500000000000009
+    },
+    {
+        "elapsed_ms":  134473.21120000002,
+        "cpu_ms":  3265.625,
+        "working_set":  71122944,
+        "message_response_ms":  0.0707
+    },
+    {
+        "elapsed_ms":  135479.76820000002,
+        "cpu_ms":  3312.5,
+        "working_set":  71122944,
+        "message_response_ms":  0.11750000000000001
+    },
+    {
+        "elapsed_ms":  136496.3266,
+        "cpu_ms":  3328.125,
+        "working_set":  71122944,
+        "message_response_ms":  0.065200000000000008
+    },
+    {
+        "elapsed_ms":  137511.9475,
+        "cpu_ms":  3343.75,
+        "working_set":  71122944,
+        "message_response_ms":  0.23750000000000002
+    },
+    {
+        "elapsed_ms":  138518.3363,
+        "cpu_ms":  3359.375,
+        "working_set":  71122944,
+        "message_response_ms":  0.0666
+    },
+    {
+        "elapsed_ms":  139527.5564,
+        "cpu_ms":  3390.625,
+        "working_set":  71122944,
+        "message_response_ms":  0.0644
+    },
+    {
+        "elapsed_ms":  140545.7379,
+        "cpu_ms":  3406.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.0673
+    },
+    {
+        "elapsed_ms":  141552.4944,
+        "cpu_ms":  3421.875,
+        "working_set":  71122944,
+        "message_response_ms":  0.072000000000000008
+    },
+    {
+        "elapsed_ms":  142568.3142,
+        "cpu_ms":  3453.125,
+        "working_set":  71122944,
+        "message_response_ms":  0.1361
+    },
+    {
+        "elapsed_ms":  143585.0036,
+        "cpu_ms":  3484.375,
+        "working_set":  71122944,
+        "message_response_ms":  0.082
+    },
+    {
+        "elapsed_ms":  144597.0021,
+        "cpu_ms":  3500,
+        "working_set":  71122944,
+        "message_response_ms":  0.1066
+    },
+    {
+        "elapsed_ms":  145614.8438,
+        "cpu_ms":  3515.625,
+        "working_set":  71122944,
+        "message_response_ms":  0.2671
+    },
+    {
+        "elapsed_ms":  146631.28410000002,
+        "cpu_ms":  3531.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.09290000000000001
+    },
+    {
+        "elapsed_ms":  147644.8366,
+        "cpu_ms":  3531.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.065700000000000008
+    },
+    {
+        "elapsed_ms":  148661.0863,
+        "cpu_ms":  3531.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.1968
+    },
+    {
+        "elapsed_ms":  149680.7208,
+        "cpu_ms":  3562.5,
+        "working_set":  71122944,
+        "message_response_ms":  0.1247
+    },
+    {
+        "elapsed_ms":  150690.0713,
+        "cpu_ms":  3578.125,
+        "working_set":  71122944,
+        "message_response_ms":  0.3516
+    },
+    {
+        "elapsed_ms":  151709.60510000002,
+        "cpu_ms":  3578.125,
+        "working_set":  71122944,
+        "message_response_ms":  0.1869
+    },
+    {
+        "elapsed_ms":  152714.5958,
+        "cpu_ms":  3609.375,
+        "working_set":  71122944,
+        "message_response_ms":  0.1282
+    },
+    {
+        "elapsed_ms":  153734.6974,
+        "cpu_ms":  3640.625,
+        "working_set":  71122944,
+        "message_response_ms":  0.0674
+    },
+    {
+        "elapsed_ms":  154739.60090000002,
+        "cpu_ms":  3640.625,
+        "working_set":  71122944,
+        "message_response_ms":  0.0702
+    },
+    {
+        "elapsed_ms":  155757.4862,
+        "cpu_ms":  3656.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.1376
+    },
+    {
+        "elapsed_ms":  156763.5223,
+        "cpu_ms":  3671.875,
+        "working_set":  71991296,
+        "message_response_ms":  0.0761
+    },
+    {
+        "elapsed_ms":  157777.6194,
+        "cpu_ms":  3687.5,
+        "working_set":  71999488,
+        "message_response_ms":  0.1375
+    },
+    {
+        "elapsed_ms":  158784.8255,
+        "cpu_ms":  3718.75,
+        "working_set":  71122944,
+        "message_response_ms":  0.0742
+    },
+    {
+        "elapsed_ms":  159794.083,
+        "cpu_ms":  3734.375,
+        "working_set":  71122944,
+        "message_response_ms":  0.0694
+    },
+    {
+        "elapsed_ms":  160814.8284,
+        "cpu_ms":  3765.625,
+        "working_set":  71122944,
+        "message_response_ms":  0.40140000000000003
+    },
+    {
+        "elapsed_ms":  161825.0455,
+        "cpu_ms":  3781.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.07690000000000001
+    },
+    {
+        "elapsed_ms":  162835.65050000002,
+        "cpu_ms":  3812.5,
+        "working_set":  71122944,
+        "message_response_ms":  0.075
+    },
+    {
+        "elapsed_ms":  163839.9462,
+        "cpu_ms":  3828.125,
+        "working_set":  71122944,
+        "message_response_ms":  0.0663
+    },
+    {
+        "elapsed_ms":  164859.565,
+        "cpu_ms":  3859.375,
+        "working_set":  71122944,
+        "message_response_ms":  0.0689
+    },
+    {
+        "elapsed_ms":  165867.4094,
+        "cpu_ms":  3890.625,
+        "working_set":  71122944,
+        "message_response_ms":  0.0882
+    },
+    {
+        "elapsed_ms":  166878.8867,
+        "cpu_ms":  3906.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.0959
+    },
+    {
+        "elapsed_ms":  167894.5484,
+        "cpu_ms":  3937.5,
+        "working_set":  71122944,
+        "message_response_ms":  0.0697
+    },
+    {
+        "elapsed_ms":  168912.317,
+        "cpu_ms":  3968.75,
+        "working_set":  71122944,
+        "message_response_ms":  0.056400000000000006
+    },
+    {
+        "elapsed_ms":  169923.7887,
+        "cpu_ms":  3984.375,
+        "working_set":  71122944,
+        "message_response_ms":  0.3603
+    },
+    {
+        "elapsed_ms":  170928.8199,
+        "cpu_ms":  4015.625,
+        "working_set":  71122944,
+        "message_response_ms":  0.10010000000000001
+    },
+    {
+        "elapsed_ms":  171939.454,
+        "cpu_ms":  4031.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.1966
+    },
+    {
+        "elapsed_ms":  172945.1257,
+        "cpu_ms":  4046.875,
+        "working_set":  71122944,
+        "message_response_ms":  0.063800000000000009
+    },
+    {
+        "elapsed_ms":  173955.4239,
+        "cpu_ms":  4062.5,
+        "working_set":  71122944,
+        "message_response_ms":  0.0892
+    },
+    {
+        "elapsed_ms":  174961.3489,
+        "cpu_ms":  4078.125,
+        "working_set":  71122944,
+        "message_response_ms":  0.43660000000000004
+    },
+    {
+        "elapsed_ms":  175969.0889,
+        "cpu_ms":  4093.75,
+        "working_set":  71122944,
+        "message_response_ms":  0.0606
+    },
+    {
+        "elapsed_ms":  176984.41710000002,
+        "cpu_ms":  4093.75,
+        "working_set":  71122944,
+        "message_response_ms":  0.0728
+    },
+    {
+        "elapsed_ms":  177991.70930000002,
+        "cpu_ms":  4109.375,
+        "working_set":  71122944,
+        "message_response_ms":  0.9412
+    },
+    {
+        "elapsed_ms":  179003.361,
+        "cpu_ms":  4125,
+        "working_set":  71122944,
+        "message_response_ms":  0.1019
+    },
+    {
+        "elapsed_ms":  180008.4162,
+        "cpu_ms":  4156.25,
+        "working_set":  71122944,
+        "message_response_ms":  0.1854
+    },
+    {
+        "elapsed_ms":  181026.9482,
+        "cpu_ms":  4171.875,
+        "working_set":  71122944,
+        "message_response_ms":  0.6138
+    },
+    {
+        "elapsed_ms":  182042.9656,
+        "cpu_ms":  4203.125,
+        "working_set":  71122944,
+        "message_response_ms":  0.21450000000000002
+    },
+    {
+        "elapsed_ms":  183058.68790000002,
+        "cpu_ms":  4218.75,
+        "working_set":  71122944,
+        "message_response_ms":  0.0577
+    },
+    {
+        "elapsed_ms":  184070.0835,
+        "cpu_ms":  4234.375,
+        "working_set":  71131136,
+        "message_response_ms":  0.2285
+    },
+    {
+        "elapsed_ms":  185075.93480000002,
+        "cpu_ms":  4265.625,
+        "working_set":  71131136,
+        "message_response_ms":  0.2898
+    },
+    {
+        "elapsed_ms":  186093.7463,
+        "cpu_ms":  4281.25,
+        "working_set":  71131136,
+        "message_response_ms":  0.063800000000000009
+    },
+    {
+        "elapsed_ms":  187105.2796,
+        "cpu_ms":  4312.5,
+        "working_set":  71131136,
+        "message_response_ms":  0.31370000000000003
+    },
+    {
+        "elapsed_ms":  188113.12850000002,
+        "cpu_ms":  4328.125,
+        "working_set":  71131136,
+        "message_response_ms":  0.163
+    },
+    {
+        "elapsed_ms":  189125.4574,
+        "cpu_ms":  4343.75,
+        "working_set":  71131136,
+        "message_response_ms":  0.0787
+    },
+    {
+        "elapsed_ms":  190134.3323,
+        "cpu_ms":  4375,
+        "working_set":  71131136,
+        "message_response_ms":  0.0945
+    },
+    {
+        "elapsed_ms":  191143.1531,
+        "cpu_ms":  4390.625,
+        "working_set":  71131136,
+        "message_response_ms":  0.4703
+    },
+    {
+        "elapsed_ms":  192161.1282,
+        "cpu_ms":  4406.25,
+        "working_set":  71131136,
+        "message_response_ms":  0.1363
+    },
+    {
+        "elapsed_ms":  193178.2868,
+        "cpu_ms":  4421.875,
+        "working_set":  71131136,
+        "message_response_ms":  0.0874
+    },
+    {
+        "elapsed_ms":  194195.95010000002,
+        "cpu_ms":  4453.125,
+        "working_set":  71131136,
+        "message_response_ms":  0.2024
+    },
+    {
+        "elapsed_ms":  195211.01880000002,
+        "cpu_ms":  4484.375,
+        "working_set":  71131136,
+        "message_response_ms":  0.1067
+    },
+    {
+        "elapsed_ms":  196229.3823,
+        "cpu_ms":  4515.625,
+        "working_set":  71131136,
+        "message_response_ms":  0.0611
+    },
+    {
+        "elapsed_ms":  197245.4819,
+        "cpu_ms":  4546.875,
+        "working_set":  71131136,
+        "message_response_ms":  0.0609
+    },
+    {
+        "elapsed_ms":  198268.7569,
+        "cpu_ms":  4562.5,
+        "working_set":  71131136,
+        "message_response_ms":  0.10060000000000001
+    },
+    {
+        "elapsed_ms":  199287.20440000002,
+        "cpu_ms":  4578.125,
+        "working_set":  71131136,
+        "message_response_ms":  0.1265
+    },
+    {
+        "elapsed_ms":  200294.4359,
+        "cpu_ms":  4593.75,
+        "working_set":  71131136,
+        "message_response_ms":  0.063300000000000009
+    },
+    {
+        "elapsed_ms":  201303.4751,
+        "cpu_ms":  4609.375,
+        "working_set":  71131136,
+        "message_response_ms":  0.0678
+    },
+    {
+        "elapsed_ms":  202317.2469,
+        "cpu_ms":  4625,
+        "working_set":  71131136,
+        "message_response_ms":  0.0656
+    },
+    {
+        "elapsed_ms":  203324.0122,
+        "cpu_ms":  4656.25,
+        "working_set":  71131136,
+        "message_response_ms":  0.32320000000000004
+    },
+    {
+        "elapsed_ms":  204333.4663,
+        "cpu_ms":  4671.875,
+        "working_set":  71131136,
+        "message_response_ms":  0.10060000000000001
+    },
+    {
+        "elapsed_ms":  205347.25890000002,
+        "cpu_ms":  4687.5,
+        "working_set":  71131136,
+        "message_response_ms":  0.0683
+    },
+    {
+        "elapsed_ms":  206358.0497,
+        "cpu_ms":  4718.75,
+        "working_set":  71131136,
+        "message_response_ms":  0.0596
+    },
+    {
+        "elapsed_ms":  207375.6104,
+        "cpu_ms":  4734.375,
+        "working_set":  71131136,
+        "message_response_ms":  0.063300000000000009
+    },
+    {
+        "elapsed_ms":  208394.1135,
+        "cpu_ms":  4750,
+        "working_set":  71131136,
+        "message_response_ms":  0.1056
+    },
+    {
+        "elapsed_ms":  209407.064,
+        "cpu_ms":  4765.625,
+        "working_set":  72015872,
+        "message_response_ms":  0.0742
+    },
+    {
+        "elapsed_ms":  210414.488,
+        "cpu_ms":  4781.25,
+        "working_set":  71131136,
+        "message_response_ms":  0.0753
+    },
+    {
+        "elapsed_ms":  211429.486,
+        "cpu_ms":  4796.875,
+        "working_set":  71131136,
+        "message_response_ms":  0.21710000000000002
+    },
+    {
+        "elapsed_ms":  212448.9794,
+        "cpu_ms":  4828.125,
+        "working_set":  71131136,
+        "message_response_ms":  0.078
+    },
+    {
+        "elapsed_ms":  213460.8936,
+        "cpu_ms":  4859.375,
+        "working_set":  71131136,
+        "message_response_ms":  0.0621
+    },
+    {
+        "elapsed_ms":  214475.869,
+        "cpu_ms":  4875,
+        "working_set":  71131136,
+        "message_response_ms":  0.090900000000000009
+    },
+    {
+        "elapsed_ms":  215482.67140000002,
+        "cpu_ms":  4890.625,
+        "working_set":  71131136,
+        "message_response_ms":  0.1358
+    },
+    {
+        "elapsed_ms":  216493.8139,
+        "cpu_ms":  4921.875,
+        "working_set":  71131136,
+        "message_response_ms":  0.085100000000000009
+    },
+    {
+        "elapsed_ms":  217508.67940000002,
+        "cpu_ms":  4937.5,
+        "working_set":  71131136,
+        "message_response_ms":  0.1072
+    },
+    {
+        "elapsed_ms":  218518.6859,
+        "cpu_ms":  4953.125,
+        "working_set":  71131136,
+        "message_response_ms":  0.1441
+    },
+    {
+        "elapsed_ms":  219526.0796,
+        "cpu_ms":  4968.75,
+        "working_set":  71131136,
+        "message_response_ms":  0.1366
+    },
+    {
+        "elapsed_ms":  220544.5392,
+        "cpu_ms":  4984.375,
+        "working_set":  71131136,
+        "message_response_ms":  0.062800000000000009
+    },
+    {
+        "elapsed_ms":  221550.05490000002,
+        "cpu_ms":  5015.625,
+        "working_set":  71131136,
+        "message_response_ms":  0.1627
+    },
+    {
+        "elapsed_ms":  222558.55180000002,
+        "cpu_ms":  5031.25,
+        "working_set":  71131136,
+        "message_response_ms":  0.43110000000000004
+    },
+    {
+        "elapsed_ms":  223569.0021,
+        "cpu_ms":  5062.5,
+        "working_set":  71131136,
+        "message_response_ms":  0.063800000000000009
+    },
+    {
+        "elapsed_ms":  224586.405,
+        "cpu_ms":  5078.125,
+        "working_set":  71131136,
+        "message_response_ms":  0.0666
+    },
+    {
+        "elapsed_ms":  225595.3439,
+        "cpu_ms":  5093.75,
+        "working_set":  71131136,
+        "message_response_ms":  0.0646
+    },
+    {
+        "elapsed_ms":  226600.9963,
+        "cpu_ms":  5125,
+        "working_set":  71131136,
+        "message_response_ms":  0.0658
+    },
+    {
+        "elapsed_ms":  227619.583,
+        "cpu_ms":  5140.625,
+        "working_set":  71131136,
+        "message_response_ms":  0.066200000000000009
+    },
+    {
+        "elapsed_ms":  228627.7086,
+        "cpu_ms":  5156.25,
+        "working_set":  71131136,
+        "message_response_ms":  0.1962
+    },
+    {
+        "elapsed_ms":  229641.6428,
+        "cpu_ms":  5171.875,
+        "working_set":  71131136,
+        "message_response_ms":  0.0784
+    },
+    {
+        "elapsed_ms":  230646.80490000002,
+        "cpu_ms":  5203.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.0648
+    },
+    {
+        "elapsed_ms":  231653.7335,
+        "cpu_ms":  5203.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.17650000000000002
+    },
+    {
+        "elapsed_ms":  232672.6307,
+        "cpu_ms":  5218.75,
+        "working_set":  75325440,
+        "message_response_ms":  0.0683
+    },
+    {
+        "elapsed_ms":  233679.25830000002,
+        "cpu_ms":  5234.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.3109
+    },
+    {
+        "elapsed_ms":  234687.51450000002,
+        "cpu_ms":  5250,
+        "working_set":  75325440,
+        "message_response_ms":  0.0776
+    },
+    {
+        "elapsed_ms":  235695.6385,
+        "cpu_ms":  5281.25,
+        "working_set":  75325440,
+        "message_response_ms":  0.162
+    },
+    {
+        "elapsed_ms":  236707.2741,
+        "cpu_ms":  5296.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.0687
+    },
+    {
+        "elapsed_ms":  237716.2355,
+        "cpu_ms":  5328.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.0999
+    },
+    {
+        "elapsed_ms":  238726.454,
+        "cpu_ms":  5343.75,
+        "working_set":  75325440,
+        "message_response_ms":  0.0722
+    },
+    {
+        "elapsed_ms":  239736.0787,
+        "cpu_ms":  5359.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.0829
+    },
+    {
+        "elapsed_ms":  240741.508,
+        "cpu_ms":  5390.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.1749
+    },
+    {
+        "elapsed_ms":  241750.0768,
+        "cpu_ms":  5406.25,
+        "working_set":  75325440,
+        "message_response_ms":  0.0678
+    },
+    {
+        "elapsed_ms":  242769.8066,
+        "cpu_ms":  5421.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.083100000000000007
+    },
+    {
+        "elapsed_ms":  243777.228,
+        "cpu_ms":  5453.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.1466
+    },
+    {
+        "elapsed_ms":  244789.779,
+        "cpu_ms":  5484.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.1075
+    },
+    {
+        "elapsed_ms":  245799.0554,
+        "cpu_ms":  5500,
+        "working_set":  75325440,
+        "message_response_ms":  0.39280000000000004
+    },
+    {
+        "elapsed_ms":  246814.075,
+        "cpu_ms":  5515.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.1189
+    },
+    {
+        "elapsed_ms":  247824.93310000002,
+        "cpu_ms":  5546.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.0604
+    },
+    {
+        "elapsed_ms":  248835.0694,
+        "cpu_ms":  5562.5,
+        "working_set":  75325440,
+        "message_response_ms":  0.3725
+    },
+    {
+        "elapsed_ms":  249847.1932,
+        "cpu_ms":  5578.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.3012
+    },
+    {
+        "elapsed_ms":  250852.7612,
+        "cpu_ms":  5609.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.0687
+    },
+    {
+        "elapsed_ms":  251866.52680000002,
+        "cpu_ms":  5640.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.064
+    },
+    {
+        "elapsed_ms":  252878.0741,
+        "cpu_ms":  5656.25,
+        "working_set":  75325440,
+        "message_response_ms":  0.0838
+    },
+    {
+        "elapsed_ms":  253890.26270000002,
+        "cpu_ms":  5687.5,
+        "working_set":  75325440,
+        "message_response_ms":  0.085600000000000009
+    },
+    {
+        "elapsed_ms":  254909.9436,
+        "cpu_ms":  5703.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.18180000000000002
+    },
+    {
+        "elapsed_ms":  255920.9138,
+        "cpu_ms":  5734.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.12390000000000001
+    },
+    {
+        "elapsed_ms":  256928.93190000003,
+        "cpu_ms":  5750,
+        "working_set":  76201984,
+        "message_response_ms":  0.3351
+    },
+    {
+        "elapsed_ms":  257940.1213,
+        "cpu_ms":  5750,
+        "working_set":  76201984,
+        "message_response_ms":  0.33680000000000004
+    },
+    {
+        "elapsed_ms":  258947.44100000002,
+        "cpu_ms":  5765.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.0763
+    },
+    {
+        "elapsed_ms":  259956.5185,
+        "cpu_ms":  5796.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.1071
+    },
+    {
+        "elapsed_ms":  260963.08010000002,
+        "cpu_ms":  5812.5,
+        "working_set":  75325440,
+        "message_response_ms":  0.0746
+    },
+    {
+        "elapsed_ms":  261968.5499,
+        "cpu_ms":  5843.75,
+        "working_set":  75325440,
+        "message_response_ms":  0.3618
+    },
+    {
+        "elapsed_ms":  262987.1207,
+        "cpu_ms":  5875,
+        "working_set":  75325440,
+        "message_response_ms":  0.0614
+    },
+    {
+        "elapsed_ms":  264006.83520000003,
+        "cpu_ms":  5890.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.1938
+    },
+    {
+        "elapsed_ms":  265015.6766,
+        "cpu_ms":  5906.25,
+        "working_set":  75325440,
+        "message_response_ms":  0.058
+    },
+    {
+        "elapsed_ms":  266021.0236,
+        "cpu_ms":  5921.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.2631
+    },
+    {
+        "elapsed_ms":  267041.4623,
+        "cpu_ms":  5921.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.065
+    },
+    {
+        "elapsed_ms":  268048.4266,
+        "cpu_ms":  5953.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.07640000000000001
+    },
+    {
+        "elapsed_ms":  269054.2565,
+        "cpu_ms":  5984.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.0604
+    },
+    {
+        "elapsed_ms":  270065.7954,
+        "cpu_ms":  6000,
+        "working_set":  75325440,
+        "message_response_ms":  0.10980000000000001
+    },
+    {
+        "elapsed_ms":  271072.8798,
+        "cpu_ms":  6031.25,
+        "working_set":  75325440,
+        "message_response_ms":  0.077300000000000008
+    },
+    {
+        "elapsed_ms":  272079.9449,
+        "cpu_ms":  6046.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.0648
+    },
+    {
+        "elapsed_ms":  273086.6022,
+        "cpu_ms":  6078.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.17500000000000002
+    },
+    {
+        "elapsed_ms":  274093.8581,
+        "cpu_ms":  6093.75,
+        "working_set":  75325440,
+        "message_response_ms":  0.062200000000000005
+    },
+    {
+        "elapsed_ms":  275103.9479,
+        "cpu_ms":  6125,
+        "working_set":  75325440,
+        "message_response_ms":  0.0708
+    },
+    {
+        "elapsed_ms":  276110.14160000003,
+        "cpu_ms":  6140.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.17350000000000002
+    },
+    {
+        "elapsed_ms":  277118.5763,
+        "cpu_ms":  6171.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.0994
+    },
+    {
+        "elapsed_ms":  278124.7462,
+        "cpu_ms":  6187.5,
+        "working_set":  75325440,
+        "message_response_ms":  0.067600000000000007
+    },
+    {
+        "elapsed_ms":  279132.2522,
+        "cpu_ms":  6218.75,
+        "working_set":  75325440,
+        "message_response_ms":  0.1267
+    },
+    {
+        "elapsed_ms":  280141.8201,
+        "cpu_ms":  6234.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.096200000000000008
+    },
+    {
+        "elapsed_ms":  281147.6292,
+        "cpu_ms":  6250,
+        "working_set":  75325440,
+        "message_response_ms":  0.069100000000000009
+    },
+    {
+        "elapsed_ms":  282156.6831,
+        "cpu_ms":  6265.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.0961
+    },
+    {
+        "elapsed_ms":  283162.7554,
+        "cpu_ms":  6296.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.0756
+    },
+    {
+        "elapsed_ms":  284168.3211,
+        "cpu_ms":  6328.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.1221
+    },
+    {
+        "elapsed_ms":  285174.2149,
+        "cpu_ms":  6343.75,
+        "working_set":  75325440,
+        "message_response_ms":  0.2277
+    },
+    {
+        "elapsed_ms":  286178.623,
+        "cpu_ms":  6359.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.0751
+    },
+    {
+        "elapsed_ms":  287196.7159,
+        "cpu_ms":  6390.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.07010000000000001
+    },
+    {
+        "elapsed_ms":  288214.4979,
+        "cpu_ms":  6421.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.0654
+    },
+    {
+        "elapsed_ms":  289220.5849,
+        "cpu_ms":  6437.5,
+        "working_set":  75325440,
+        "message_response_ms":  0.22820000000000001
+    },
+    {
+        "elapsed_ms":  290225.79120000004,
+        "cpu_ms":  6453.125,
+        "working_set":  75325440,
+        "message_response_ms":  0.111
+    },
+    {
+        "elapsed_ms":  291243.1119,
+        "cpu_ms":  6484.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.1953
+    },
+    {
+        "elapsed_ms":  292261.0882,
+        "cpu_ms":  6515.625,
+        "working_set":  75325440,
+        "message_response_ms":  0.061900000000000004
+    },
+    {
+        "elapsed_ms":  293268.6583,
+        "cpu_ms":  6531.25,
+        "working_set":  75325440,
+        "message_response_ms":  0.25120000000000003
+    },
+    {
+        "elapsed_ms":  294274.6951,
+        "cpu_ms":  6546.875,
+        "working_set":  75325440,
+        "message_response_ms":  0.055400000000000005
+    },
+    {
+        "elapsed_ms":  295281.3044,
+        "cpu_ms":  6562.5,
+        "working_set":  75325440,
+        "message_response_ms":  0.1053
+    },
+    {
+        "elapsed_ms":  296298.7083,
+        "cpu_ms":  6593.75,
+        "working_set":  75325440,
+        "message_response_ms":  0.07350000000000001
+    },
+    {
+        "elapsed_ms":  297307.2693,
+        "cpu_ms":  6625,
+        "working_set":  75362304,
+        "message_response_ms":  0.11710000000000001
+    },
+    {
+        "elapsed_ms":  298312.94680000003,
+        "cpu_ms":  6656.25,
+        "working_set":  75362304,
+        "message_response_ms":  0.072000000000000008
+    },
+    {
+        "elapsed_ms":  299321.6962,
+        "cpu_ms":  6656.25,
+        "working_set":  76230656,
+        "message_response_ms":  0.0775
+    },
+    {
+        "elapsed_ms":  300330.38420000003,
+        "cpu_ms":  6671.875,
+        "working_set":  75362304,
+        "message_response_ms":  0.15760000000000002
+    },
+    {
+        "elapsed_ms":  301346.45900000003,
+        "cpu_ms":  6703.125,
+        "working_set":  75362304,
+        "message_response_ms":  0.0699
+    },
+    {
+        "elapsed_ms":  302354.18200000003,
+        "cpu_ms":  6718.75,
+        "working_set":  75362304,
+        "message_response_ms":  0.1497
+    },
+    {
+        "elapsed_ms":  303361.99210000003,
+        "cpu_ms":  6750,
+        "working_set":  75362304,
+        "message_response_ms":  0.059300000000000005
+    },
+    {
+        "elapsed_ms":  304367.4201,
+        "cpu_ms":  6750,
+        "working_set":  75362304,
+        "message_response_ms":  0.1466
+    },
+    {
+        "elapsed_ms":  305382.1947,
+        "cpu_ms":  6765.625,
+        "working_set":  75362304,
+        "message_response_ms":  0.1398
+    },
+    {
+        "elapsed_ms":  306390.06330000004,
+        "cpu_ms":  6781.25,
+        "working_set":  75362304,
+        "message_response_ms":  0.12350000000000001
+    },
+    {
+        "elapsed_ms":  307396.8069,
+        "cpu_ms":  6812.5,
+        "working_set":  75362304,
+        "message_response_ms":  0.1264
+    },
+    {
+        "elapsed_ms":  308402.23720000003,
+        "cpu_ms":  6828.125,
+        "working_set":  75362304,
+        "message_response_ms":  0.0604
+    },
+    {
+        "elapsed_ms":  309422.5354,
+        "cpu_ms":  6843.75,
+        "working_set":  75362304,
+        "message_response_ms":  0.0625
+    },
+    {
+        "elapsed_ms":  310429.65380000003,
+        "cpu_ms":  6875,
+        "working_set":  75362304,
+        "message_response_ms":  0.1004
+    },
+    {
+        "elapsed_ms":  311441.2181,
+        "cpu_ms":  6890.625,
+        "working_set":  75362304,
+        "message_response_ms":  0.2348
+    },
+    {
+        "elapsed_ms":  312451.5702,
+        "cpu_ms":  6906.25,
+        "working_set":  75362304,
+        "message_response_ms":  0.065
+    },
+    {
+        "elapsed_ms":  313459.7035,
+        "cpu_ms":  6937.5,
+        "working_set":  75386880,
+        "message_response_ms":  0.1086
+    },
+    {
+        "elapsed_ms":  314470.8226,
+        "cpu_ms":  6953.125,
+        "working_set":  75386880,
+        "message_response_ms":  0.2013
+    },
+    {
+        "elapsed_ms":  315479.96650000004,
+        "cpu_ms":  6984.375,
+        "working_set":  75386880,
+        "message_response_ms":  0.1957
+    },
+    {
+        "elapsed_ms":  316499.2951,
+        "cpu_ms":  7015.625,
+        "working_set":  75386880,
+        "message_response_ms":  0.062200000000000005
+    },
+    {
+        "elapsed_ms":  317507.10870000004,
+        "cpu_ms":  7046.875,
+        "working_set":  75386880,
+        "message_response_ms":  0.066
+    },
+    {
+        "elapsed_ms":  318514.5537,
+        "cpu_ms":  7062.5,
+        "working_set":  75386880,
+        "message_response_ms":  0.137
+    },
+    {
+        "elapsed_ms":  319520.90530000004,
+        "cpu_ms":  7093.75,
+        "working_set":  75386880,
+        "message_response_ms":  0.068100000000000008
+    },
+    {
+        "elapsed_ms":  320530.0256,
+        "cpu_ms":  7125,
+        "working_set":  75386880,
+        "message_response_ms":  0.2195
+    },
+    {
+        "elapsed_ms":  321537.6862,
+        "cpu_ms":  7156.25,
+        "working_set":  75386880,
+        "message_response_ms":  0.3834
+    },
+    {
+        "elapsed_ms":  322548.1987,
+        "cpu_ms":  7171.875,
+        "working_set":  75386880,
+        "message_response_ms":  0.0955
+    },
+    {
+        "elapsed_ms":  323558.35480000003,
+        "cpu_ms":  7203.125,
+        "working_set":  75386880,
+        "message_response_ms":  0.078
+    },
+    {
+        "elapsed_ms":  324571.7627,
+        "cpu_ms":  7234.375,
+        "working_set":  75386880,
+        "message_response_ms":  0.0757
+    },
+    {
+        "elapsed_ms":  325583.8013,
+        "cpu_ms":  7250,
+        "working_set":  75386880,
+        "message_response_ms":  0.0663
+    },
+    {
+        "elapsed_ms":  326590.10380000004,
+        "cpu_ms":  7265.625,
+        "working_set":  75386880,
+        "message_response_ms":  0.083700000000000011
+    },
+    {
+        "elapsed_ms":  327602.5725,
+        "cpu_ms":  7296.875,
+        "working_set":  75386880,
+        "message_response_ms":  0.1293
+    },
+    {
+        "elapsed_ms":  328615.9152,
+        "cpu_ms":  7328.125,
+        "working_set":  75386880,
+        "message_response_ms":  0.0978
+    },
+    {
+        "elapsed_ms":  329633.89910000004,
+        "cpu_ms":  7359.375,
+        "working_set":  75386880,
+        "message_response_ms":  0.08320000000000001
+    },
+    {
+        "elapsed_ms":  330642.43450000003,
+        "cpu_ms":  7390.625,
+        "working_set":  75386880,
+        "message_response_ms":  0.0752
+    },
+    {
+        "elapsed_ms":  331651.1108,
+        "cpu_ms":  7406.25,
+        "working_set":  75386880,
+        "message_response_ms":  0.0843
+    },
+    {
+        "elapsed_ms":  332664.617,
+        "cpu_ms":  7437.5,
+        "working_set":  75386880,
+        "message_response_ms":  0.0623
+    },
+    {
+        "elapsed_ms":  333670.7199,
+        "cpu_ms":  7453.125,
+        "working_set":  75386880,
+        "message_response_ms":  0.1446
+    },
+    {
+        "elapsed_ms":  334676.6225,
+        "cpu_ms":  7468.75,
+        "working_set":  75386880,
+        "message_response_ms":  0.1824
+    },
+    {
+        "elapsed_ms":  335681.6265,
+        "cpu_ms":  7500,
+        "working_set":  75386880,
+        "message_response_ms":  0.187
+    },
+    {
+        "elapsed_ms":  336686.9034,
+        "cpu_ms":  7515.625,
+        "working_set":  75386880,
+        "message_response_ms":  0.11
+    },
+    {
+        "elapsed_ms":  337706.91510000004,
+        "cpu_ms":  7531.25,
+        "working_set":  75386880,
+        "message_response_ms":  0.1966
+    },
+    {
+        "elapsed_ms":  338726.31320000003,
+        "cpu_ms":  7562.5,
+        "working_set":  75386880,
+        "message_response_ms":  0.0804
+    },
+    {
+        "elapsed_ms":  339745.7894,
+        "cpu_ms":  7593.75,
+        "working_set":  75386880,
+        "message_response_ms":  0.089400000000000007
+    },
+    {
+        "elapsed_ms":  340763.1145,
+        "cpu_ms":  7625,
+        "working_set":  75386880,
+        "message_response_ms":  0.10540000000000001
+    },
+    {
+        "elapsed_ms":  341773.6113,
+        "cpu_ms":  7656.25,
+        "working_set":  75386880,
+        "message_response_ms":  0.0898
+    },
+    {
+        "elapsed_ms":  342785.1839,
+        "cpu_ms":  7671.875,
+        "working_set":  75386880,
+        "message_response_ms":  0.0766
+    },
+    {
+        "elapsed_ms":  343794.04370000004,
+        "cpu_ms":  7703.125,
+        "working_set":  75386880,
+        "message_response_ms":  0.1139
+    },
+    {
+        "elapsed_ms":  344806.68940000003,
+        "cpu_ms":  7718.75,
+        "working_set":  75386880,
+        "message_response_ms":  0.065700000000000008
+    },
+    {
+        "elapsed_ms":  345812.5966,
+        "cpu_ms":  7750,
+        "working_set":  75386880,
+        "message_response_ms":  0.3644
+    },
+    {
+        "elapsed_ms":  346821.81570000004,
+        "cpu_ms":  7765.625,
+        "working_set":  75386880,
+        "message_response_ms":  0.11710000000000001
+    },
+    {
+        "elapsed_ms":  347841.58300000004,
+        "cpu_ms":  7781.25,
+        "working_set":  76263424,
+        "message_response_ms":  0.138
+    },
+    {
+        "elapsed_ms":  348850.9634,
+        "cpu_ms":  7796.875,
+        "working_set":  76255232,
+        "message_response_ms":  0.1145
+    },
+    {
+        "elapsed_ms":  349869.55600000004,
+        "cpu_ms":  7812.5,
+        "working_set":  75386880,
+        "message_response_ms":  0.0621
+    },
+    {
+        "elapsed_ms":  350874.7781,
+        "cpu_ms":  7843.75,
+        "working_set":  75386880,
+        "message_response_ms":  0.0748
+    },
+    {
+        "elapsed_ms":  351895.2296,
+        "cpu_ms":  7859.375,
+        "working_set":  75386880,
+        "message_response_ms":  0.1613
+    },
+    {
+        "elapsed_ms":  352901.6964,
+        "cpu_ms":  7875,
+        "working_set":  75386880,
+        "message_response_ms":  0.0804
+    },
+    {
+        "elapsed_ms":  353910.1021,
+        "cpu_ms":  7890.625,
+        "working_set":  75386880,
+        "message_response_ms":  0.2918
+    },
+    {
+        "elapsed_ms":  354929.0283,
+        "cpu_ms":  7906.25,
+        "working_set":  75386880,
+        "message_response_ms":  0.1893
+    },
+    {
+        "elapsed_ms":  355941.70930000005,
+        "cpu_ms":  7921.875,
+        "working_set":  75386880,
+        "message_response_ms":  0.1797
+    },
+    {
+        "elapsed_ms":  356963.992,
+        "cpu_ms":  7937.5,
+        "working_set":  75386880,
+        "message_response_ms":  0.061000000000000006
+    },
+    {
+        "elapsed_ms":  357982.5617,
+        "cpu_ms":  7968.75,
+        "working_set":  75575296,
+        "message_response_ms":  0.1877
+    },
+    {
+        "elapsed_ms":  359001.7319,
+        "cpu_ms":  8000,
+        "working_set":  75575296,
+        "message_response_ms":  0.0843
+    },
+    {
+        "elapsed_ms":  360015.6117,
+        "cpu_ms":  8031.25,
+        "working_set":  75575296,
+        "message_response_ms":  0.060700000000000004
+    },
+    {
+        "elapsed_ms":  361032.4949,
+        "cpu_ms":  8062.5,
+        "working_set":  75575296,
+        "message_response_ms":  0.0758
+    },
+    {
+        "elapsed_ms":  362038.35380000004,
+        "cpu_ms":  8093.75,
+        "working_set":  75575296,
+        "message_response_ms":  0.098
+    },
+    {
+        "elapsed_ms":  363050.24710000004,
+        "cpu_ms":  8109.375,
+        "working_set":  75575296,
+        "message_response_ms":  0.3612
+    },
+    {
+        "elapsed_ms":  364057.4733,
+        "cpu_ms":  8140.625,
+        "working_set":  75575296,
+        "message_response_ms":  0.062400000000000004
+    },
+    {
+        "elapsed_ms":  365063.1003,
+        "cpu_ms":  8156.25,
+        "working_set":  75575296,
+        "message_response_ms":  0.1058
+    },
+    {
+        "elapsed_ms":  366071.2086,
+        "cpu_ms":  8171.875,
+        "working_set":  75575296,
+        "message_response_ms":  0.0574
+    },
+    {
+        "elapsed_ms":  367079.7232,
+        "cpu_ms":  8187.5,
+        "working_set":  75575296,
+        "message_response_ms":  0.0629
+    },
+    {
+        "elapsed_ms":  368087.683,
+        "cpu_ms":  8218.75,
+        "working_set":  75575296,
+        "message_response_ms":  0.0743
+    },
+    {
+        "elapsed_ms":  369107.8736,
+        "cpu_ms":  8234.375,
+        "working_set":  75575296,
+        "message_response_ms":  0.1631
+    },
+    {
+        "elapsed_ms":  370118.26930000004,
+        "cpu_ms":  8250,
+        "working_set":  75575296,
+        "message_response_ms":  0.0651
+    },
+    {
+        "elapsed_ms":  371137.47000000003,
+        "cpu_ms":  8265.625,
+        "working_set":  75575296,
+        "message_response_ms":  0.0616
+    },
+    {
+        "elapsed_ms":  372152.77170000004,
+        "cpu_ms":  8281.25,
+        "working_set":  75575296,
+        "message_response_ms":  0.065200000000000008
+    },
+    {
+        "elapsed_ms":  373159.86730000004,
+        "cpu_ms":  8296.875,
+        "working_set":  75575296,
+        "message_response_ms":  0.1626
+    },
+    {
+        "elapsed_ms":  374178.67120000004,
+        "cpu_ms":  8328.125,
+        "working_set":  75575296,
+        "message_response_ms":  0.1429
+    },
+    {
+        "elapsed_ms":  375198.20900000003,
+        "cpu_ms":  8359.375,
+        "working_set":  75575296,
+        "message_response_ms":  0.0834
+    },
+    {
+        "elapsed_ms":  376206.4483,
+        "cpu_ms":  8375,
+        "working_set":  75575296,
+        "message_response_ms":  0.0671
+    },
+    {
+        "elapsed_ms":  377224.8483,
+        "cpu_ms":  8406.25,
+        "working_set":  75575296,
+        "message_response_ms":  0.0675
+    },
+    {
+        "elapsed_ms":  378231.63940000004,
+        "cpu_ms":  8421.875,
+        "working_set":  75575296,
+        "message_response_ms":  0.0658
+    },
+    {
+        "elapsed_ms":  379237.0601,
+        "cpu_ms":  8437.5,
+        "working_set":  75575296,
+        "message_response_ms":  0.2094
+    },
+    {
+        "elapsed_ms":  380242.0653,
+        "cpu_ms":  8468.75,
+        "working_set":  75575296,
+        "message_response_ms":  0.0816
+    },
+    {
+        "elapsed_ms":  381261.2822,
+        "cpu_ms":  8500,
+        "working_set":  75575296,
+        "message_response_ms":  0.0976
+    },
+    {
+        "elapsed_ms":  382268.1121,
+        "cpu_ms":  8515.625,
+        "working_set":  75575296,
+        "message_response_ms":  0.3548
+    },
+    {
+        "elapsed_ms":  383276.8252,
+        "cpu_ms":  8546.875,
+        "working_set":  75575296,
+        "message_response_ms":  0.075400000000000009
+    },
+    {
+        "elapsed_ms":  384296.7737,
+        "cpu_ms":  8578.125,
+        "working_set":  75575296,
+        "message_response_ms":  0.12010000000000001
+    },
+    {
+        "elapsed_ms":  385302.09290000005,
+        "cpu_ms":  8593.75,
+        "working_set":  75575296,
+        "message_response_ms":  0.0907
+    },
+    {
+        "elapsed_ms":  386319.56070000003,
+        "cpu_ms":  8625,
+        "working_set":  75575296,
+        "message_response_ms":  0.069
+    },
+    {
+        "elapsed_ms":  387333.7247,
+        "cpu_ms":  8656.25,
+        "working_set":  75575296,
+        "message_response_ms":  0.0901
+    },
+    {
+        "elapsed_ms":  388350.5293,
+        "cpu_ms":  8671.875,
+        "working_set":  75575296,
+        "message_response_ms":  0.064200000000000007
+    },
+    {
+        "elapsed_ms":  389366.6962,
+        "cpu_ms":  8703.125,
+        "working_set":  75575296,
+        "message_response_ms":  0.0658
+    },
+    {
+        "elapsed_ms":  390374.1753,
+        "cpu_ms":  8718.75,
+        "working_set":  75575296,
+        "message_response_ms":  0.083
+    },
+    {
+        "elapsed_ms":  391381.8211,
+        "cpu_ms":  8734.375,
+        "working_set":  75575296,
+        "message_response_ms":  0.0898
+    },
+    {
+        "elapsed_ms":  392396.75080000004,
+        "cpu_ms":  8750,
+        "working_set":  75575296,
+        "message_response_ms":  0.0731
+    },
+    {
+        "elapsed_ms":  393406.1094,
+        "cpu_ms":  8765.625,
+        "working_set":  75575296,
+        "message_response_ms":  0.078
+    },
+    {
+        "elapsed_ms":  394425.71040000004,
+        "cpu_ms":  8781.25,
+        "working_set":  75575296,
+        "message_response_ms":  0.0601
+    },
+    {
+        "elapsed_ms":  395435.2846,
+        "cpu_ms":  8812.5,
+        "working_set":  75575296,
+        "message_response_ms":  0.0591
+    },
+    {
+        "elapsed_ms":  396441.7432,
+        "cpu_ms":  8828.125,
+        "working_set":  76443648,
+        "message_response_ms":  0.0883
+    },
+    {
+        "elapsed_ms":  397448.7197,
+        "cpu_ms":  8828.125,
+        "working_set":  75575296,
+        "message_response_ms":  0.0709
+    },
+    {
+        "elapsed_ms":  398456.2662,
+        "cpu_ms":  8859.375,
+        "working_set":  75575296,
+        "message_response_ms":  0.1403
+    },
+    {
+        "elapsed_ms":  399471.6471,
+        "cpu_ms":  8875,
+        "working_set":  75534336,
+        "message_response_ms":  0.1834
+    },
+    {
+        "elapsed_ms":  400488.69810000004,
+        "cpu_ms":  8906.25,
+        "working_set":  75534336,
+        "message_response_ms":  0.18280000000000002
+    },
+    {
+        "elapsed_ms":  401498.8043,
+        "cpu_ms":  8921.875,
+        "working_set":  75534336,
+        "message_response_ms":  0.0693
+    },
+    {
+        "elapsed_ms":  402505.0177,
+        "cpu_ms":  8953.125,
+        "working_set":  75534336,
+        "message_response_ms":  0.0678
+    },
+    {
+        "elapsed_ms":  403512.6928,
+        "cpu_ms":  8968.75,
+        "working_set":  75624448,
+        "message_response_ms":  0.0708
+    },
+    {
+        "elapsed_ms":  404530.6153,
+        "cpu_ms":  9000,
+        "working_set":  75624448,
+        "message_response_ms":  0.0623
+    },
+    {
+        "elapsed_ms":  405535.7211,
+        "cpu_ms":  9031.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.0733
+    },
+    {
+        "elapsed_ms":  406542.412,
+        "cpu_ms":  9046.875,
+        "working_set":  75624448,
+        "message_response_ms":  0.1208
+    },
+    {
+        "elapsed_ms":  407551.5428,
+        "cpu_ms":  9078.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.0946
+    },
+    {
+        "elapsed_ms":  408570.11000000004,
+        "cpu_ms":  9093.75,
+        "working_set":  75624448,
+        "message_response_ms":  0.10740000000000001
+    },
+    {
+        "elapsed_ms":  409580.24360000005,
+        "cpu_ms":  9093.75,
+        "working_set":  75624448,
+        "message_response_ms":  0.1101
+    },
+    {
+        "elapsed_ms":  410588.3998,
+        "cpu_ms":  9125,
+        "working_set":  75624448,
+        "message_response_ms":  0.10360000000000001
+    },
+    {
+        "elapsed_ms":  411600.3495,
+        "cpu_ms":  9140.625,
+        "working_set":  75624448,
+        "message_response_ms":  0.14780000000000001
+    },
+    {
+        "elapsed_ms":  412620.50580000004,
+        "cpu_ms":  9156.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.0637
+    },
+    {
+        "elapsed_ms":  413630.2317,
+        "cpu_ms":  9171.875,
+        "working_set":  75624448,
+        "message_response_ms":  0.0955
+    },
+    {
+        "elapsed_ms":  414645.4106,
+        "cpu_ms":  9203.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.2228
+    },
+    {
+        "elapsed_ms":  415655.68200000003,
+        "cpu_ms":  9234.375,
+        "working_set":  75624448,
+        "message_response_ms":  0.112
+    },
+    {
+        "elapsed_ms":  416664.9474,
+        "cpu_ms":  9265.625,
+        "working_set":  75624448,
+        "message_response_ms":  0.1625
+    },
+    {
+        "elapsed_ms":  417671.5795,
+        "cpu_ms":  9281.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.0862
+    },
+    {
+        "elapsed_ms":  418691.052,
+        "cpu_ms":  9296.875,
+        "working_set":  75624448,
+        "message_response_ms":  0.1207
+    },
+    {
+        "elapsed_ms":  419696.03640000004,
+        "cpu_ms":  9328.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.071500000000000008
+    },
+    {
+        "elapsed_ms":  420703.7881,
+        "cpu_ms":  9343.75,
+        "working_set":  75624448,
+        "message_response_ms":  0.06770000000000001
+    },
+    {
+        "elapsed_ms":  421709.5876,
+        "cpu_ms":  9375,
+        "working_set":  75624448,
+        "message_response_ms":  0.064700000000000008
+    },
+    {
+        "elapsed_ms":  422715.62230000005,
+        "cpu_ms":  9406.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.0546
+    },
+    {
+        "elapsed_ms":  423734.63440000004,
+        "cpu_ms":  9421.875,
+        "working_set":  75624448,
+        "message_response_ms":  0.07010000000000001
+    },
+    {
+        "elapsed_ms":  424750.8201,
+        "cpu_ms":  9453.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.1579
+    },
+    {
+        "elapsed_ms":  425761.0795,
+        "cpu_ms":  9484.375,
+        "working_set":  75624448,
+        "message_response_ms":  0.1302
+    },
+    {
+        "elapsed_ms":  426782.9865,
+        "cpu_ms":  9500,
+        "working_set":  75624448,
+        "message_response_ms":  0.3791
+    },
+    {
+        "elapsed_ms":  427790.48230000003,
+        "cpu_ms":  9515.625,
+        "working_set":  75624448,
+        "message_response_ms":  0.059500000000000004
+    },
+    {
+        "elapsed_ms":  428798.41750000004,
+        "cpu_ms":  9531.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.068
+    },
+    {
+        "elapsed_ms":  429804.7981,
+        "cpu_ms":  9562.5,
+        "working_set":  75624448,
+        "message_response_ms":  0.0671
+    },
+    {
+        "elapsed_ms":  430812.06320000003,
+        "cpu_ms":  9578.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.0741
+    },
+    {
+        "elapsed_ms":  431819.71180000005,
+        "cpu_ms":  9609.375,
+        "working_set":  75624448,
+        "message_response_ms":  0.1726
+    },
+    {
+        "elapsed_ms":  432825.2282,
+        "cpu_ms":  9640.625,
+        "working_set":  75624448,
+        "message_response_ms":  0.0685
+    },
+    {
+        "elapsed_ms":  433830.45780000003,
+        "cpu_ms":  9656.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.3528
+    },
+    {
+        "elapsed_ms":  434849.6641,
+        "cpu_ms":  9687.5,
+        "working_set":  75624448,
+        "message_response_ms":  0.16640000000000002
+    },
+    {
+        "elapsed_ms":  435868.51170000003,
+        "cpu_ms":  9703.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.0702
+    },
+    {
+        "elapsed_ms":  436885.4106,
+        "cpu_ms":  9734.375,
+        "working_set":  75624448,
+        "message_response_ms":  0.0668
+    },
+    {
+        "elapsed_ms":  437905.2417,
+        "cpu_ms":  9765.625,
+        "working_set":  75624448,
+        "message_response_ms":  0.090400000000000008
+    },
+    {
+        "elapsed_ms":  438924.6328,
+        "cpu_ms":  9781.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.2328
+    },
+    {
+        "elapsed_ms":  439930.509,
+        "cpu_ms":  9812.5,
+        "working_set":  75624448,
+        "message_response_ms":  0.0839
+    },
+    {
+        "elapsed_ms":  440947.4343,
+        "cpu_ms":  9843.75,
+        "working_set":  75624448,
+        "message_response_ms":  0.11270000000000001
+    },
+    {
+        "elapsed_ms":  441965.631,
+        "cpu_ms":  9859.375,
+        "working_set":  76500992,
+        "message_response_ms":  0.1004
+    },
+    {
+        "elapsed_ms":  442971.3078,
+        "cpu_ms":  9875,
+        "working_set":  75624448,
+        "message_response_ms":  0.132
+    },
+    {
+        "elapsed_ms":  443990.14660000004,
+        "cpu_ms":  9890.625,
+        "working_set":  75624448,
+        "message_response_ms":  0.2521
+    },
+    {
+        "elapsed_ms":  444997.8703,
+        "cpu_ms":  9906.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.2048
+    },
+    {
+        "elapsed_ms":  446002.65650000004,
+        "cpu_ms":  9937.5,
+        "working_set":  75624448,
+        "message_response_ms":  0.109
+    },
+    {
+        "elapsed_ms":  447015.3041,
+        "cpu_ms":  9953.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.1661
+    },
+    {
+        "elapsed_ms":  448023.21660000004,
+        "cpu_ms":  9984.375,
+        "working_set":  75624448,
+        "message_response_ms":  0.07
+    },
+    {
+        "elapsed_ms":  449028.32190000004,
+        "cpu_ms":  10000,
+        "working_set":  75624448,
+        "message_response_ms":  0.4212
+    },
+    {
+        "elapsed_ms":  450037.6225,
+        "cpu_ms":  10031.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.3618
+    },
+    {
+        "elapsed_ms":  451052.18970000005,
+        "cpu_ms":  10046.875,
+        "working_set":  75624448,
+        "message_response_ms":  0.093
+    },
+    {
+        "elapsed_ms":  452058.0582,
+        "cpu_ms":  10062.5,
+        "working_set":  75624448,
+        "message_response_ms":  0.068
+    },
+    {
+        "elapsed_ms":  453069.9512,
+        "cpu_ms":  10093.75,
+        "working_set":  75624448,
+        "message_response_ms":  0.12250000000000001
+    },
+    {
+        "elapsed_ms":  454078.7134,
+        "cpu_ms":  10093.75,
+        "working_set":  75624448,
+        "message_response_ms":  0.0845
+    },
+    {
+        "elapsed_ms":  455086.3265,
+        "cpu_ms":  10125,
+        "working_set":  75624448,
+        "message_response_ms":  0.088500000000000009
+    },
+    {
+        "elapsed_ms":  456092.44690000004,
+        "cpu_ms":  10140.625,
+        "working_set":  75624448,
+        "message_response_ms":  0.0685
+    },
+    {
+        "elapsed_ms":  457100.90650000004,
+        "cpu_ms":  10171.875,
+        "working_set":  75624448,
+        "message_response_ms":  0.15990000000000001
+    },
+    {
+        "elapsed_ms":  458116.59150000004,
+        "cpu_ms":  10203.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.14730000000000001
+    },
+    {
+        "elapsed_ms":  459134.6154,
+        "cpu_ms":  10234.375,
+        "working_set":  75624448,
+        "message_response_ms":  0.064
+    },
+    {
+        "elapsed_ms":  460141.6985,
+        "cpu_ms":  10250,
+        "working_set":  75624448,
+        "message_response_ms":  0.069100000000000009
+    },
+    {
+        "elapsed_ms":  461149.26920000004,
+        "cpu_ms":  10281.25,
+        "working_set":  75624448,
+        "message_response_ms":  0.065200000000000008
+    },
+    {
+        "elapsed_ms":  462159.39540000004,
+        "cpu_ms":  10296.875,
+        "working_set":  75624448,
+        "message_response_ms":  0.0903
+    },
+    {
+        "elapsed_ms":  463171.9512,
+        "cpu_ms":  10328.125,
+        "working_set":  75624448,
+        "message_response_ms":  0.0646
+    },
+    {
+        "elapsed_ms":  464178.96420000005,
+        "cpu_ms":  10359.375,
+        "working_set":  75624448,
+        "message_response_ms":  0.12860000000000002
+    },
+    {
+        "elapsed_ms":  465194.7138,
+        "cpu_ms":  10390.625,
+        "working_set":  75624448,
+        "message_response_ms":  0.0659
+    },
+    {
+        "elapsed_ms":  466200.7183,
+        "cpu_ms":  10406.25,
+        "working_set":  75571200,
+        "message_response_ms":  0.1434
+    },
+    {
+        "elapsed_ms":  467207.15900000004,
+        "cpu_ms":  10437.5,
+        "working_set":  75571200,
+        "message_response_ms":  0.0961
+    },
+    {
+        "elapsed_ms":  468226.359,
+        "cpu_ms":  10468.75,
+        "working_set":  75571200,
+        "message_response_ms":  0.1496
+    },
+    {
+        "elapsed_ms":  469234.51570000005,
+        "cpu_ms":  10484.375,
+        "working_set":  75571200,
+        "message_response_ms":  0.0931
+    },
+    {
+        "elapsed_ms":  470242.5704,
+        "cpu_ms":  10515.625,
+        "working_set":  75571200,
+        "message_response_ms":  0.059800000000000006
+    },
+    {
+        "elapsed_ms":  471254.7796,
+        "cpu_ms":  10531.25,
+        "working_set":  75341824,
+        "message_response_ms":  0.0697
+    },
+    {
+        "elapsed_ms":  472261.9647,
+        "cpu_ms":  10562.5,
+        "working_set":  75345920,
+        "message_response_ms":  0.091900000000000009
+    },
+    {
+        "elapsed_ms":  473272.6007,
+        "cpu_ms":  10593.75,
+        "working_set":  75354112,
+        "message_response_ms":  0.12860000000000002
+    },
+    {
+        "elapsed_ms":  474283.92630000005,
+        "cpu_ms":  10609.375,
+        "working_set":  75358208,
+        "message_response_ms":  0.10890000000000001
+    },
+    {
+        "elapsed_ms":  475293.23500000004,
+        "cpu_ms":  10640.625,
+        "working_set":  75378688,
+        "message_response_ms":  0.086500000000000007
+    },
+    {
+        "elapsed_ms":  476304.6547,
+        "cpu_ms":  10671.875,
+        "working_set":  75407360,
+        "message_response_ms":  0.0614
+    },
+    {
+        "elapsed_ms":  477320.1398,
+        "cpu_ms":  10687.5,
+        "working_set":  75407360,
+        "message_response_ms":  0.4298
+    },
+    {
+        "elapsed_ms":  478328.9083,
+        "cpu_ms":  10703.125,
+        "working_set":  75407360,
+        "message_response_ms":  0.0655
+    },
+    {
+        "elapsed_ms":  479339.15760000004,
+        "cpu_ms":  10734.375,
+        "working_set":  75407360,
+        "message_response_ms":  0.0717
+    },
+    {
+        "elapsed_ms":  480358.6914,
+        "cpu_ms":  10750,
+        "working_set":  75407360,
+        "message_response_ms":  0.15380000000000002
+    },
+    {
+        "elapsed_ms":  481376.40640000004,
+        "cpu_ms":  10765.625,
+        "working_set":  75415552,
+        "message_response_ms":  0.0806
+    },
+    {
+        "elapsed_ms":  482395.4659,
+        "cpu_ms":  10781.25,
+        "working_set":  75415552,
+        "message_response_ms":  0.057300000000000004
+    },
+    {
+        "elapsed_ms":  483401.6016,
+        "cpu_ms":  10812.5,
+        "working_set":  75436032,
+        "message_response_ms":  0.0796
+    },
+    {
+        "elapsed_ms":  484410.13950000005,
+        "cpu_ms":  10828.125,
+        "working_set":  75440128,
+        "message_response_ms":  0.062200000000000005
+    },
+    {
+        "elapsed_ms":  485417.33430000005,
+        "cpu_ms":  10859.375,
+        "working_set":  75440128,
+        "message_response_ms":  0.07400000000000001
+    },
+    {
+        "elapsed_ms":  486427.1877,
+        "cpu_ms":  10875,
+        "working_set":  75440128,
+        "message_response_ms":  0.2484
+    },
+    {
+        "elapsed_ms":  487447.4379,
+        "cpu_ms":  10906.25,
+        "working_set":  75444224,
+        "message_response_ms":  0.0789
+    },
+    {
+        "elapsed_ms":  488456.45920000004,
+        "cpu_ms":  10921.875,
+        "working_set":  76324864,
+        "message_response_ms":  0.0892
+    },
+    {
+        "elapsed_ms":  489463.3458,
+        "cpu_ms":  10921.875,
+        "working_set":  75448320,
+        "message_response_ms":  0.16540000000000002
+    },
+    {
+        "elapsed_ms":  490470.41040000005,
+        "cpu_ms":  10953.125,
+        "working_set":  75448320,
+        "message_response_ms":  0.069600000000000009
+    },
+    {
+        "elapsed_ms":  491490.31720000005,
+        "cpu_ms":  10984.375,
+        "working_set":  75448320,
+        "message_response_ms":  0.0762
+    },
+    {
+        "elapsed_ms":  492503.89,
+        "cpu_ms":  11000,
+        "working_set":  75448320,
+        "message_response_ms":  0.085100000000000009
+    },
+    {
+        "elapsed_ms":  493511.433,
+        "cpu_ms":  11000,
+        "working_set":  75448320,
+        "message_response_ms":  0.0644
+    },
+    {
+        "elapsed_ms":  494522.46160000004,
+        "cpu_ms":  11031.25,
+        "working_set":  75448320,
+        "message_response_ms":  0.057100000000000005
+    },
+    {
+        "elapsed_ms":  495532.0334,
+        "cpu_ms":  11046.875,
+        "working_set":  75448320,
+        "message_response_ms":  0.0641
+    },
+    {
+        "elapsed_ms":  496552.6339,
+        "cpu_ms":  11078.125,
+        "working_set":  75448320,
+        "message_response_ms":  0.1019
+    },
+    {
+        "elapsed_ms":  497571.6191,
+        "cpu_ms":  11093.75,
+        "working_set":  75448320,
+        "message_response_ms":  0.0601
+    },
+    {
+        "elapsed_ms":  498578.50230000005,
+        "cpu_ms":  11125,
+        "working_set":  75448320,
+        "message_response_ms":  0.0726
+    },
+    {
+        "elapsed_ms":  499587.69550000003,
+        "cpu_ms":  11156.25,
+        "working_set":  75448320,
+        "message_response_ms":  0.203
+    },
+    {
+        "elapsed_ms":  500606.71,
+        "cpu_ms":  11171.875,
+        "working_set":  75448320,
+        "message_response_ms":  0.11120000000000001
+    },
+    {
+        "elapsed_ms":  501614.8154,
+        "cpu_ms":  11203.125,
+        "working_set":  75448320,
+        "message_response_ms":  0.0753
+    },
+    {
+        "elapsed_ms":  502621.9281,
+        "cpu_ms":  11218.75,
+        "working_set":  75448320,
+        "message_response_ms":  0.3957
+    },
+    {
+        "elapsed_ms":  503628.63340000005,
+        "cpu_ms":  11234.375,
+        "working_set":  75481088,
+        "message_response_ms":  0.1389
+    },
+    {
+        "elapsed_ms":  504636.00100000005,
+        "cpu_ms":  11250,
+        "working_set":  75481088,
+        "message_response_ms":  0.17750000000000002
+    },
+    {
+        "elapsed_ms":  505650.5882,
+        "cpu_ms":  11265.625,
+        "working_set":  75481088,
+        "message_response_ms":  0.0649
+    },
+    {
+        "elapsed_ms":  506657.53990000003,
+        "cpu_ms":  11281.25,
+        "working_set":  75481088,
+        "message_response_ms":  0.0693
+    },
+    {
+        "elapsed_ms":  507665.429,
+        "cpu_ms":  11312.5,
+        "working_set":  75481088,
+        "message_response_ms":  0.13490000000000002
+    },
+    {
+        "elapsed_ms":  508671.7099,
+        "cpu_ms":  11328.125,
+        "working_set":  75481088,
+        "message_response_ms":  0.076800000000000007
+    },
+    {
+        "elapsed_ms":  509676.4269,
+        "cpu_ms":  11359.375,
+        "working_set":  75481088,
+        "message_response_ms":  0.1376
+    },
+    {
+        "elapsed_ms":  510695.1029,
+        "cpu_ms":  11390.625,
+        "working_set":  75481088,
+        "message_response_ms":  0.0757
+    },
+    {
+        "elapsed_ms":  511714.6721,
+        "cpu_ms":  11406.25,
+        "working_set":  75481088,
+        "message_response_ms":  0.069600000000000009
+    },
+    {
+        "elapsed_ms":  512722.0246,
+        "cpu_ms":  11421.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.13
+    },
+    {
+        "elapsed_ms":  513730.9281,
+        "cpu_ms":  11453.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.08030000000000001
+    },
+    {
+        "elapsed_ms":  514744.41010000004,
+        "cpu_ms":  11484.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.3593
+    },
+    {
+        "elapsed_ms":  515750.33660000004,
+        "cpu_ms":  11500,
+        "working_set":  75493376,
+        "message_response_ms":  0.0853
+    },
+    {
+        "elapsed_ms":  516757.6733,
+        "cpu_ms":  11531.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.09820000000000001
+    },
+    {
+        "elapsed_ms":  517763.95780000003,
+        "cpu_ms":  11562.5,
+        "working_set":  75493376,
+        "message_response_ms":  0.0688
+    },
+    {
+        "elapsed_ms":  518773.7837,
+        "cpu_ms":  11593.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.074400000000000008
+    },
+    {
+        "elapsed_ms":  519782.2245,
+        "cpu_ms":  11609.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.11180000000000001
+    },
+    {
+        "elapsed_ms":  520788.0223,
+        "cpu_ms":  11625,
+        "working_set":  75493376,
+        "message_response_ms":  0.069
+    },
+    {
+        "elapsed_ms":  521797.8862,
+        "cpu_ms":  11640.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.064200000000000007
+    },
+    {
+        "elapsed_ms":  522807.666,
+        "cpu_ms":  11671.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.0944
+    },
+    {
+        "elapsed_ms":  523819.9068,
+        "cpu_ms":  11687.5,
+        "working_set":  75493376,
+        "message_response_ms":  0.1288
+    },
+    {
+        "elapsed_ms":  524828.2889,
+        "cpu_ms":  11718.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.0729
+    },
+    {
+        "elapsed_ms":  525846.1784,
+        "cpu_ms":  11734.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.068100000000000008
+    },
+    {
+        "elapsed_ms":  526853.2792,
+        "cpu_ms":  11765.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.0577
+    },
+    {
+        "elapsed_ms":  527862.06650000007,
+        "cpu_ms":  11781.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.2575
+    },
+    {
+        "elapsed_ms":  528880.3321,
+        "cpu_ms":  11796.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.0592
+    },
+    {
+        "elapsed_ms":  529887.1269,
+        "cpu_ms":  11828.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.1685
+    },
+    {
+        "elapsed_ms":  530896.8026,
+        "cpu_ms":  11843.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.19310000000000002
+    },
+    {
+        "elapsed_ms":  531904.60200000007,
+        "cpu_ms":  11859.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.0742
+    },
+    {
+        "elapsed_ms":  532910.9703,
+        "cpu_ms":  11875,
+        "working_set":  75493376,
+        "message_response_ms":  0.37820000000000004
+    },
+    {
+        "elapsed_ms":  533921.6761,
+        "cpu_ms":  11906.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.0659
+    },
+    {
+        "elapsed_ms":  534927.27990000008,
+        "cpu_ms":  11921.875,
+        "working_set":  76361728,
+        "message_response_ms":  0.1378
+    },
+    {
+        "elapsed_ms":  535938.6535,
+        "cpu_ms":  11921.875,
+        "working_set":  76361728,
+        "message_response_ms":  0.0845
+    },
+    {
+        "elapsed_ms":  536954.1575,
+        "cpu_ms":  11953.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.0719
+    },
+    {
+        "elapsed_ms":  537972.9211,
+        "cpu_ms":  11984.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.1101
+    },
+    {
+        "elapsed_ms":  538990.56540000008,
+        "cpu_ms":  12000,
+        "working_set":  75493376,
+        "message_response_ms":  0.0684
+    },
+    {
+        "elapsed_ms":  540001.4983,
+        "cpu_ms":  12015.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.0626
+    },
+    {
+        "elapsed_ms":  541010.2918,
+        "cpu_ms":  12031.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.0787
+    },
+    {
+        "elapsed_ms":  542030.6334,
+        "cpu_ms":  12046.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.2278
+    },
+    {
+        "elapsed_ms":  543037.3016,
+        "cpu_ms":  12062.5,
+        "working_set":  75493376,
+        "message_response_ms":  0.089400000000000007
+    },
+    {
+        "elapsed_ms":  544052.63880000007,
+        "cpu_ms":  12078.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.1024
+    },
+    {
+        "elapsed_ms":  545058.0261,
+        "cpu_ms":  12093.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.067600000000000007
+    },
+    {
+        "elapsed_ms":  546063.0081,
+        "cpu_ms":  12125,
+        "working_set":  75493376,
+        "message_response_ms":  0.1145
+    },
+    {
+        "elapsed_ms":  547069.6563,
+        "cpu_ms":  12156.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.1037
+    },
+    {
+        "elapsed_ms":  548080.1113,
+        "cpu_ms":  12171.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.215
+    },
+    {
+        "elapsed_ms":  549092.82760000008,
+        "cpu_ms":  12203.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.1165
+    },
+    {
+        "elapsed_ms":  550108.4508,
+        "cpu_ms":  12218.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.0941
+    },
+    {
+        "elapsed_ms":  551123.7102,
+        "cpu_ms":  12234.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.0732
+    },
+    {
+        "elapsed_ms":  552138.1084,
+        "cpu_ms":  12250,
+        "working_set":  75493376,
+        "message_response_ms":  0.088500000000000009
+    },
+    {
+        "elapsed_ms":  553153.7445,
+        "cpu_ms":  12265.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.15960000000000002
+    },
+    {
+        "elapsed_ms":  554172.5949,
+        "cpu_ms":  12281.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.0838
+    },
+    {
+        "elapsed_ms":  555188.1104,
+        "cpu_ms":  12312.5,
+        "working_set":  75493376,
+        "message_response_ms":  0.057600000000000005
+    },
+    {
+        "elapsed_ms":  556194.9485,
+        "cpu_ms":  12343.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.061200000000000004
+    },
+    {
+        "elapsed_ms":  557205.8715,
+        "cpu_ms":  12359.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.12710000000000002
+    },
+    {
+        "elapsed_ms":  558218.6798,
+        "cpu_ms":  12390.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.075400000000000009
+    },
+    {
+        "elapsed_ms":  559225.8256,
+        "cpu_ms":  12421.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.222
+    },
+    {
+        "elapsed_ms":  560233.5277,
+        "cpu_ms":  12437.5,
+        "working_set":  75493376,
+        "message_response_ms":  0.0828
+    },
+    {
+        "elapsed_ms":  561238.8524,
+        "cpu_ms":  12453.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.073000000000000009
+    },
+    {
+        "elapsed_ms":  562251.4764,
+        "cpu_ms":  12484.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.09530000000000001
+    },
+    {
+        "elapsed_ms":  563263.0226,
+        "cpu_ms":  12515.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.14850000000000002
+    },
+    {
+        "elapsed_ms":  564271.36920000007,
+        "cpu_ms":  12546.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.0781
+    },
+    {
+        "elapsed_ms":  565280.6363,
+        "cpu_ms":  12578.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.061500000000000006
+    },
+    {
+        "elapsed_ms":  566292.6273,
+        "cpu_ms":  12609.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.0625
+    },
+    {
+        "elapsed_ms":  567298.54670000006,
+        "cpu_ms":  12625,
+        "working_set":  75493376,
+        "message_response_ms":  0.0608
+    },
+    {
+        "elapsed_ms":  568315.6516,
+        "cpu_ms":  12640.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.0673
+    },
+    {
+        "elapsed_ms":  569322.829,
+        "cpu_ms":  12671.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.0741
+    },
+    {
+        "elapsed_ms":  570335.4285,
+        "cpu_ms":  12703.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.0728
+    },
+    {
+        "elapsed_ms":  571350.8282,
+        "cpu_ms":  12718.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.058100000000000006
+    },
+    {
+        "elapsed_ms":  572357.5486,
+        "cpu_ms":  12750,
+        "working_set":  75493376,
+        "message_response_ms":  0.447
+    },
+    {
+        "elapsed_ms":  573367.16100000008,
+        "cpu_ms":  12781.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.069100000000000009
+    },
+    {
+        "elapsed_ms":  574375.9458,
+        "cpu_ms":  12796.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.091900000000000009
+    },
+    {
+        "elapsed_ms":  575384.7138,
+        "cpu_ms":  12828.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.0577
+    },
+    {
+        "elapsed_ms":  576403.43430000008,
+        "cpu_ms":  12859.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.0606
+    },
+    {
+        "elapsed_ms":  577414.9346,
+        "cpu_ms":  12890.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.21280000000000002
+    },
+    {
+        "elapsed_ms":  578434.287,
+        "cpu_ms":  12921.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.0668
+    },
+    {
+        "elapsed_ms":  579442.4459,
+        "cpu_ms":  12937.5,
+        "working_set":  75493376,
+        "message_response_ms":  0.0694
+    },
+    {
+        "elapsed_ms":  580458.3257,
+        "cpu_ms":  12953.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.057100000000000005
+    },
+    {
+        "elapsed_ms":  581465.1108,
+        "cpu_ms":  12984.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.1202
+    },
+    {
+        "elapsed_ms":  582471.4105,
+        "cpu_ms":  13000,
+        "working_set":  76369920,
+        "message_response_ms":  0.0629
+    },
+    {
+        "elapsed_ms":  583480.15710000007,
+        "cpu_ms":  13000,
+        "working_set":  75493376,
+        "message_response_ms":  0.15360000000000001
+    },
+    {
+        "elapsed_ms":  584497.0073,
+        "cpu_ms":  13031.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.0568
+    },
+    {
+        "elapsed_ms":  585514.0044,
+        "cpu_ms":  13062.5,
+        "working_set":  75493376,
+        "message_response_ms":  0.4025
+    },
+    {
+        "elapsed_ms":  586520.2069,
+        "cpu_ms":  13093.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.10590000000000001
+    },
+    {
+        "elapsed_ms":  587539.10070000007,
+        "cpu_ms":  13109.375,
+        "working_set":  75493376,
+        "message_response_ms":  0.10310000000000001
+    },
+    {
+        "elapsed_ms":  588545.4986,
+        "cpu_ms":  13125,
+        "working_set":  75493376,
+        "message_response_ms":  0.07060000000000001
+    },
+    {
+        "elapsed_ms":  589562.2434,
+        "cpu_ms":  13156.25,
+        "working_set":  75493376,
+        "message_response_ms":  0.0601
+    },
+    {
+        "elapsed_ms":  590566.7634,
+        "cpu_ms":  13187.5,
+        "working_set":  75493376,
+        "message_response_ms":  0.0671
+    },
+    {
+        "elapsed_ms":  591582.5533,
+        "cpu_ms":  13203.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.0555
+    },
+    {
+        "elapsed_ms":  592593.24510000006,
+        "cpu_ms":  13218.75,
+        "working_set":  75493376,
+        "message_response_ms":  0.0755
+    },
+    {
+        "elapsed_ms":  593603.0601,
+        "cpu_ms":  13250,
+        "working_set":  75493376,
+        "message_response_ms":  0.12510000000000002
+    },
+    {
+        "elapsed_ms":  594622.3574,
+        "cpu_ms":  13265.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.20470000000000002
+    },
+    {
+        "elapsed_ms":  595638.8918,
+        "cpu_ms":  13296.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.061200000000000004
+    },
+    {
+        "elapsed_ms":  596645.4656,
+        "cpu_ms":  13328.125,
+        "working_set":  75538432,
+        "message_response_ms":  0.0733
+    },
+    {
+        "elapsed_ms":  597651.5952,
+        "cpu_ms":  13343.75,
+        "working_set":  75542528,
+        "message_response_ms":  0.083600000000000008
+    },
+    {
+        "elapsed_ms":  598660.95260000008,
+        "cpu_ms":  13375,
+        "working_set":  75542528,
+        "message_response_ms":  0.11330000000000001
+    },
+    {
+        "elapsed_ms":  599668.4253,
+        "cpu_ms":  13390.625,
+        "working_set":  75542528,
+        "message_response_ms":  0.055400000000000005
+    },
+    {
+        "elapsed_ms":  600689.0057,
+        "cpu_ms":  13406.25,
+        "working_set":  75542528,
+        "message_response_ms":  0.3113
+    },
+    {
+        "elapsed_ms":  601696.7334,
+        "cpu_ms":  13437.5,
+        "working_set":  75542528,
+        "message_response_ms":  0.0859
+    },
+    {
+        "elapsed_ms":  602716.72070000006,
+        "cpu_ms":  13453.125,
+        "working_set":  75542528,
+        "message_response_ms":  0.0751
+    },
+    {
+        "elapsed_ms":  603737.42280000006,
+        "cpu_ms":  13484.375,
+        "working_set":  75542528,
+        "message_response_ms":  0.075
+    },
+    {
+        "elapsed_ms":  604744.56430000009,
+        "cpu_ms":  13515.625,
+        "working_set":  75542528,
+        "message_response_ms":  0.1359
+    },
+    {
+        "elapsed_ms":  605752.3844,
+        "cpu_ms":  13531.25,
+        "working_set":  75542528,
+        "message_response_ms":  0.2929
+    },
+    {
+        "elapsed_ms":  606767.5717,
+        "cpu_ms":  13562.5,
+        "working_set":  75542528,
+        "message_response_ms":  0.1325
+    },
+    {
+        "elapsed_ms":  607777.7168,
+        "cpu_ms":  13593.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.0741
+    },
+    {
+        "elapsed_ms":  608783.6145,
+        "cpu_ms":  13609.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.0785
+    },
+    {
+        "elapsed_ms":  609790.4778,
+        "cpu_ms":  13640.625,
+        "working_set":  75550720,
+        "message_response_ms":  0.069100000000000009
+    },
+    {
+        "elapsed_ms":  610796.976,
+        "cpu_ms":  13656.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.0884
+    },
+    {
+        "elapsed_ms":  611802.62400000007,
+        "cpu_ms":  13671.875,
+        "working_set":  75550720,
+        "message_response_ms":  0.0565
+    },
+    {
+        "elapsed_ms":  612808.62510000006,
+        "cpu_ms":  13687.5,
+        "working_set":  75550720,
+        "message_response_ms":  0.090400000000000008
+    },
+    {
+        "elapsed_ms":  613818.8064,
+        "cpu_ms":  13703.125,
+        "working_set":  75550720,
+        "message_response_ms":  0.0779
+    },
+    {
+        "elapsed_ms":  614828.045,
+        "cpu_ms":  13718.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.0673
+    },
+    {
+        "elapsed_ms":  615843.8833,
+        "cpu_ms":  13734.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.08660000000000001
+    },
+    {
+        "elapsed_ms":  616859.29910000006,
+        "cpu_ms":  13750,
+        "working_set":  75550720,
+        "message_response_ms":  0.0665
+    },
+    {
+        "elapsed_ms":  617864.51360000006,
+        "cpu_ms":  13765.625,
+        "working_set":  75550720,
+        "message_response_ms":  0.0756
+    },
+    {
+        "elapsed_ms":  618880.31410000008,
+        "cpu_ms":  13796.875,
+        "working_set":  75550720,
+        "message_response_ms":  0.2112
+    },
+    {
+        "elapsed_ms":  619886.17690000008,
+        "cpu_ms":  13828.125,
+        "working_set":  75550720,
+        "message_response_ms":  0.0618
+    },
+    {
+        "elapsed_ms":  620891.5341,
+        "cpu_ms":  13843.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.069600000000000009
+    },
+    {
+        "elapsed_ms":  621896.8066,
+        "cpu_ms":  13859.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.0718
+    },
+    {
+        "elapsed_ms":  622903.0475,
+        "cpu_ms":  13890.625,
+        "working_set":  75550720,
+        "message_response_ms":  0.0668
+    },
+    {
+        "elapsed_ms":  623909.42,
+        "cpu_ms":  13906.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.4243
+    },
+    {
+        "elapsed_ms":  624919.6528,
+        "cpu_ms":  13937.5,
+        "working_set":  75550720,
+        "message_response_ms":  0.0621
+    },
+    {
+        "elapsed_ms":  625926.643,
+        "cpu_ms":  13937.5,
+        "working_set":  76419072,
+        "message_response_ms":  0.07010000000000001
+    },
+    {
+        "elapsed_ms":  626932.8529,
+        "cpu_ms":  13953.125,
+        "working_set":  75550720,
+        "message_response_ms":  0.2046
+    },
+    {
+        "elapsed_ms":  627941.8728,
+        "cpu_ms":  13984.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.117
+    },
+    {
+        "elapsed_ms":  628951.88660000009,
+        "cpu_ms":  14000,
+        "working_set":  75550720,
+        "message_response_ms":  0.066200000000000009
+    },
+    {
+        "elapsed_ms":  629959.9286,
+        "cpu_ms":  14031.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.0947
+    },
+    {
+        "elapsed_ms":  630967.5929,
+        "cpu_ms":  14046.875,
+        "working_set":  75550720,
+        "message_response_ms":  0.063300000000000009
+    },
+    {
+        "elapsed_ms":  631978.9042,
+        "cpu_ms":  14078.125,
+        "working_set":  75550720,
+        "message_response_ms":  0.1245
+    },
+    {
+        "elapsed_ms":  632985.228,
+        "cpu_ms":  14093.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.0623
+    },
+    {
+        "elapsed_ms":  633991.2099,
+        "cpu_ms":  14109.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.1436
+    },
+    {
+        "elapsed_ms":  634996.7258,
+        "cpu_ms":  14125,
+        "working_set":  75550720,
+        "message_response_ms":  0.1149
+    },
+    {
+        "elapsed_ms":  636007.2534,
+        "cpu_ms":  14156.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.1938
+    },
+    {
+        "elapsed_ms":  637019.12660000008,
+        "cpu_ms":  14156.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.1043
+    },
+    {
+        "elapsed_ms":  638027.61070000008,
+        "cpu_ms":  14187.5,
+        "working_set":  75550720,
+        "message_response_ms":  0.1086
+    },
+    {
+        "elapsed_ms":  639045.2767,
+        "cpu_ms":  14203.125,
+        "working_set":  75550720,
+        "message_response_ms":  0.1131
+    },
+    {
+        "elapsed_ms":  640052.1799,
+        "cpu_ms":  14234.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.069600000000000009
+    },
+    {
+        "elapsed_ms":  641065.399,
+        "cpu_ms":  14250,
+        "working_set":  75550720,
+        "message_response_ms":  0.35450000000000004
+    },
+    {
+        "elapsed_ms":  642072.33960000006,
+        "cpu_ms":  14281.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.0718
+    },
+    {
+        "elapsed_ms":  643083.13400000008,
+        "cpu_ms":  14312.5,
+        "working_set":  75550720,
+        "message_response_ms":  0.0746
+    },
+    {
+        "elapsed_ms":  644087.9247,
+        "cpu_ms":  14343.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.0528
+    },
+    {
+        "elapsed_ms":  645106.6604,
+        "cpu_ms":  14359.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.0664
+    },
+    {
+        "elapsed_ms":  646114.6517,
+        "cpu_ms":  14375,
+        "working_set":  75550720,
+        "message_response_ms":  0.085600000000000009
+    },
+    {
+        "elapsed_ms":  647121.54190000007,
+        "cpu_ms":  14406.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.0763
+    },
+    {
+        "elapsed_ms":  648128.68560000008,
+        "cpu_ms":  14437.5,
+        "working_set":  75550720,
+        "message_response_ms":  0.15660000000000002
+    },
+    {
+        "elapsed_ms":  649135.9632,
+        "cpu_ms":  14468.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.0697
+    },
+    {
+        "elapsed_ms":  650144.75420000008,
+        "cpu_ms":  14484.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.063
+    },
+    {
+        "elapsed_ms":  651153.615,
+        "cpu_ms":  14500,
+        "working_set":  75550720,
+        "message_response_ms":  0.11520000000000001
+    },
+    {
+        "elapsed_ms":  652160.4203,
+        "cpu_ms":  14531.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.11850000000000001
+    },
+    {
+        "elapsed_ms":  653166.6603,
+        "cpu_ms":  14546.875,
+        "working_set":  75550720,
+        "message_response_ms":  0.0606
+    },
+    {
+        "elapsed_ms":  654179.62750000006,
+        "cpu_ms":  14578.125,
+        "working_set":  75550720,
+        "message_response_ms":  0.1544
+    },
+    {
+        "elapsed_ms":  655193.45150000008,
+        "cpu_ms":  14593.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.0693
+    },
+    {
+        "elapsed_ms":  656199.7809,
+        "cpu_ms":  14625,
+        "working_set":  75550720,
+        "message_response_ms":  0.1077
+    },
+    {
+        "elapsed_ms":  657211.5217,
+        "cpu_ms":  14656.25,
+        "working_set":  75550720,
+        "message_response_ms":  0.0916
+    },
+    {
+        "elapsed_ms":  658225.73290000006,
+        "cpu_ms":  14687.5,
+        "working_set":  75550720,
+        "message_response_ms":  0.1061
+    },
+    {
+        "elapsed_ms":  659239.3815,
+        "cpu_ms":  14703.125,
+        "working_set":  75550720,
+        "message_response_ms":  0.18150000000000002
+    },
+    {
+        "elapsed_ms":  660245.66560000007,
+        "cpu_ms":  14734.375,
+        "working_set":  75550720,
+        "message_response_ms":  0.071500000000000008
+    },
+    {
+        "elapsed_ms":  661253.3784,
+        "cpu_ms":  14750,
+        "working_set":  75550720,
+        "message_response_ms":  0.1363
+    },
+    {
+        "elapsed_ms":  662270.4066,
+        "cpu_ms":  14765.625,
+        "working_set":  75550720,
+        "message_response_ms":  0.0704
+    },
+    {
+        "elapsed_ms":  663276.5213,
+        "cpu_ms":  14796.875,
+        "working_set":  75550720,
+        "message_response_ms":  0.11850000000000001
+    },
+    {
+        "elapsed_ms":  664296.1051,
+        "cpu_ms":  14812.5,
+        "working_set":  75550720,
+        "message_response_ms":  0.0703
+    },
+    {
+        "elapsed_ms":  665307.375,
+        "cpu_ms":  14843.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.0636
+    },
+    {
+        "elapsed_ms":  666327.0714,
+        "cpu_ms":  14875,
+        "working_set":  75550720,
+        "message_response_ms":  0.0695
+    },
+    {
+        "elapsed_ms":  667343.96570000006,
+        "cpu_ms":  14906.25,
+        "working_set":  75411456,
+        "message_response_ms":  0.0974
+    },
+    {
+        "elapsed_ms":  668364.32370000007,
+        "cpu_ms":  14921.875,
+        "working_set":  76288000,
+        "message_response_ms":  0.0734
+    },
+    {
+        "elapsed_ms":  669383.7391,
+        "cpu_ms":  14921.875,
+        "working_set":  76288000,
+        "message_response_ms":  0.0558
+    },
+    {
+        "elapsed_ms":  670390.03860000009,
+        "cpu_ms":  14937.5,
+        "working_set":  75411456,
+        "message_response_ms":  0.066200000000000009
+    },
+    {
+        "elapsed_ms":  671396.6465,
+        "cpu_ms":  14968.75,
+        "working_set":  75411456,
+        "message_response_ms":  0.3371
+    },
+    {
+        "elapsed_ms":  672416.1421,
+        "cpu_ms":  14984.375,
+        "working_set":  75411456,
+        "message_response_ms":  0.065
+    },
+    {
+        "elapsed_ms":  673426.4604,
+        "cpu_ms":  15015.625,
+        "working_set":  75436032,
+        "message_response_ms":  0.0674
+    },
+    {
+        "elapsed_ms":  674435.0087,
+        "cpu_ms":  15031.25,
+        "working_set":  75436032,
+        "message_response_ms":  0.0745
+    },
+    {
+        "elapsed_ms":  675445.7245,
+        "cpu_ms":  15062.5,
+        "working_set":  75436032,
+        "message_response_ms":  0.13440000000000002
+    },
+    {
+        "elapsed_ms":  676450.42650000006,
+        "cpu_ms":  15078.125,
+        "working_set":  75436032,
+        "message_response_ms":  0.0641
+    },
+    {
+        "elapsed_ms":  677460.6675,
+        "cpu_ms":  15109.375,
+        "working_set":  75436032,
+        "message_response_ms":  0.1237
+    },
+    {
+        "elapsed_ms":  678465.9396,
+        "cpu_ms":  15125,
+        "working_set":  75436032,
+        "message_response_ms":  0.1739
+    },
+    {
+        "elapsed_ms":  679471.675,
+        "cpu_ms":  15156.25,
+        "working_set":  75440128,
+        "message_response_ms":  0.0616
+    },
+    {
+        "elapsed_ms":  680488.5,
+        "cpu_ms":  15171.875,
+        "working_set":  75440128,
+        "message_response_ms":  0.1192
+    },
+    {
+        "elapsed_ms":  681498.7414,
+        "cpu_ms":  15203.125,
+        "working_set":  75440128,
+        "message_response_ms":  0.1217
+    },
+    {
+        "elapsed_ms":  682504.5087,
+        "cpu_ms":  15234.375,
+        "working_set":  75448320,
+        "message_response_ms":  0.0616
+    },
+    {
+        "elapsed_ms":  683509.99160000007,
+        "cpu_ms":  15250,
+        "working_set":  75448320,
+        "message_response_ms":  0.11670000000000001
+    },
+    {
+        "elapsed_ms":  684518.1533,
+        "cpu_ms":  15265.625,
+        "working_set":  75448320,
+        "message_response_ms":  0.0785
+    },
+    {
+        "elapsed_ms":  685527.859,
+        "cpu_ms":  15281.25,
+        "working_set":  75448320,
+        "message_response_ms":  0.0758
+    },
+    {
+        "elapsed_ms":  686546.93760000006,
+        "cpu_ms":  15296.875,
+        "working_set":  75448320,
+        "message_response_ms":  0.16290000000000002
+    },
+    {
+        "elapsed_ms":  687551.26600000006,
+        "cpu_ms":  15312.5,
+        "working_set":  75448320,
+        "message_response_ms":  0.0799
+    },
+    {
+        "elapsed_ms":  688568.8333,
+        "cpu_ms":  15343.75,
+        "working_set":  75448320,
+        "message_response_ms":  0.3211
+    },
+    {
+        "elapsed_ms":  689583.4338,
+        "cpu_ms":  15375,
+        "working_set":  75448320,
+        "message_response_ms":  0.0637
+    },
+    {
+        "elapsed_ms":  690593.7519,
+        "cpu_ms":  15406.25,
+        "working_set":  75448320,
+        "message_response_ms":  0.080800000000000011
+    },
+    {
+        "elapsed_ms":  691613.97090000007,
+        "cpu_ms":  15437.5,
+        "working_set":  75448320,
+        "message_response_ms":  0.2785
+    },
+    {
+        "elapsed_ms":  692624.86920000007,
+        "cpu_ms":  15453.125,
+        "working_set":  75448320,
+        "message_response_ms":  0.0795
+    },
+    {
+        "elapsed_ms":  693632.9976,
+        "cpu_ms":  15484.375,
+        "working_set":  75448320,
+        "message_response_ms":  0.1189
+    },
+    {
+        "elapsed_ms":  694642.512,
+        "cpu_ms":  15500,
+        "working_set":  75448320,
+        "message_response_ms":  0.0687
+    },
+    {
+        "elapsed_ms":  695648.5729,
+        "cpu_ms":  15531.25,
+        "working_set":  75448320,
+        "message_response_ms":  0.1109
+    },
+    {
+        "elapsed_ms":  696656.3696,
+        "cpu_ms":  15546.875,
+        "working_set":  75448320,
+        "message_response_ms":  0.0726
+    },
+    {
+        "elapsed_ms":  697664.2182,
+        "cpu_ms":  15562.5,
+        "working_set":  75448320,
+        "message_response_ms":  0.4202
+    },
+    {
+        "elapsed_ms":  698674.00050000008,
+        "cpu_ms":  15578.125,
+        "working_set":  75448320,
+        "message_response_ms":  0.22920000000000001
+    },
+    {
+        "elapsed_ms":  699683.44150000007,
+        "cpu_ms":  15609.375,
+        "working_set":  75472896,
+        "message_response_ms":  0.079700000000000007
+    },
+    {
+        "elapsed_ms":  700702.52470000007,
+        "cpu_ms":  15640.625,
+        "working_set":  75497472,
+        "message_response_ms":  0.0562
+    },
+    {
+        "elapsed_ms":  701707.87790000008,
+        "cpu_ms":  15656.25,
+        "working_set":  75501568,
+        "message_response_ms":  0.064200000000000007
+    },
+    {
+        "elapsed_ms":  702718.7766,
+        "cpu_ms":  15671.875,
+        "working_set":  75505664,
+        "message_response_ms":  0.0697
+    },
+    {
+        "elapsed_ms":  703729.524,
+        "cpu_ms":  15703.125,
+        "working_set":  75513856,
+        "message_response_ms":  0.1044
+    },
+    {
+        "elapsed_ms":  704744.8212,
+        "cpu_ms":  15734.375,
+        "working_set":  75513856,
+        "message_response_ms":  0.1807
+    },
+    {
+        "elapsed_ms":  705750.9584,
+        "cpu_ms":  15765.625,
+        "working_set":  75513856,
+        "message_response_ms":  0.0663
+    },
+    {
+        "elapsed_ms":  706757.49700000009,
+        "cpu_ms":  15781.25,
+        "working_set":  75513856,
+        "message_response_ms":  0.18760000000000002
+    },
+    {
+        "elapsed_ms":  707768.2012,
+        "cpu_ms":  15796.875,
+        "working_set":  75513856,
+        "message_response_ms":  0.12990000000000002
+    },
+    {
+        "elapsed_ms":  708774.3371,
+        "cpu_ms":  15828.125,
+        "working_set":  75513856,
+        "message_response_ms":  0.1723
+    },
+    {
+        "elapsed_ms":  709781.302,
+        "cpu_ms":  15859.375,
+        "working_set":  75513856,
+        "message_response_ms":  0.11570000000000001
+    },
+    {
+        "elapsed_ms":  710787.6074,
+        "cpu_ms":  15875,
+        "working_set":  75513856,
+        "message_response_ms":  0.1228
+    },
+    {
+        "elapsed_ms":  711793.93780000007,
+        "cpu_ms":  15906.25,
+        "working_set":  75513856,
+        "message_response_ms":  0.061200000000000004
+    },
+    {
+        "elapsed_ms":  712803.3948,
+        "cpu_ms":  15921.875,
+        "working_set":  76382208,
+        "message_response_ms":  0.1613
+    },
+    {
+        "elapsed_ms":  713822.8206,
+        "cpu_ms":  15921.875,
+        "working_set":  76382208,
+        "message_response_ms":  0.2175
+    },
+    {
+        "elapsed_ms":  714830.91320000007,
+        "cpu_ms":  15953.125,
+        "working_set":  75513856,
+        "message_response_ms":  0.3224
+    },
+    {
+        "elapsed_ms":  715839.5845,
+        "cpu_ms":  15968.75,
+        "working_set":  75513856,
+        "message_response_ms":  0.060000000000000005
+    },
+    {
+        "elapsed_ms":  716845.69740000006,
+        "cpu_ms":  16000,
+        "working_set":  75513856,
+        "message_response_ms":  0.4354
+    },
+    {
+        "elapsed_ms":  717865.3663,
+        "cpu_ms":  16031.25,
+        "working_set":  75513856,
+        "message_response_ms":  0.0644
+    },
+    {
+        "elapsed_ms":  718871.2177,
+        "cpu_ms":  16046.875,
+        "working_set":  75513856,
+        "message_response_ms":  0.1418
+    },
+    {
+        "elapsed_ms":  719879.8647,
+        "cpu_ms":  16078.125,
+        "working_set":  75513856,
+        "message_response_ms":  0.0855
+    },
+    {
+        "elapsed_ms":  720898.5355,
+        "cpu_ms":  16093.75,
+        "working_set":  75513856,
+        "message_response_ms":  0.0777
+    },
+    {
+        "elapsed_ms":  721906.19500000007,
+        "cpu_ms":  16109.375,
+        "working_set":  75513856,
+        "message_response_ms":  0.0955
+    },
+    {
+        "elapsed_ms":  722918.56780000008,
+        "cpu_ms":  16140.625,
+        "working_set":  75513856,
+        "message_response_ms":  0.074900000000000008
+    },
+    {
+        "elapsed_ms":  723931.0124,
+        "cpu_ms":  16171.875,
+        "working_set":  75513856,
+        "message_response_ms":  0.1995
+    },
+    {
+        "elapsed_ms":  724943.64270000008,
+        "cpu_ms":  16203.125,
+        "working_set":  75513856,
+        "message_response_ms":  0.3645
+    },
+    {
+        "elapsed_ms":  725949.8567,
+        "cpu_ms":  16218.75,
+        "working_set":  75513856,
+        "message_response_ms":  0.074900000000000008
+    },
+    {
+        "elapsed_ms":  726967.7364,
+        "cpu_ms":  16218.75,
+        "working_set":  75513856,
+        "message_response_ms":  0.0711
+    },
+    {
+        "elapsed_ms":  727974.5102,
+        "cpu_ms":  16250,
+        "working_set":  75513856,
+        "message_response_ms":  0.12300000000000001
+    },
+    {
+        "elapsed_ms":  728979.5587,
+        "cpu_ms":  16281.25,
+        "working_set":  75513856,
+        "message_response_ms":  0.0704
+    },
+    {
+        "elapsed_ms":  729997.8356,
+        "cpu_ms":  16312.5,
+        "working_set":  75513856,
+        "message_response_ms":  0.0621
+    },
+    {
+        "elapsed_ms":  731016.6517,
+        "cpu_ms":  16343.75,
+        "working_set":  75513856,
+        "message_response_ms":  0.062400000000000004
+    },
+    {
+        "elapsed_ms":  732026.08390000009,
+        "cpu_ms":  16375,
+        "working_set":  75513856,
+        "message_response_ms":  0.070500000000000007
+    },
+    {
+        "elapsed_ms":  733033.8943,
+        "cpu_ms":  16390.625,
+        "working_set":  75513856,
+        "message_response_ms":  0.12660000000000002
+    },
+    {
+        "elapsed_ms":  734042.30150000006,
+        "cpu_ms":  16421.875,
+        "working_set":  75513856,
+        "message_response_ms":  0.0717
+    },
+    {
+        "elapsed_ms":  735062.0457,
+        "cpu_ms":  16437.5,
+        "working_set":  75513856,
+        "message_response_ms":  0.221
+    },
+    {
+        "elapsed_ms":  736069.74270000006,
+        "cpu_ms":  16468.75,
+        "working_set":  75513856,
+        "message_response_ms":  0.0849
+    },
+    {
+        "elapsed_ms":  737078.6922,
+        "cpu_ms":  16484.375,
+        "working_set":  75513856,
+        "message_response_ms":  0.0989
+    },
+    {
+        "elapsed_ms":  738098.3182,
+        "cpu_ms":  16500,
+        "working_set":  75513856,
+        "message_response_ms":  0.22310000000000002
+    },
+    {
+        "elapsed_ms":  739116.5477,
+        "cpu_ms":  16531.25,
+        "working_set":  75513856,
+        "message_response_ms":  0.0629
+    },
+    {
+        "elapsed_ms":  740134.1299,
+        "cpu_ms":  16562.5,
+        "working_set":  75513856,
+        "message_response_ms":  0.057100000000000005
+    },
+    {
+        "elapsed_ms":  741139.4887,
+        "cpu_ms":  16593.75,
+        "working_set":  75513856,
+        "message_response_ms":  0.0674
+    },
+    {
+        "elapsed_ms":  742154.15510000009,
+        "cpu_ms":  16625,
+        "working_set":  75513856,
+        "message_response_ms":  0.12510000000000002
+    },
+    {
+        "elapsed_ms":  743172.43800000008,
+        "cpu_ms":  16640.625,
+        "working_set":  75513856,
+        "message_response_ms":  0.0858
+    },
+    {
+        "elapsed_ms":  744179.6487,
+        "cpu_ms":  16656.25,
+        "working_set":  75513856,
+        "message_response_ms":  0.058800000000000005
+    },
+    {
+        "elapsed_ms":  745184.0988,
+        "cpu_ms":  16687.5,
+        "working_set":  75513856,
+        "message_response_ms":  0.2233
+    },
+    {
+        "elapsed_ms":  746202.6465,
+        "cpu_ms":  16703.125,
+        "working_set":  75513856,
+        "message_response_ms":  0.1259
+    },
+    {
+        "elapsed_ms":  747209.9495,
+        "cpu_ms":  16718.75,
+        "working_set":  75513856,
+        "message_response_ms":  0.055400000000000005
+    },
+    {
+        "elapsed_ms":  748230.1739,
+        "cpu_ms":  16750,
+        "working_set":  75513856,
+        "message_response_ms":  0.083700000000000011
+    },
+    {
+        "elapsed_ms":  749239.6176,
+        "cpu_ms":  16765.625,
+        "working_set":  75513856,
+        "message_response_ms":  0.0889
+    },
+    {
+        "elapsed_ms":  750254.9684,
+        "cpu_ms":  16781.25,
+        "working_set":  75513856,
+        "message_response_ms":  0.0941
+    },
+    {
+        "elapsed_ms":  751261.6296,
+        "cpu_ms":  16812.5,
+        "working_set":  75513856,
+        "message_response_ms":  0.0648
+    },
+    {
+        "elapsed_ms":  752270.9604,
+        "cpu_ms":  16828.125,
+        "working_set":  75513856,
+        "message_response_ms":  0.0684
+    },
+    {
+        "elapsed_ms":  753290.2217,
+        "cpu_ms":  16843.75,
+        "working_set":  75517952,
+        "message_response_ms":  0.10690000000000001
+    },
+    {
+        "elapsed_ms":  754298.6086,
+        "cpu_ms":  16875,
+        "working_set":  75517952,
+        "message_response_ms":  0.074900000000000008
+    },
+    {
+        "elapsed_ms":  755304.6985,
+        "cpu_ms":  16890.625,
+        "working_set":  75517952,
+        "message_response_ms":  0.0721
+    },
+    {
+        "elapsed_ms":  756322.21500000008,
+        "cpu_ms":  16921.875,
+        "working_set":  75517952,
+        "message_response_ms":  0.061500000000000006
+    },
+    {
+        "elapsed_ms":  757331.1971,
+        "cpu_ms":  16921.875,
+        "working_set":  76386304,
+        "message_response_ms":  0.12350000000000001
+    },
+    {
+        "elapsed_ms":  758350.18520000007,
+        "cpu_ms":  16937.5,
+        "working_set":  75517952,
+        "message_response_ms":  0.0936
+    },
+    {
+        "elapsed_ms":  759359.50030000007,
+        "cpu_ms":  16953.125,
+        "working_set":  75517952,
+        "message_response_ms":  0.056600000000000004
+    },
+    {
+        "elapsed_ms":  760379.5579,
+        "cpu_ms":  16984.375,
+        "working_set":  75517952,
+        "message_response_ms":  0.0708
+    },
+    {
+        "elapsed_ms":  761386.6635,
+        "cpu_ms":  17000,
+        "working_set":  75517952,
+        "message_response_ms":  0.10990000000000001
+    },
+    {
+        "elapsed_ms":  762394.0945,
+        "cpu_ms":  17031.25,
+        "working_set":  75546624,
+        "message_response_ms":  0.0682
+    },
+    {
+        "elapsed_ms":  763404.5999,
+        "cpu_ms":  17046.875,
+        "working_set":  75546624,
+        "message_response_ms":  0.066
+    },
+    {
+        "elapsed_ms":  764413.13550000009,
+        "cpu_ms":  17078.125,
+        "working_set":  75546624,
+        "message_response_ms":  0.1386
+    },
+    {
+        "elapsed_ms":  765423.05100000009,
+        "cpu_ms":  17093.75,
+        "working_set":  75550720,
+        "message_response_ms":  0.059000000000000004
+    },
+    {
+        "elapsed_ms":  766429.3195,
+        "cpu_ms":  17125,
+        "working_set":  75550720,
+        "message_response_ms":  0.3175
+    },
+    {
+        "elapsed_ms":  767437.4858,
+        "cpu_ms":  17140.625,
+        "working_set":  75145216,
+        "message_response_ms":  0.0596
+    },
+    {
+        "elapsed_ms":  768455.9029,
+        "cpu_ms":  17171.875,
+        "working_set":  75321344,
+        "message_response_ms":  0.078300000000000008
+    },
+    {
+        "elapsed_ms":  769464.44410000008,
+        "cpu_ms":  17187.5,
+        "working_set":  75333632,
+        "message_response_ms":  0.070500000000000007
+    },
+    {
+        "elapsed_ms":  770471.32110000006,
+        "cpu_ms":  17203.125,
+        "working_set":  75350016,
+        "message_response_ms":  0.2626
+    },
+    {
+        "elapsed_ms":  771485.2095,
+        "cpu_ms":  17234.375,
+        "working_set":  75063296,
+        "message_response_ms":  0.08270000000000001
+    },
+    {
+        "elapsed_ms":  772499.674,
+        "cpu_ms":  17250,
+        "working_set":  75247616,
+        "message_response_ms":  0.17500000000000002
+    },
+    {
+        "elapsed_ms":  773517.34980000008,
+        "cpu_ms":  17281.25,
+        "working_set":  75296768,
+        "message_response_ms":  0.0918
+    },
+    {
+        "elapsed_ms":  774536.91490000009,
+        "cpu_ms":  17312.5,
+        "working_set":  75362304,
+        "message_response_ms":  0.11270000000000001
+    },
+    {
+        "elapsed_ms":  775552.8658,
+        "cpu_ms":  17328.125,
+        "working_set":  75059200,
+        "message_response_ms":  0.32280000000000003
+    },
+    {
+        "elapsed_ms":  776568.4418,
+        "cpu_ms":  17359.375,
+        "working_set":  75268096,
+        "message_response_ms":  0.0704
+    },
+    {
+        "elapsed_ms":  777584.8702,
+        "cpu_ms":  17375,
+        "working_set":  75329536,
+        "message_response_ms":  0.1159
+    },
+    {
+        "elapsed_ms":  778598.5671,
+        "cpu_ms":  17406.25,
+        "working_set":  75350016,
+        "message_response_ms":  0.0639
+    },
+    {
+        "elapsed_ms":  779605.6361,
+        "cpu_ms":  17421.875,
+        "working_set":  75096064,
+        "message_response_ms":  0.0999
+    },
+    {
+        "elapsed_ms":  780612.37270000007,
+        "cpu_ms":  17453.125,
+        "working_set":  75304960,
+        "message_response_ms":  0.1067
+    },
+    {
+        "elapsed_ms":  781618.52950000006,
+        "cpu_ms":  17484.375,
+        "working_set":  75325440,
+        "message_response_ms":  0.1751
+    },
+    {
+        "elapsed_ms":  782636.7251,
+        "cpu_ms":  17500,
+        "working_set":  75005952,
+        "message_response_ms":  0.3764
+    },
+    {
+        "elapsed_ms":  783642.72850000008,
+        "cpu_ms":  17515.625,
+        "working_set":  75218944,
+        "message_response_ms":  0.1686
+    },
+    {
+        "elapsed_ms":  784649.6735,
+        "cpu_ms":  17531.25,
+        "working_set":  75243520,
+        "message_response_ms":  0.2832
+    },
+    {
+        "elapsed_ms":  785659.66820000007,
+        "cpu_ms":  17546.875,
+        "working_set":  75272192,
+        "message_response_ms":  0.19310000000000002
+    },
+    {
+        "elapsed_ms":  786666.01290000009,
+        "cpu_ms":  17578.125,
+        "working_set":  75284480,
+        "message_response_ms":  0.1247
+    },
+    {
+        "elapsed_ms":  787685.974,
+        "cpu_ms":  17609.375,
+        "working_set":  75304960,
+        "message_response_ms":  0.0582
+    },
+    {
+        "elapsed_ms":  788693.7552,
+        "cpu_ms":  17625,
+        "working_set":  75337728,
+        "message_response_ms":  0.1245
+    },
+    {
+        "elapsed_ms":  789705.2393,
+        "cpu_ms":  17640.625,
+        "working_set":  75354112,
+        "message_response_ms":  0.1703
+    },
+    {
+        "elapsed_ms":  790725.4889,
+        "cpu_ms":  17656.25,
+        "working_set":  75358208,
+        "message_response_ms":  0.17600000000000002
+    },
+    {
+        "elapsed_ms":  791733.47000000009,
+        "cpu_ms":  17687.5,
+        "working_set":  75386880,
+        "message_response_ms":  0.0796
+    },
+    {
+        "elapsed_ms":  792752.5819,
+        "cpu_ms":  17703.125,
+        "working_set":  75403264,
+        "message_response_ms":  0.084200000000000011
+    },
+    {
+        "elapsed_ms":  793762.99460000009,
+        "cpu_ms":  17718.75,
+        "working_set":  75407360,
+        "message_response_ms":  0.3543
+    },
+    {
+        "elapsed_ms":  794769.7811,
+        "cpu_ms":  17734.375,
+        "working_set":  75407360,
+        "message_response_ms":  0.13820000000000002
+    },
+    {
+        "elapsed_ms":  795787.69020000007,
+        "cpu_ms":  17765.625,
+        "working_set":  75411456,
+        "message_response_ms":  0.0682
+    },
+    {
+        "elapsed_ms":  796795.0413,
+        "cpu_ms":  17796.875,
+        "working_set":  75419648,
+        "message_response_ms":  0.0708
+    },
+    {
+        "elapsed_ms":  797800.4019,
+        "cpu_ms":  17812.5,
+        "working_set":  75419648,
+        "message_response_ms":  0.0675
+    },
+    {
+        "elapsed_ms":  798810.44800000009,
+        "cpu_ms":  17843.75,
+        "working_set":  75436032,
+        "message_response_ms":  0.1514
+    },
+    {
+        "elapsed_ms":  799829.8796,
+        "cpu_ms":  17859.375,
+        "working_set":  75436032,
+        "message_response_ms":  0.0761
+    },
+    {
+        "elapsed_ms":  800837.1652,
+        "cpu_ms":  17875,
+        "working_set":  75440128,
+        "message_response_ms":  0.12040000000000001
+    },
+    {
+        "elapsed_ms":  801846.7582,
+        "cpu_ms":  17890.625,
+        "working_set":  75448320,
+        "message_response_ms":  0.0879
+    },
+    {
+        "elapsed_ms":  802854.5803,
+        "cpu_ms":  17890.625,
+        "working_set":  76316672,
+        "message_response_ms":  0.1585
+    },
+    {
+        "elapsed_ms":  803861.70110000006,
+        "cpu_ms":  17921.875,
+        "working_set":  75448320,
+        "message_response_ms":  0.0668
+    },
+    {
+        "elapsed_ms":  804869.1391,
+        "cpu_ms":  17937.5,
+        "working_set":  75452416,
+        "message_response_ms":  0.068600000000000008
+    },
+    {
+        "elapsed_ms":  805881.0525,
+        "cpu_ms":  17968.75,
+        "working_set":  75468800,
+        "message_response_ms":  0.077
+    },
+    {
+        "elapsed_ms":  806887.44560000009,
+        "cpu_ms":  17984.375,
+        "working_set":  75468800,
+        "message_response_ms":  0.0733
+    },
+    {
+        "elapsed_ms":  807905.31450000009,
+        "cpu_ms":  18015.625,
+        "working_set":  75468800,
+        "message_response_ms":  0.11860000000000001
+    },
+    {
+        "elapsed_ms":  808925.0353,
+        "cpu_ms":  18046.875,
+        "working_set":  75468800,
+        "message_response_ms":  0.0682
+    },
+    {
+        "elapsed_ms":  809943.38680000009,
+        "cpu_ms":  18062.5,
+        "working_set":  75468800,
+        "message_response_ms":  0.1511
+    },
+    {
+        "elapsed_ms":  810953.5085,
+        "cpu_ms":  18078.125,
+        "working_set":  75468800,
+        "message_response_ms":  0.4703
+    },
+    {
+        "elapsed_ms":  811970.9882,
+        "cpu_ms":  18109.375,
+        "working_set":  75468800,
+        "message_response_ms":  0.0935
+    },
+    {
+        "elapsed_ms":  812978.74880000006,
+        "cpu_ms":  18140.625,
+        "working_set":  75476992,
+        "message_response_ms":  0.2018
+    },
+    {
+        "elapsed_ms":  813992.30040000007,
+        "cpu_ms":  18156.25,
+        "working_set":  75476992,
+        "message_response_ms":  0.068100000000000008
+    },
+    {
+        "elapsed_ms":  815000.9349,
+        "cpu_ms":  18171.875,
+        "working_set":  75476992,
+        "message_response_ms":  0.18480000000000002
+    },
+    {
+        "elapsed_ms":  816006.31,
+        "cpu_ms":  18203.125,
+        "working_set":  75505664,
+        "message_response_ms":  0.1416
+    },
+    {
+        "elapsed_ms":  817013.5904,
+        "cpu_ms":  18218.75,
+        "working_set":  75505664,
+        "message_response_ms":  0.0703
+    },
+    {
+        "elapsed_ms":  818032.3844000001,
+        "cpu_ms":  18234.375,
+        "working_set":  75505664,
+        "message_response_ms":  0.079300000000000009
+    },
+    {
+        "elapsed_ms":  819050.43260000006,
+        "cpu_ms":  18265.625,
+        "working_set":  75505664,
+        "message_response_ms":  0.092300000000000007
+    },
+    {
+        "elapsed_ms":  820058.01660000009,
+        "cpu_ms":  18296.875,
+        "working_set":  75505664,
+        "message_response_ms":  0.4938
+    },
+    {
+        "elapsed_ms":  821076.275,
+        "cpu_ms":  18312.5,
+        "working_set":  75505664,
+        "message_response_ms":  0.1193
+    },
+    {
+        "elapsed_ms":  822085.8939,
+        "cpu_ms":  18328.125,
+        "working_set":  75505664,
+        "message_response_ms":  0.059500000000000004
+    },
+    {
+        "elapsed_ms":  823104.0126,
+        "cpu_ms":  18359.375,
+        "working_set":  75505664,
+        "message_response_ms":  0.23170000000000002
+    },
+    {
+        "elapsed_ms":  824112.2733,
+        "cpu_ms":  18375,
+        "working_set":  75505664,
+        "message_response_ms":  0.1291
+    },
+    {
+        "elapsed_ms":  825126.545,
+        "cpu_ms":  18390.625,
+        "working_set":  75505664,
+        "message_response_ms":  0.07690000000000001
+    },
+    {
+        "elapsed_ms":  826141.4054,
+        "cpu_ms":  18406.25,
+        "working_set":  75505664,
+        "message_response_ms":  0.0718
+    },
+    {
+        "elapsed_ms":  827159.6025,
+        "cpu_ms":  18437.5,
+        "working_set":  75505664,
+        "message_response_ms":  0.24760000000000001
+    },
+    {
+        "elapsed_ms":  828177.6833,
+        "cpu_ms":  18453.125,
+        "working_set":  75505664,
+        "message_response_ms":  0.1233
+    },
+    {
+        "elapsed_ms":  829193.14030000009,
+        "cpu_ms":  18484.375,
+        "working_set":  75505664,
+        "message_response_ms":  0.3341
+    },
+    {
+        "elapsed_ms":  830211.94520000007,
+        "cpu_ms":  18515.625,
+        "working_set":  75505664,
+        "message_response_ms":  0.0748
+    },
+    {
+        "elapsed_ms":  831219.5091,
+        "cpu_ms":  18546.875,
+        "working_set":  75505664,
+        "message_response_ms":  0.0673
+    },
+    {
+        "elapsed_ms":  832237.59460000007,
+        "cpu_ms":  18578.125,
+        "working_set":  75505664,
+        "message_response_ms":  0.0772
+    },
+    {
+        "elapsed_ms":  833256.7264,
+        "cpu_ms":  18593.75,
+        "working_set":  75505664,
+        "message_response_ms":  0.0723
+    },
+    {
+        "elapsed_ms":  834275.54560000007,
+        "cpu_ms":  18640.625,
+        "working_set":  75505664,
+        "message_response_ms":  0.093800000000000008
+    },
+    {
+        "elapsed_ms":  835286.3378000001,
+        "cpu_ms":  18656.25,
+        "working_set":  75505664,
+        "message_response_ms":  0.096700000000000008
+    },
+    {
+        "elapsed_ms":  836295.7557000001,
+        "cpu_ms":  18687.5,
+        "working_set":  75538432,
+        "message_response_ms":  0.0675
+    },
+    {
+        "elapsed_ms":  837302.66600000008,
+        "cpu_ms":  18703.125,
+        "working_set":  75538432,
+        "message_response_ms":  0.2524
+    },
+    {
+        "elapsed_ms":  838321.46110000007,
+        "cpu_ms":  18718.75,
+        "working_set":  75538432,
+        "message_response_ms":  0.0823
+    },
+    {
+        "elapsed_ms":  839334.3643,
+        "cpu_ms":  18734.375,
+        "working_set":  75538432,
+        "message_response_ms":  0.1115
+    },
+    {
+        "elapsed_ms":  840338.4311,
+        "cpu_ms":  18765.625,
+        "working_set":  75538432,
+        "message_response_ms":  0.0678
+    },
+    {
+        "elapsed_ms":  841346.844,
+        "cpu_ms":  18781.25,
+        "working_set":  75571200,
+        "message_response_ms":  0.1321
+    },
+    {
+        "elapsed_ms":  842361.8606,
+        "cpu_ms":  18796.875,
+        "working_set":  75575296,
+        "message_response_ms":  0.0646
+    },
+    {
+        "elapsed_ms":  843381.5098,
+        "cpu_ms":  18812.5,
+        "working_set":  75132928,
+        "message_response_ms":  0.1953
+    },
+    {
+        "elapsed_ms":  844391.26360000006,
+        "cpu_ms":  18843.75,
+        "working_set":  75272192,
+        "message_response_ms":  0.0654
+    },
+    {
+        "elapsed_ms":  845399.7271,
+        "cpu_ms":  18875,
+        "working_set":  75292672,
+        "message_response_ms":  0.0675
+    },
+    {
+        "elapsed_ms":  846408.9806,
+        "cpu_ms":  18890.625,
+        "working_set":  75321344,
+        "message_response_ms":  0.0695
+    },
+    {
+        "elapsed_ms":  847414.3772,
+        "cpu_ms":  18906.25,
+        "working_set":  75096064,
+        "message_response_ms":  0.0733
+    },
+    {
+        "elapsed_ms":  848434.0784,
+        "cpu_ms":  18937.5,
+        "working_set":  75264000,
+        "message_response_ms":  0.2467
+    },
+    {
+        "elapsed_ms":  849444.36160000006,
+        "cpu_ms":  18953.125,
+        "working_set":  75280384,
+        "message_response_ms":  0.076
+    },
+    {
+        "elapsed_ms":  850448.74310000008,
+        "cpu_ms":  18984.375,
+        "working_set":  75292672,
+        "message_response_ms":  0.06770000000000001
+    },
+    {
+        "elapsed_ms":  851454.2578,
+        "cpu_ms":  19000,
+        "working_set":  76242944,
+        "message_response_ms":  0.0621
+    },
+    {
+        "elapsed_ms":  852469.5189,
+        "cpu_ms":  19015.625,
+        "working_set":  76279808,
+        "message_response_ms":  0.0597
+    },
+    {
+        "elapsed_ms":  853475.52510000009,
+        "cpu_ms":  19031.25,
+        "working_set":  75411456,
+        "message_response_ms":  0.06770000000000001
+    },
+    {
+        "elapsed_ms":  854483.59200000006,
+        "cpu_ms":  19046.875,
+        "working_set":  75018240,
+        "message_response_ms":  0.0683
+    },
+    {
+        "elapsed_ms":  855494.77210000006,
+        "cpu_ms":  19078.125,
+        "working_set":  75313152,
+        "message_response_ms":  0.0707
+    },
+    {
+        "elapsed_ms":  856504.621,
+        "cpu_ms":  19093.75,
+        "working_set":  75341824,
+        "message_response_ms":  0.1802
+    },
+    {
+        "elapsed_ms":  857523.2175,
+        "cpu_ms":  19109.375,
+        "working_set":  75370496,
+        "message_response_ms":  0.0805
+    },
+    {
+        "elapsed_ms":  858531.55210000009,
+        "cpu_ms":  19125,
+        "working_set":  75374592,
+        "message_response_ms":  0.1381
+    },
+    {
+        "elapsed_ms":  859539.1482,
+        "cpu_ms":  19156.25,
+        "working_set":  75374592,
+        "message_response_ms":  0.1272
+    },
+    {
+        "elapsed_ms":  860548.2334,
+        "cpu_ms":  19171.875,
+        "working_set":  75382784,
+        "message_response_ms":  0.058600000000000006
+    },
+    {
+        "elapsed_ms":  861566.2647,
+        "cpu_ms":  19203.125,
+        "working_set":  75411456,
+        "message_response_ms":  0.056900000000000006
+    },
+    {
+        "elapsed_ms":  862571.47960000008,
+        "cpu_ms":  19218.75,
+        "working_set":  75436032,
+        "message_response_ms":  0.06720000000000001
+    },
+    {
+        "elapsed_ms":  863585.473,
+        "cpu_ms":  19250,
+        "working_set":  75079680,
+        "message_response_ms":  0.0758
+    },
+    {
+        "elapsed_ms":  864597.6633,
+        "cpu_ms":  19265.625,
+        "working_set":  75264000,
+        "message_response_ms":  0.1051
+    },
+    {
+        "elapsed_ms":  865607.92210000008,
+        "cpu_ms":  19281.25,
+        "working_set":  75313152,
+        "message_response_ms":  0.0824
+    },
+    {
+        "elapsed_ms":  866614.49200000009,
+        "cpu_ms":  19312.5,
+        "working_set":  75329536,
+        "message_response_ms":  0.10690000000000001
+    },
+    {
+        "elapsed_ms":  867621.9915,
+        "cpu_ms":  19328.125,
+        "working_set":  75366400,
+        "message_response_ms":  0.2366
+    },
+    {
+        "elapsed_ms":  868633.7127,
+        "cpu_ms":  19359.375,
+        "working_set":  75390976,
+        "message_response_ms":  0.1537
+    },
+    {
+        "elapsed_ms":  869653.93890000007,
+        "cpu_ms":  19359.375,
+        "working_set":  75403264,
+        "message_response_ms":  0.1653
+    },
+    {
+        "elapsed_ms":  870659.7783,
+        "cpu_ms":  19375,
+        "working_set":  75415552,
+        "message_response_ms":  0.1986
+    },
+    {
+        "elapsed_ms":  871664.60960000008,
+        "cpu_ms":  19390.625,
+        "working_set":  75067392,
+        "message_response_ms":  0.11810000000000001
+    },
+    {
+        "elapsed_ms":  872671.13860000006,
+        "cpu_ms":  19406.25,
+        "working_set":  75235328,
+        "message_response_ms":  0.088500000000000009
+    },
+    {
+        "elapsed_ms":  873678.59480000008,
+        "cpu_ms":  19421.875,
+        "working_set":  75255808,
+        "message_response_ms":  0.0969
+    },
+    {
+        "elapsed_ms":  874692.5869,
+        "cpu_ms":  19437.5,
+        "working_set":  75304960,
+        "message_response_ms":  0.0654
+    },
+    {
+        "elapsed_ms":  875703.8489000001,
+        "cpu_ms":  19453.125,
+        "working_set":  75337728,
+        "message_response_ms":  0.0661
+    },
+    {
+        "elapsed_ms":  876724.05280000006,
+        "cpu_ms":  19484.375,
+        "working_set":  75374592,
+        "message_response_ms":  0.17880000000000001
+    },
+    {
+        "elapsed_ms":  877729.0932,
+        "cpu_ms":  19515.625,
+        "working_set":  75374592,
+        "message_response_ms":  0.0816
+    },
+    {
+        "elapsed_ms":  878736.70650000009,
+        "cpu_ms":  19531.25,
+        "working_set":  75390976,
+        "message_response_ms":  0.07060000000000001
+    },
+    {
+        "elapsed_ms":  879751.84460000007,
+        "cpu_ms":  19546.875,
+        "working_set":  75436032,
+        "message_response_ms":  0.1184
+    },
+    {
+        "elapsed_ms":  880771.1365,
+        "cpu_ms":  19593.75,
+        "working_set":  75456512,
+        "message_response_ms":  0.0718
+    },
+    {
+        "elapsed_ms":  881778.69610000006,
+        "cpu_ms":  19625,
+        "working_set":  75468800,
+        "message_response_ms":  0.063800000000000009
+    },
+    {
+        "elapsed_ms":  882794.85350000008,
+        "cpu_ms":  19640.625,
+        "working_set":  75493376,
+        "message_response_ms":  0.0675
+    },
+    {
+        "elapsed_ms":  883803.4682,
+        "cpu_ms":  19671.875,
+        "working_set":  75493376,
+        "message_response_ms":  0.12390000000000001
+    },
+    {
+        "elapsed_ms":  884823.0302,
+        "cpu_ms":  19703.125,
+        "working_set":  75493376,
+        "message_response_ms":  0.0775
+    },
+    {
+        "elapsed_ms":  885834.0904,
+        "cpu_ms":  19718.75,
+        "working_set":  75505664,
+        "message_response_ms":  0.062400000000000004
+    },
+    {
+        "elapsed_ms":  886844.19910000009,
+        "cpu_ms":  19750,
+        "working_set":  75505664,
+        "message_response_ms":  0.0674
+    },
+    {
+        "elapsed_ms":  887852.3785,
+        "cpu_ms":  19765.625,
+        "working_set":  75513856,
+        "message_response_ms":  0.1399
+    },
+    {
+        "elapsed_ms":  888871.49050000007,
+        "cpu_ms":  19796.875,
+        "working_set":  75517952,
+        "message_response_ms":  0.096
+    },
+    {
+        "elapsed_ms":  889877.4619,
+        "cpu_ms":  19812.5,
+        "working_set":  75517952,
+        "message_response_ms":  0.0956
+    },
+    {
+        "elapsed_ms":  890886.09090000007,
+        "cpu_ms":  19843.75,
+        "working_set":  75522048,
+        "message_response_ms":  0.07
+    },
+    {
+        "elapsed_ms":  891894.2693,
+        "cpu_ms":  19859.375,
+        "working_set":  75104256,
+        "message_response_ms":  0.3608
+    },
+    {
+        "elapsed_ms":  892911.084,
+        "cpu_ms":  19875,
+        "working_set":  75288576,
+        "message_response_ms":  0.10740000000000001
+    },
+    {
+        "elapsed_ms":  893916.39010000008,
+        "cpu_ms":  19890.625,
+        "working_set":  75350016,
+        "message_response_ms":  0.2536
+    },
+    {
+        "elapsed_ms":  894921.35090000008,
+        "cpu_ms":  19921.875,
+        "working_set":  75358208,
+        "message_response_ms":  0.10010000000000001
+    },
+    {
+        "elapsed_ms":  895930.55710000009,
+        "cpu_ms":  19937.5,
+        "working_set":  75386880,
+        "message_response_ms":  0.062800000000000009
+    },
+    {
+        "elapsed_ms":  896944.49640000006,
+        "cpu_ms":  19953.125,
+        "working_set":  75431936,
+        "message_response_ms":  0.11620000000000001
+    },
+    {
+        "elapsed_ms":  897951.64770000009,
+        "cpu_ms":  19984.375,
+        "working_set":  75440128,
+        "message_response_ms":  0.071000000000000008
+    },
+    {
+        "elapsed_ms":  898960.3804,
+        "cpu_ms":  20000,
+        "working_set":  76324864,
+        "message_response_ms":  0.0765
+    },
+    {
+        "elapsed_ms":  899967.643,
+        "cpu_ms":  20000,
+        "working_set":  75493376,
+        "message_response_ms":  0.0599
+    },
+    {
+        "elapsed_ms":  900977.8083,
+        "cpu_ms":  20031.25,
+        "working_set":  75497472,
+        "message_response_ms":  0.1247
+    },
+    {
+        "elapsed_ms":  901984.9438,
+        "cpu_ms":  20062.5,
+        "working_set":  75526144,
+        "message_response_ms":  0.1242
+    },
+    {
+        "elapsed_ms":  902990.0736,
+        "cpu_ms":  20093.75,
+        "working_set":  75530240,
+        "message_response_ms":  0.35550000000000004
+    },
+    {
+        "elapsed_ms":  904006.7125,
+        "cpu_ms":  20109.375,
+        "working_set":  75603968,
+        "message_response_ms":  0.063800000000000009
+    },
+    {
+        "elapsed_ms":  905012.4813000001,
+        "cpu_ms":  20140.625,
+        "working_set":  75640832,
+        "message_response_ms":  0.0585
+    },
+    {
+        "elapsed_ms":  906019.98590000009,
+        "cpu_ms":  20171.875,
+        "working_set":  75108352,
+        "message_response_ms":  0.2066
+    },
+    {
+        "elapsed_ms":  907038.7824,
+        "cpu_ms":  20187.5,
+        "working_set":  75304960,
+        "message_response_ms":  0.17400000000000002
+    },
+    {
+        "elapsed_ms":  908048.1746,
+        "cpu_ms":  20203.125,
+        "working_set":  75345920,
+        "message_response_ms":  0.0727
+    },
+    {
+        "elapsed_ms":  909066.96960000007,
+        "cpu_ms":  20234.375,
+        "working_set":  75366400,
+        "message_response_ms":  0.088500000000000009
+    }
+]

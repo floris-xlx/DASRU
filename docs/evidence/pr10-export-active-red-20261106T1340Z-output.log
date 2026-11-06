@@ -1,0 +1,24 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.70s
+     Running tests/gui_controller.rs (target/debug/deps/gui_controller-03fc53335b3a964b)
+
+running 1 test
+test shutdown_during_export_joins_without_starting_another_probe ... FAILED
+
+failures:
+
+---- shutdown_during_export_joins_without_starting_another_probe stdout ----
+
+thread 'shutdown_during_export_joins_without_starting_another_probe' (133407) panicked at tests/gui_controller.rs:157:5:
+assertion `left == right` failed: probe began after cancellation during export
+  left: 2
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    shutdown_during_export_joins_without_starting_another_probe
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.10s
+
+error: test failed, to rerun pass `--test gui_controller`

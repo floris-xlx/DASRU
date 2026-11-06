@@ -360,11 +360,14 @@ fn process_status(status: ProbeStatus) -> ProcessStatus {
 }
 
 pub fn run_probe() -> ProbeReport {
+    run_probe_cancellable(&std::sync::atomic::AtomicBool::new(false))
+}
+pub fn run_probe_cancellable(cancel: &std::sync::atomic::AtomicBool) -> ProbeReport {
     let registry = match BuildRegistry::from_toml(BUILDS_TOML) {
         Ok(registry) => registry,
         Err(error) => return registry_error(error),
     };
-    run_probe_with_registry(&registry)
+    run_probe_with_registry_cancellable(&registry, cancel)
 }
 
 pub fn inspect_executable(path: &Path) -> ProbeReport {
@@ -491,7 +494,19 @@ fn inspect_executable_identity(
     path: &Path,
     registry: &BuildRegistry,
 ) -> Result<ExecutableInspection, (ProbeStatus, String)> {
-    let executable = ExecutableIdentity::inspect(path).map_err(executable_error)?;
+    inspect_executable_identity_cancellable(
+        path,
+        registry,
+        &std::sync::atomic::AtomicBool::new(false),
+    )
+}
+fn inspect_executable_identity_cancellable(
+    path: &Path,
+    registry: &BuildRegistry,
+    cancel: &std::sync::atomic::AtomicBool,
+) -> Result<ExecutableInspection, (ProbeStatus, String)> {
+    let executable =
+        ExecutableIdentity::inspect_cancellable(path, cancel).map_err(executable_error)?;
     let resolution = registry.resolve(&executable);
     let expected_steam_build_id = match &resolution {
         BuildResolution::ExactMatch { build } => build.steam_build_id.clone(),
@@ -566,6 +581,12 @@ fn inspect_executable_identity(
 }
 
 pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
+    run_probe_with_registry_cancellable(registry, &std::sync::atomic::AtomicBool::new(false))
+}
+fn run_probe_with_registry_cancellable(
+    registry: &BuildRegistry,
+    cancel: &std::sync::atomic::AtomicBool,
+) -> ProbeReport {
     let pinned_candidates = match enumerate_pinned_game_processes() {
         Ok(candidates) => candidates,
         Err(error) => return process_scan_error(error),
@@ -606,25 +627,28 @@ pub fn run_probe_with_registry(registry: &BuildRegistry) -> ProbeReport {
         }
     };
 
-    let executable_inspection =
-        match inspect_executable_identity(&process_identity.executable_path, registry) {
-            Ok(inspection) => inspection,
-            Err((status, reason)) => {
-                let mut report = ProbeReport::empty(status, Some(reason));
-                report.processes = candidates;
-                report.process_status = ProcessStatus::Verified;
-                report.executable_status = executable_error_status(status);
-                if let Some(error) = report.errors.first_mut() {
-                    error.field = "executable";
-                    error.code = "EXECUTABLE_INSPECTION_FAILED";
-                }
-                report.evidence_provenance.extend([
-                    "Windows process path query",
-                    "executable file open and metadata inspection",
-                ]);
-                return report;
+    let executable_inspection = match inspect_executable_identity_cancellable(
+        &process_identity.executable_path,
+        registry,
+        cancel,
+    ) {
+        Ok(inspection) => inspection,
+        Err((status, reason)) => {
+            let mut report = ProbeReport::empty(status, Some(reason));
+            report.processes = candidates;
+            report.process_status = ProcessStatus::Verified;
+            report.executable_status = executable_error_status(status);
+            if let Some(error) = report.errors.first_mut() {
+                error.field = "executable";
+                error.code = "EXECUTABLE_INSPECTION_FAILED";
             }
-        };
+            report.evidence_provenance.extend([
+                "Windows process path query",
+                "executable file open and metadata inspection",
+            ]);
+            return report;
+        }
+    };
 
     let current_candidates = match enumerate_game_processes() {
         Ok(candidates) => candidates,
