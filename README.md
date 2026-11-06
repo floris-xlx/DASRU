@@ -7,6 +7,7 @@ dasru doctor
 dasru doctor --json
 dasru probe
 dasru probe --json
+dasru support export support-report.json
 dasru inspect --exe "C:\path\to\DOOMTheDarkAges.exe"
 dasru inspect --exe "C:\path\to\DOOMTheDarkAges.exe" --json
 dasru memory scan --metrics
@@ -18,6 +19,8 @@ dasru memory discover --metrics-objects --json
 ```
 
 `doctor` emits a support report with host OS/version, architecture, Linux distribution/kernel and session type (`X11`, `WAYLAND`, or `HEADLESS`). `xwayland_available` reports XWayland separately for Linux Wayland sessions. It also reports Steam/Proton/Wine environment signals and host capability hints. JSON uses `schema_version: 1`. Runtime detection reports environment variable names only, never their values. Capability and feature records keep `detected`, `accessible`, and `implementation_status` separate. `UNKNOWN` means no access test was run; a detected clipboard utility or display session never marks clipboard or hotkeys as implemented. The Wayland GlobalShortcuts portal is reported as `UNKNOWN` because doctor does not query D-Bus. Checks do not open game processes, touch the clipboard, or register hotkeys. Doctor exits `0` when it emits a report and `2` for invalid CLI usage.
+
+`support export <path>` writes a versioned JSON support bundle containing host diagnostics, input capability hints, executable/build compatibility status, and structured error codes. It stages beside the destination and publishes without overwriting an existing file. Unix reports use mode `0600`; Windows reports are created in the destination directory and inherit its access controls. That ACL behavior can vary with filesystem and filter-driver policy and is not verified for every Windows filesystem. The destination filesystem must support hard links; a filesystem that does not support them returns `SUPPORT_EXPORT_PUBLISH_FAILED` and leaves no destination file. Unix and Windows CI exercise their respective local filesystems, not every destination filesystem. The bundle includes environment variable names and the inspected executable SHA-256 for compatibility checks, but omits environment values, executable and Steam install paths, PIDs, raw process lists, and raw error messages. `keyboard_input` and `global_hotkeys` report Windows API availability separately from DASRU implementation; input access remains `UNKNOWN`, and the features remain `NOT_IMPLEMENTED`. Export exits `0` on success, `1` for collection or publication failure, and `2` for invalid CLI usage.
 
 `inspect --exe` hashes and reads version metadata from an executable without looking for a running process. Its report uses `PROCESS_NOT_EVALUATED` semantics (`process_status: NOT_EVALUATED`), with an empty process list. `probe` discovers a process by executable name, retains its Windows process handle while it hashes the executable, and reports the live process identity.
 

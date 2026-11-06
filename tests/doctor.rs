@@ -49,6 +49,7 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
         &[
             "clipboard",
             "global_hotkeys",
+            "keyboard_input",
             "process_memory_read",
             "wayland_global_shortcuts_portal",
         ],
@@ -106,6 +107,7 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
         "process_memory_read",
         "clipboard",
         "global_hotkeys",
+        "keyboard_input",
         "wayland_global_shortcuts_portal",
     ] {
         assert_object_keys(
@@ -171,6 +173,13 @@ fn doctor_json_reports_host_signals_separately_from_feature_implementation() {
             .unwrap()["implementation_status"],
         "NOT_IMPLEMENTED"
     );
+    assert_eq!(
+        features
+            .iter()
+            .find(|entry| entry["feature"] == "keyboard_input")
+            .unwrap()["implementation_status"],
+        "NOT_IMPLEMENTED"
+    );
     for feature in ["clipboard", "global_hotkeys"] {
         let entry = features
             .iter()
@@ -231,6 +240,7 @@ fn doctor_human_output_is_a_support_report() {
     assert!(text.contains("Host"));
     assert!(text.contains("Environment"));
     assert!(text.contains("Feature readiness"));
+    assert!(text.contains("Keyboard input"));
     assert!(text.contains("Wayland GlobalShortcuts portal"));
 }
 

@@ -23,6 +23,11 @@ fn main() -> ExitCode {
         [command, option] if command == OsStr::new("probe") && option == OsStr::new("--json") => {
             print_probe(run_probe(), true)
         }
+        [command, subcommand, path]
+            if command == OsStr::new("support") && subcommand == OsStr::new("export") =>
+        {
+            print_support_export(&PathBuf::from(path))
+        }
         [command, option, path]
             if command == OsStr::new("inspect") && option == OsStr::new("--exe") =>
         {
@@ -141,6 +146,19 @@ fn print_doctor(report: DoctorReport, json: bool) -> ExitCode {
     print_report(&report, &report.to_human_text(), json, 0)
 }
 
+fn print_support_export(path: &std::path::Path) -> ExitCode {
+    match dasru::support::export_json(path) {
+        Ok(()) => {
+            println!("Support report exported.");
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("Support export failed [{}].", error.code());
+            ExitCode::FAILURE
+        }
+    }
+}
+
 fn print_metrics(report: dasru::memory::MetricsScanReport, json: bool) -> ExitCode {
     tracing_subscriber::fmt()
         .with_writer(io::stderr)
@@ -192,7 +210,7 @@ fn print_metrics_layout_for_label(label: &OsStr, json: bool) -> ExitCode {
 
 fn print_usage() -> ExitCode {
     eprintln!(
-        "Usage: dasru doctor [--json]\n       dasru probe [--json]\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory discover --metrics-objects [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore"
+        "Usage: dasru doctor [--json]\n       dasru probe [--json]\n       dasru support export <path>\n       dasru inspect --exe <path> [--json]\n       dasru memory scan --metrics [--json]\n       dasru memory inspect --metrics [--replacement <label>] [--json]\n       dasru memory discover --metrics-objects [--json]\n       dasru memory osd --fps-marker + --experimental-write\n       dasru memory osd restore"
     );
     ExitCode::from(2)
 }
