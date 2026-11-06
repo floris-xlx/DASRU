@@ -22,6 +22,11 @@ pub struct SettingsWriter {
 }
 impl SettingsWriter {
     pub fn start(mut store: SettingsStore) -> std::io::Result<Self> {
+        Self::spawn(move |preferences| store.save(preferences))
+    }
+    fn spawn(
+        mut save: impl FnMut(&Preferences) -> Result<(), &'static str> + Send + 'static,
+    ) -> std::io::Result<Self> {
         let (sender, receiver) = mpsc::sync_channel(1);
         let status = Arc::new(Mutex::new(WriteStatus::Idle));
         let state = status.clone();
@@ -29,7 +34,7 @@ impl SettingsWriter {
             .name("dasru-preferences".into())
             .spawn(move || {
                 for preferences in receiver {
-                    let result = match store.save(&preferences) {
+                    let result = match save(&preferences) {
                         Ok(()) => WriteStatus::Saved,
                         Err(error) => WriteStatus::Failed(error),
                     };
@@ -83,5 +88,67 @@ impl Drop for SettingsWriter {
     fn drop(&mut self) {
         self.sender.take();
         let _ = self.join();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[test]
+    fn finish_drains_full_queue_and_persists_final_preferences() {
+        let (entered, entry) = mpsc::channel();
+        let (release, gate) = mpsc::channel();
+        let (saved, writes) = mpsc::channel();
+        let mut first = true;
+        let mut writer = SettingsWriter::spawn(move |preferences| {
+            if first {
+                first = false;
+                entered.send(()).unwrap();
+                gate.recv_timeout(Duration::from_secs(2)).unwrap();
+            }
+            saved.send(preferences.clone()).unwrap();
+            Ok(())
+        })
+        .unwrap();
+        writer.save(Preferences::default()).unwrap();
+        entry.recv_timeout(Duration::from_secs(2)).unwrap();
+        writer
+            .sender
+            .as_ref()
+            .unwrap()
+            .send(Preferences::default())
+            .unwrap();
+        let final_preferences = Preferences {
+            refresh_seconds: 7,
+            ..Default::default()
+        };
+        let expected = final_preferences.clone();
+        let (done, completion) = mpsc::channel();
+        let owner = thread::spawn(move || {
+            let result = writer.finish(final_preferences);
+            done.send(result).unwrap();
+        });
+        let early = completion.recv_timeout(Duration::from_millis(100)).ok();
+        release.send(()).unwrap();
+        owner.join().unwrap();
+        assert!(early.is_none(), "settings owner escaped before flush");
+        assert_eq!(completion.recv().unwrap(), Ok(()));
+        assert_eq!(writes.try_iter().last(), Some(expected));
+    }
+
+    #[test]
+    fn finish_reports_failed_write_and_worker_panic() {
+        let mut writer = SettingsWriter::spawn(|_| Err("SETTINGS_WRITE_FAILED")).unwrap();
+        assert_eq!(
+            writer.finish(Preferences::default()),
+            Err("SETTINGS_WRITE_FAILED")
+        );
+        let mut writer = SettingsWriter::spawn(|_| panic!("controlled settings fault")).unwrap();
+        assert_eq!(
+            writer.finish(Preferences::default()),
+            Err("SETTINGS_WORKER_FAILED")
+        );
     }
 }

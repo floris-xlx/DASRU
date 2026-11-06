@@ -1,7 +1,9 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
 #[cfg(windows)]
-fn main() -> eframe::Result {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut app = dasru::gui::DesktopApp::monitored()?;
+    let shutdown = app.shutdown_report();
     eframe::run_native(
         "DASRU",
         eframe::NativeOptions {
@@ -18,12 +20,16 @@ fn main() -> eframe::Result {
                 ]),
             ..Default::default()
         },
-        Box::new(|creation| {
-            let mut app = dasru::gui::DesktopApp::monitored()?;
+        Box::new(move |creation| {
             app.restore_window(creation);
             Ok(Box::new(app))
         }),
-    )
+    )?;
+    let result = shutdown
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .unwrap_or(Err("APP_SHUTDOWN_NOT_COMPLETED"));
+    result.map_err(|code| std::io::Error::other(code).into())
 }
 
 #[cfg(not(windows))]

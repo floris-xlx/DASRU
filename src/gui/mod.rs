@@ -5,6 +5,8 @@ pub enum Dialog {
     Diagnostics,
 }
 
+pub type ShutdownReport = std::sync::Arc<std::sync::Mutex<Option<Result<(), &'static str>>>>;
+
 #[derive(Default)]
 pub struct DesktopApp {
     dialog: Option<Dialog>,
@@ -15,6 +17,7 @@ pub struct DesktopApp {
     error: Option<&'static str>,
     destination: String,
     last_export_destination: Option<String>,
+    shutdown_report: ShutdownReport,
 }
 
 impl DesktopApp {
@@ -141,21 +144,41 @@ impl eframe::App for DesktopApp {
         self.show(ui);
     }
     fn on_exit(&mut self, _: Option<&eframe::glow::Context>) {
-        self.shutdown();
+        let _ = self.shutdown();
     }
 }
 impl DesktopApp {
-    pub fn shutdown(&mut self) {
+    pub fn shutdown_report(&self) -> ShutdownReport {
+        self.shutdown_report.clone()
+    }
+
+    pub fn shutdown(&mut self) -> Result<(), &'static str> {
+        if let Some(result) = *self
+            .shutdown_report
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+        {
+            return result;
+        }
+        let mut result = Ok(());
         if let Some(controller) = &mut self.controller
             && let Err(error) = controller.shutdown()
         {
-            self.error = Some(error);
+            result = Err(error);
         }
         if let Some(mut writer) = self.writer.take()
             && let Err(error) = writer.finish(self.preferences.clone())
         {
+            result = result.and(Err(error));
+        }
+        if let Err(error) = result {
             self.error = Some(error);
         }
+        *self
+            .shutdown_report
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) = Some(result);
+        result
     }
 }
 pub mod controller;
@@ -171,6 +194,30 @@ pub mod theme;
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn shutdown_failure_survives_app_destruction_and_repeated_close() {
+        let path =
+            std::env::temp_dir().join(format!("dasru-shutdown-error-{}.json", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let (store, _, error) = settings::SettingsStore::load(path.clone());
+        assert!(error.is_none());
+        std::fs::write(&path, b"preserve external change").unwrap();
+        let mut app = DesktopApp {
+            writer: Some(settings::SettingsWriter::start(store).unwrap()),
+            ..Default::default()
+        };
+        let report = app.shutdown_report();
+        let first = app.shutdown();
+        let repeated = app.shutdown();
+        drop(app);
+        let bytes = std::fs::read(&path).unwrap();
+        std::fs::remove_file(path).unwrap();
+        assert_eq!(first, Err("SETTINGS_CHANGED_EXTERNALLY"));
+        assert_eq!(repeated, first);
+        assert_eq!(*report.lock().unwrap(), Some(first));
+        assert_eq!(bytes, b"preserve external change");
+    }
+
     #[test]
     fn separate_dialogs_inherit_the_text_scale_preference() {
         let mut app = DesktopApp::default();

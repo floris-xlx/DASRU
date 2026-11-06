@@ -105,6 +105,46 @@ regression: 240 tests pass. Raw outputs: `evidence/pr10-shutdown-join-*-*.log`.
 Commit: `Join Raw Input worker before returning shutdown failures`.
 Gate A remains FAIL pending final error reporting and instrumented native closes.
 
+### A2/A3 - cancel queued work, finish owned I/O, preserve cleanup failure
+
+Requirement: shutdown cancels queued work, does not start another probe after a
+cancelled in-flight export, flushes final preferences, and reports cleanup errors
+beyond UI destruction.
+
+Observed defects and RED:
+
+- `shutdown_cancels_queued_export_and_rejects_new_work` failed: Pending instead
+  of Failed(SUPPORT_EXPORT_CANCELLED) after the monitor joined.
+- `shutdown_during_export_joins_without_starting_another_probe` failed: probe
+  count rose from 1 to 2 after cancellation during the channel-controlled export.
+- `shutdown_failure_survives_app_destruction_and_repeated_close` initially failed
+  compilation because shutdown returned unit and no retained report existed.
+
+Minimal implementations: cancel the queued destination under its mutex; check
+cancellation after in-flight export; check new exports against cancellation under
+the same queue lock. The default service export remains `support::export_json`;
+only its service boundary is injectable for deterministic tests. Preserve the
+first shutdown error while still finishing both owners. Retain the terminal
+result in a shared report read by the native entrypoint after eframe returns;
+cleanup failure now returns a nonzero process status. Repeated close returns the
+same result. No state or I/O lock is held across a join.
+
+GREEN: all four controller tests and the retained-report test pass. Settings
+queue/final-flush and write/panic failure tests pass as additional regression
+coverage; they did not expose a defect and are not claimed RED cycles. The
+settings save closure is extracted without changing storage semantics, atomic
+publication or corrupt-file preservation. Rustfmt applied; native Rust 1.95
+all-target/all-feature check passed. Raw cycle outputs are under
+`evidence/pr10-*-20261106T1340Z-*.log`.
+
+In-flight support export and settings filesystem calls remain cooperative,
+uninterruptible waits owned until completion. No hard deadline or forced thread
+termination is introduced. This still does not establish the historical timeout's
+cause; Gate A remains FAIL until instrumented acceptance and remaining review.
+Regression checks: 245 WSL Rust 1.95 all-target/all-feature tests passed; native
+Windows warnings-as-errors Clippy passed. Commit: `Cancel queued GUI work and
+retain terminal cleanup failures`.
+
 ## Current presentation revision: compact DESRU-style utility
 
 The user's revised direction supersedes the sidebar/page specification. The

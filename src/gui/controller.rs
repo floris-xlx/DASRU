@@ -14,6 +14,9 @@ use std::{
 };
 
 pub trait MonitorService: Send + 'static {
+    fn export(&mut self, path: &std::path::Path) -> Result<(), &'static str> {
+        crate::support::export_json(path).map_err(|error| error.code())
+    }
     fn observe(&mut self, cancel: &AtomicBool) -> Result<Observation, &'static str>;
     fn observe_with_progress(
         &mut self,
@@ -105,14 +108,18 @@ impl Controller {
                         .0
                         .take();
                     if let Some(path) = export {
-                        let result =
-                            std::panic::catch_unwind(|| crate::support::export_json(&path))
-                                .map(|result| match result {
-                                    Ok(()) => ExportStatus::Complete,
-                                    Err(error) => ExportStatus::Failed(error.code()),
-                                })
-                                .unwrap_or(ExportStatus::Failed("SUPPORT_EXPORT_FAILED"));
+                        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                            service.export(&path)
+                        }))
+                        .map(|result| match result {
+                            Ok(()) => ExportStatus::Complete,
+                            Err(error) => ExportStatus::Failed(error),
+                        })
+                        .unwrap_or(ExportStatus::Failed("SUPPORT_EXPORT_FAILED"));
                         state.export.lock().unwrap_or_else(|e| e.into_inner()).1 = result;
+                    }
+                    if state.cancel.load(Ordering::Acquire) {
+                        break;
                     }
                     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                         service.observe_with_progress(&state.cancel, &mut |phase| {
@@ -152,13 +159,13 @@ impl Controller {
         Ok(())
     }
     pub fn export(&self, path: PathBuf) -> Result<(), &'static str> {
-        if self.shared.cancel.load(Ordering::Acquire) {
-            return Err("CONTROLLER_STOPPED");
-        }
         if path.as_os_str().is_empty() {
             return Err("SUPPORT_DESTINATION_REQUIRED");
         }
         let mut export = self.shared.export.lock().unwrap_or_else(|e| e.into_inner());
+        if self.shared.cancel.load(Ordering::Acquire) {
+            return Err("CONTROLLER_STOPPED");
+        }
         if export.1 == ExportStatus::Pending {
             return Err("SUPPORT_EXPORT_PENDING");
         }
@@ -230,6 +237,11 @@ impl Controller {
                 .lock()
                 .unwrap_or_else(|error| error.into_inner());
             self.shared.cancel.store(true, Ordering::Release);
+            let mut export = self.shared.export.lock().unwrap_or_else(|e| e.into_inner());
+            if export.0.take().is_some() {
+                export.1 = ExportStatus::Failed("SUPPORT_EXPORT_CANCELLED");
+            }
+            drop(export);
             self.shared
                 .model
                 .lock()
