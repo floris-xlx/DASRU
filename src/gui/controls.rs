@@ -67,8 +67,9 @@ impl DesktopApp {
             theme::skeleton(ui, 400.0);
             theme::skeleton(ui, 160.0);
         } else {
-            ui.label("Destination JSON file");
-            ui.text_edit_singleline(&mut self.destination);
+            let destination_label = ui.label("Destination JSON file");
+            ui.text_edit_singleline(&mut self.destination)
+                .labelled_by(destination_label.id);
             if ui
                 .add_enabled(
                     !self.destination.trim().is_empty()
@@ -112,15 +113,16 @@ impl DesktopApp {
             egui::Slider::new(&mut self.preferences.refresh_seconds, 1..=30)
                 .text("Refresh interval (seconds)"),
         );
-        ui.label("Observation shortcut");
+        let binding_label = ui.label("Observation shortcut");
         let running = self
             .controller
             .as_ref()
             .is_some_and(|c| c.listener_running());
         ui.add_enabled(
             !running,
-            egui::TextEdit::singleline(&mut self.preferences.binding),
-        );
+            egui::TextEdit::singleline(&mut self.preferences.binding).interactive(!running),
+        )
+        .labelled_by(binding_label.id);
         let valid = self.preferences.validate().is_ok();
         if !valid {
             ui.colored_label(theme::ERROR, "Preferences contain an invalid value.");

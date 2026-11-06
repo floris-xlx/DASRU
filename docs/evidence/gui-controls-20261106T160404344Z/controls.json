@@ -1,0 +1,60 @@
+{
+    "source_head":  "d68c67e07682106ae759638dc160869551868a58",
+    "source_tracked_dirty":  true,
+    "binary_sha256":  "5EE6BB32CBD22B0FAE179552B2D281D466E6CE58E8FEEF5E4B64A4F112FD47E4",
+    "physical_key_test_performed":  false,
+    "generated_keyboard_events":  0,
+    "stages":  [
+                   {
+                       "accepted":  "0",
+                       "foreground_is_game":  false,
+                       "stage":  "start listener outside game",
+                       "state":  "Inactive"
+                   },
+                   {
+                       "accepted":  "0",
+                       "foreground_is_game":  true,
+                       "stage":  "game foreground",
+                       "state":  "Active"
+                   },
+                   {
+                       "accepted":  "0",
+                       "foreground_is_game":  false,
+                       "stage":  "game foreground loss",
+                       "state":  "Inactive"
+                   },
+                   {
+                       "accepted":  "0",
+                       "foreground_is_game":  false,
+                       "stage":  "stop listener through GUI",
+                       "state":  "Disabled"
+                   },
+                   {
+                       "accepted":  "0",
+                       "foreground_is_game":  false,
+                       "stage":  "exit game while GUI listener is running",
+                       "state":  "Error"
+                   },
+                   {
+                       "accepted":  "0",
+                       "foreground_is_game":  false,
+                       "stage":  "restart game and require fresh verification",
+                       "state":  "Error"
+                   }
+               ],
+    "build":  "steam-25755602",
+    "binding_disabled_while_listening":  true,
+    "binding_read_only_while_listening":  true,
+    "duplicate_start_disabled":  true,
+    "game_focus_granted":  true,
+    "gui_focus_restored":  true,
+    "stop_disabled_after_stop":  true,
+    "listener_terminal_after_game_exit":  true,
+    "start_disabled_without_game":  true,
+    "replacement_identity_changed":  true,
+    "replacement_verified_by_gui":  true,
+    "old_listener_did_not_reactivate":  true,
+    "test_passed":  false,
+    "failure_stage":  "restart listener through GUI",
+    "failure_type":  "RuntimeException"
+}

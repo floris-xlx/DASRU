@@ -21,6 +21,14 @@ paths, raw PIDs, environment values, memory dumps or unrestricted process lists.
 
 ## B: physical game and listener
 
+The operator-independent lifecycle portion can be run with
+`powershell -NoProfile -File scripts/gui-native-controls.ps1`. It invokes actual
+GUI controls through Windows accessibility, checks real foreground state, and
+closes DASRU with the listener running. `-RestartGame` also closes the controlled
+game session through its native window and launches a replacement through Steam;
+use it only in a test session. All preferences are isolated. No game keyboard
+events are generated, so this does not replace the physical chord test below.
+
 1. Launch the release GUI without TDA. Record NotRunning/NotFound, unavailable
    build and disabled Start. Launch TDA normally; allow verification to complete.
    Record exact registered-build status and the displayed build identifier.

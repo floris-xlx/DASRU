@@ -1,0 +1,14 @@
+{
+    "source_head":  "d68c67e07682106ae759638dc160869551868a58",
+    "source_tracked_dirty":  true,
+    "binary_sha256":  "721DEF63540E247148AC8039057CAFA3E868AB90261DA7370B6F19895808610D",
+    "physical_key_test_performed":  false,
+    "generated_keyboard_events":  0,
+    "stages":  [
+
+               ],
+    "build":  "steam-25755602",
+    "test_passed":  false,
+    "failure_stage":  "expand observation counters",
+    "failure_type":  "RuntimeException"
+}

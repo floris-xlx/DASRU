@@ -1,5 +1,62 @@
 # Desktop UI TDD evidence
 
+## Accessibility and real GUI lifecycle (2026-11-06)
+
+Requirement: expose native controls and truthful status to assistive clients, and
+verify real GUI listener ownership against TDA. Native RED: DASRU exposed no
+application buttons through Windows UI Automation. The pinned eframe 0.37 native
+accessibility adapter was disabled. Enabling its accesskit feature exposes those
+controls without changing Glow or the compact layout.
+
+Recorded RED/GREEN fixes:
+
+- text_inputs_expose_their_visible_labels_to_accessibility failed on unnamed
+  inputs; existing visible labels now identify status, binding and export fields.
+  Test texture-delta cleanup was corrected and RED reproduced before the app fix.
+- status_inputs_expose_read_only_semantics_to_accessibility failed because status
+  fields advertised editability; those disabled inputs now explicitly disable
+  interaction while retaining their presentation.
+- advanced_hotkeys_respond_to_accessible_expand_and_collapse failed to open
+  counters. Expand/Collapse requests now update the existing collapsing state.
+- Native acceptance found the active binding disabled but advertised as writable.
+  Both shortcut editors now expose read-only semantics while listening.
+
+The native harness initially selected the wrong pattern for the disclosure;
+after correcting that test, the unhandled Expand request above reproduced in
+both native and headless tests. Failed records remain in evidence/gui-controls-*.
+No failed attempt is relabeled as a pass.
+
+Run gui-controls-20261106T155721707Z used actual GUI controls: Inactive outside
+TDA, Active with real game focus, Inactive on focus loss, Disabled after Stop,
+duplicate controls disabled, then restart and close while Active. Observations
+stayed zero; no keyboard events were generated. Close took 156ms, exit zero and
+all cleanup phases succeeded.
+
+Run gui-controls-20261106T160920150Z additionally closed and restarted TDA. The old
+listener became terminal, Start was disabled without the game, a different
+identity appeared, and the GUI verified it without reviving the old listener.
+Fresh GUI Start and active-listener close then passed in 167ms with exit zero.
+The first restart attempt timed out before the harness waited for a replacement
+game window; that failure is retained. Requiring actual window readiness made
+the repeat pass; no hotkey-service bypass or product retry was introduced.
+
+These are native GUI/focus/exit/restart observations, not physical shortcut or
+held-repeat acceptance. The required three physical observations remain pending,
+as does the unexplained historical >15s close. There is no game-memory write,
+input injection, macro or new gameplay control.
+
+Dependency review: pinned eframe/egui remain 0.37.0. AccessKit adds 14 selected
+Windows packages (143 registry packages; 144 inventory entries including DASRU).
+Cargo.lock also records conditional non-Windows packages, but eframe stays
+Windows-only. Selected Windows dependencies have no MSRV above 1.95 and include
+no Tokio/async-std/async-io/executor runtime. Font notices are unchanged; final
+project-license/provenance and redistribution review remain pending.
+
+Checks: 256 Rust 1.95 WSL all-target/all-feature tests pass; WSL/native Clippy,
+formatting, locked native release build and diff checks pass. Native phase/focus
+assertions were also checked against the recorded successful run. Commit:
+Expose accessible native controls and verify real TDA GUI lifecycle.
+
 ## Native geometry correction and real-game detection (2026-11-06)
 
 Requirement: restore the complete decorated window inside the visible work area,

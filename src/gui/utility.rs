@@ -65,7 +65,7 @@ impl DesktopApp {
                     ui.columns(2, |columns| {
                         panel(&mut columns[0], "KEYBINDS", 124.0, |ui| {
                             ui.label("Observation only; no game action.");
-                            ui.label("Observation shortcut");
+                            let binding_label = ui.label("Observation shortcut");
                             let running = self
                                 .controller
                                 .as_ref()
@@ -73,23 +73,54 @@ impl DesktopApp {
                             ui.add_enabled(
                                 !running,
                                 egui::TextEdit::singleline(&mut self.preferences.binding)
+                                    .interactive(!running)
                                     .desired_width(f32::INFINITY),
-                            );
-                            egui::CollapsingHeader::new("More hotkeys / advanced").show(ui, |ui| {
-                                ui.label("Additional bindings are unavailable in this window.");
-                                egui::Grid::new("advanced_hotkeys").show(ui, |ui| {
-                                    theme::value(ui, "Accepted", listener.accepted);
-                                    theme::value(ui, "Rejected", listener.rejected);
-                                    theme::value(
-                                        ui,
-                                        "Last event",
-                                        listener
-                                            .last_event
-                                            .map(|e| format!("{e:?}"))
-                                            .unwrap_or_else(|| "None".into()),
-                                    );
+                            )
+                            .labelled_by(binding_label.id);
+                            let advanced = egui::CollapsingHeader::new("More hotkeys / advanced")
+                                .show(ui, |ui| {
+                                    ui.label("Additional bindings are unavailable in this window.");
+                                    egui::Grid::new("advanced_hotkeys").show(ui, |ui| {
+                                        theme::value(ui, "Accepted", listener.accepted);
+                                        theme::value(ui, "Rejected", listener.rejected);
+                                        theme::value(
+                                            ui,
+                                            "Last event",
+                                            listener
+                                                .last_event
+                                                .map(|e| format!("{e:?}"))
+                                                .unwrap_or_else(|| "None".into()),
+                                        );
+                                    });
                                 });
+                            let id = advanced.header_response.id;
+                            ui.ctx().accesskit_node_builder(id, |node| {
+                                node.add_action(egui::accesskit::Action::Expand);
+                                node.add_action(egui::accesskit::Action::Collapse);
                             });
+                            let requested = ui.input(|input| {
+                                if input.has_accesskit_action_request(
+                                    id,
+                                    egui::accesskit::Action::Expand,
+                                ) {
+                                    Some(true)
+                                } else if input.has_accesskit_action_request(
+                                    id,
+                                    egui::accesskit::Action::Collapse,
+                                ) {
+                                    Some(false)
+                                } else {
+                                    None
+                                }
+                            });
+                            if let Some(open) = requested
+                                && let Some(mut state) =
+                                    egui::collapsing_header::CollapsingState::load(ui.ctx(), id)
+                            {
+                                state.set_open(open);
+                                state.store(ui.ctx());
+                                ui.ctx().request_repaint();
+                            }
                         });
                         panel(&mut columns[1], "GAME STATUS", 124.0, |ui| {
                             egui::Grid::new("compact_status")

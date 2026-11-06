@@ -57,14 +57,16 @@ pub fn apply(ctx: &egui::Context, dark: bool) {
     ctx.set_visuals_of(selected, visuals);
 }
 pub fn value(ui: &mut egui::Ui, label: &str, value: impl ToString) {
-    ui.label(label);
+    let label = ui.label(label);
     let mut value = value.to_string();
     ui.add_enabled(
         false,
         egui::TextEdit::singleline(&mut value)
+            .interactive(false)
             .desired_width(f32::INFINITY)
             .min_size(egui::vec2(180.0, 0.0)),
-    );
+    )
+    .labelled_by(label.id);
     ui.end_row();
 }
 pub fn skeleton(ui: &mut egui::Ui, width: f32) {
@@ -76,14 +78,16 @@ pub fn skeleton(ui: &mut egui::Ui, width: f32) {
         .rect_filled(rect, 3, ui.visuals().widgets.inactive.bg_fill);
 }
 pub fn connection(ui: &mut egui::Ui, connection: Connection) {
-    ui.label("Connection");
+    let label = ui.label("Connection");
     let mut text = format!("{connection:?}");
     ui.add_enabled(
         false,
         egui::TextEdit::singleline(&mut text)
+            .interactive(false)
             .text_color(connection_color(connection))
             .min_size(egui::vec2(180.0, 0.0))
             .desired_width(f32::INFINITY),
-    );
+    )
+    .labelled_by(label.id);
     ui.end_row();
 }

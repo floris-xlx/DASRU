@@ -1,0 +1,8 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.71s
+     Running tests/gui_bootstrap.rs (target/debug/deps/gui_bootstrap-5cc07dcb8b513863)
+
+running 1 test
+test advanced_hotkeys_respond_to_accessible_expand_and_collapse ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.04s

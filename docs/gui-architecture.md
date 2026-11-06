@@ -18,6 +18,12 @@ layout contract, which supersedes the initial sidebar specification.
 
 ## Ownership and concurrency
 
+The Windows eframe build enables its AccessKit adapter. Existing field labels are
+associated with inputs; permanent status values and locked observation bindings
+expose read-only semantics. Accessible Expand/Collapse requests update the same
+advanced-section state used by ordinary interaction. Native control tests invoke
+the real GUI through UI Automation and never generate game keyboard events.
+
 `DesktopApp` renders projections and sends typed controller requests. It never
 enumerates processes, hashes executables, reads game memory, or monitors keyboards.
 `Controller` owns a monitor thread and `HotkeyRuntime`; `SettingsWriter` owns a

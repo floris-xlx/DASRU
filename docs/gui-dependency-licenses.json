@@ -5,6 +5,21 @@
         "license":  "MIT OR Apache-2.0"
     },
     {
+        "name":  "accesskit_consumer",
+        "version":  "0.39.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "accesskit_windows",
+        "version":  "0.35.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "accesskit_winit",
+        "version":  "0.34.1",
+        "license":  "Apache-2.0"
+    },
+    {
         "name":  "adler2",
         "version":  "2.0.1",
         "license":  "0BSD OR MIT OR Apache-2.0"
@@ -50,14 +65,14 @@
         "license":  "Unlicense OR MIT"
     },
     {
-        "name":  "cfg-if",
-        "version":  "1.0.5",
-        "license":  "MIT OR Apache-2.0"
-    },
-    {
         "name":  "cfg_aliases",
         "version":  "0.2.2",
         "license":  "MIT"
+    },
+    {
+        "name":  "cfg-if",
+        "version":  "1.0.5",
+        "license":  "MIT OR Apache-2.0"
     },
     {
         "name":  "color",
@@ -120,12 +135,12 @@
         "license":  "MIT OR Apache-2.0"
     },
     {
-        "name":  "egui-winit",
+        "name":  "egui_glow",
         "version":  "0.37.0",
         "license":  "MIT OR Apache-2.0"
     },
     {
-        "name":  "egui_glow",
+        "name":  "egui-winit",
         "version":  "0.37.0",
         "license":  "MIT OR Apache-2.0"
     },
@@ -190,6 +205,11 @@
         "license":  "MIT"
     },
     {
+        "name":  "getrandom",
+        "version":  "0.3.4",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
         "name":  "gl_generator",
         "version":  "0.14.0",
         "license":  "Apache-2.0"
@@ -210,11 +230,6 @@
         "license":  "Apache-2.0"
     },
     {
-        "name":  "glutin-winit",
-        "version":  "0.5.0",
-        "license":  "MIT"
-    },
-    {
         "name":  "glutin_egl_sys",
         "version":  "0.7.1",
         "license":  "Apache-2.0"
@@ -223,6 +238,11 @@
         "name":  "glutin_wgl_sys",
         "version":  "0.6.1",
         "license":  "Apache-2.0"
+    },
+    {
+        "name":  "glutin-winit",
+        "version":  "0.5.0",
+        "license":  "MIT"
     },
     {
         "name":  "guillotiere",
@@ -590,8 +610,58 @@
         "license":  "MIT OR Apache-2.0"
     },
     {
+        "name":  "windows",
+        "version":  "0.62.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows_x86_64_msvc",
+        "version":  "0.52.6",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows-collections",
+        "version":  "0.3.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows-core",
+        "version":  "0.62.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows-future",
+        "version":  "0.3.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows-implement",
+        "version":  "0.60.2",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows-interface",
+        "version":  "0.59.3",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
         "name":  "windows-link",
         "version":  "0.2.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows-numerics",
+        "version":  "0.3.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows-result",
+        "version":  "0.4.1",
+        "license":  "MIT OR Apache-2.0"
+    },
+    {
+        "name":  "windows-strings",
+        "version":  "0.5.1",
         "license":  "MIT OR Apache-2.0"
     },
     {
@@ -610,8 +680,8 @@
         "license":  "MIT OR Apache-2.0"
     },
     {
-        "name":  "windows_x86_64_msvc",
-        "version":  "0.52.6",
+        "name":  "windows-threading",
+        "version":  "0.2.1",
         "license":  "MIT OR Apache-2.0"
     },
     {
