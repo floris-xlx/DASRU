@@ -1,4 +1,6 @@
 pub mod binding;
+#[cfg(any(windows, test))]
+mod diagnostics;
 pub mod keyboard;
 pub mod manager;
 pub mod state;

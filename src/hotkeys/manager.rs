@@ -2,7 +2,7 @@ use crate::process::ProcessIdentity;
 
 use super::{
     binding::{BindingError, HotkeyBinding, validate_bindings},
-    keyboard::KeyboardEventTracker,
+    keyboard::{KeyboardEvent, KeyboardEventTracker},
     state::{HotkeyLifecycle, LifecycleEvent},
 };
 
@@ -256,6 +256,10 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
         is_down: bool,
     ) -> Option<HotkeyEvent> {
         let event = self.keyboard.observe(virtual_key, is_down)?;
+        self.handle_keyboard_event(event)
+    }
+
+    fn handle_keyboard_event(&mut self, event: KeyboardEvent) -> Option<HotkeyEvent> {
         if !event.is_down {
             return None;
         }
@@ -268,6 +272,28 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
             })
             .map(|index| index as u32 + 1)?;
         self.handle_hotkey(id)
+    }
+
+    #[cfg_attr(not(windows), allow(dead_code))]
+    pub(crate) fn handle_keyboard_input_at_generation(
+        &mut self,
+        virtual_key: u16,
+        is_down: bool,
+        captured_generation: u64,
+        current_generation: u64,
+    ) -> Option<HotkeyEvent> {
+        let event = self.keyboard.observe_at_generation(
+            virtual_key,
+            is_down,
+            captured_generation,
+            current_generation,
+        )?;
+        self.handle_keyboard_event(event)
+    }
+
+    #[cfg_attr(not(windows), allow(dead_code))]
+    pub(crate) fn reset_keyboard_state(&mut self) {
+        self.keyboard.focus_lost();
     }
 
     pub fn shutdown(&mut self) -> Result<(), HotkeyFailure> {

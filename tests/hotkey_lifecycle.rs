@@ -197,6 +197,24 @@ fn focus_loss_deactivates_bindings() {
 }
 
 #[test]
+fn focus_loss_before_chord_dispatch_rejects_keyboard_event() {
+    let (mut manager, _, foreground) = rig();
+    manager.start().unwrap();
+    foreground.borrow_mut().foreground_pid = Ok(Some(99));
+
+    assert_eq!(manager.handle_keyboard_input(0xa2, true), None);
+    assert_eq!(manager.handle_keyboard_input(0xa4, true), None);
+    assert_eq!(
+        manager.handle_keyboard_input(0x78, true),
+        Some(HotkeyEvent::Rejected {
+            binding: HotkeyBinding::parse("CTRL+ALT+F9").unwrap(),
+            code: HotkeyErrorCode::ForegroundMismatch,
+        })
+    );
+    assert_eq!(manager.state(), HotkeyState::Inactive);
+}
+
+#[test]
 fn process_exit_disables_bindings() {
     let (mut manager, registration_events, foreground) = rig();
     manager.start().unwrap();
@@ -444,6 +462,32 @@ fn focus_reactivation_does_not_reuse_stale_modifier_state() {
 }
 
 #[test]
+fn repeated_focus_cycles_release_every_registration() {
+    let (mut manager, operations, foreground) = rig();
+    manager.start().unwrap();
+
+    for _ in 0..8 {
+        foreground.borrow_mut().foreground_pid = Ok(Some(99));
+        manager.reconcile().unwrap();
+        foreground.borrow_mut().foreground_pid = Ok(Some(42));
+        manager.reconcile().unwrap();
+    }
+    manager.shutdown().unwrap();
+
+    let operations = operations.borrow();
+    let registered = operations
+        .iter()
+        .filter(|operation| matches!(operation, RegistrationOperation::Register(..)))
+        .count();
+    let unregistered = operations
+        .iter()
+        .filter(|operation| matches!(operation, RegistrationOperation::Unregister(..)))
+        .count();
+    assert_eq!(registered, 9);
+    assert_eq!(unregistered, registered);
+}
+
+#[test]
 fn rejects_event_from_unrelated_foreground_window() {
     let (mut manager, _, foreground) = rig();
     manager.start().unwrap();
@@ -480,8 +524,10 @@ fn rejects_same_pid_with_changed_creation_identity() {
     manager.start().unwrap();
     foreground.borrow_mut().current_identity = Some(identity(2));
 
+    assert_eq!(manager.handle_keyboard_input(0xa2, true), None);
+    assert_eq!(manager.handle_keyboard_input(0xa4, true), None);
     assert_eq!(
-        manager.handle_hotkey(1),
+        manager.handle_keyboard_input(0x78, true),
         Some(HotkeyEvent::Rejected {
             binding: HotkeyBinding::parse("CTRL+ALT+F9").unwrap(),
             code: HotkeyErrorCode::IdentityChanged,

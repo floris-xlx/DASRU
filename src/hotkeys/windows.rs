@@ -3,7 +3,7 @@ use std::{
     process::ExitCode,
     sync::{
         Arc,
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicU64, Ordering},
         mpsc::{self, Receiver, Sender, SyncSender},
     },
     thread::{self, JoinHandle},
@@ -45,6 +45,7 @@ use crate::{
 use super::{
     HotkeyErrorCode,
     binding::HotkeyBinding,
+    diagnostics::{HotkeyDiagnostics, Stage},
     manager::{
         ForegroundBackend, HotkeyEvent, HotkeyManager, HotkeyState, RegistrationBackend,
         RegistrationFailure, VerifiedGameProcess,
@@ -65,6 +66,7 @@ const VK_LSHIFT: u16 = 0xa0;
 const VK_RSHIFT: u16 = 0xa1;
 const STARTUP_TIMEOUT: Duration = Duration::from_secs(3);
 const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(3);
+static FOCUS_GENERATION: AtomicU64 = AtomicU64::new(0);
 
 enum Command {
     Register {
@@ -78,7 +80,11 @@ enum Command {
 }
 
 enum BackendEvent {
-    KeyboardInput(u16, bool),
+    KeyboardInput {
+        virtual_key: u16,
+        is_down: bool,
+        generation: u64,
+    },
     ForegroundChanged,
     Failed(HotkeyErrorCode),
 }
@@ -103,7 +109,15 @@ pub(super) struct WindowsBackend {
 }
 
 impl WindowsBackend {
+    #[cfg_attr(not(test), allow(dead_code))]
     fn start(bindings: &[HotkeyBinding]) -> Result<Self, HotkeyErrorCode> {
+        Self::start_with_diagnostics(bindings, Arc::new(HotkeyDiagnostics::default()))
+    }
+
+    fn start_with_diagnostics(
+        bindings: &[HotkeyBinding],
+        diagnostics: Arc<HotkeyDiagnostics>,
+    ) -> Result<Self, HotkeyErrorCode> {
         let (commands_tx, commands_rx) = mpsc::channel();
         let (events_tx, events_rx) = mpsc::channel();
         let (startup_tx, startup_rx) = mpsc::sync_channel(2);
@@ -111,6 +125,7 @@ impl WindowsBackend {
         let abort = Arc::new(AtomicBool::new(false));
         let worker_abort = Arc::clone(&abort);
         let worker_bindings = bindings.to_vec();
+        let worker_diagnostics = Arc::clone(&diagnostics);
         let worker = thread::Builder::new()
             .name("dasru-hotkeys".to_owned())
             .spawn(move || {
@@ -120,6 +135,7 @@ impl WindowsBackend {
                     startup_tx,
                     worker_abort,
                     worker_bindings,
+                    worker_diagnostics,
                 );
                 let _ = completed_tx.send(result);
             })
@@ -293,6 +309,7 @@ fn message_loop(
     startup: SyncSender<StartupMessage>,
     abort: Arc<AtomicBool>,
     bindings: Vec<HotkeyBinding>,
+    diagnostics: Arc<HotkeyDiagnostics>,
 ) -> Result<(), HotkeyErrorCode> {
     let mut message = MSG::default();
     unsafe {
@@ -325,6 +342,7 @@ fn message_loop(
     let mut window_state = Box::new(InputWindowState {
         events: events.clone(),
         monitored_keys: monitored_keys(&bindings),
+        diagnostics: Arc::clone(&diagnostics),
     });
     let class = WNDCLASSW {
         lpfnWndProc: Some(input_window_proc),
@@ -424,8 +442,10 @@ fn message_loop(
         match message.message {
             FOREGROUND_MESSAGE => {
                 // Discard queued keys so a chord cannot survive a focus cycle.
-                discard_pending_raw_input(window);
-                let _ = events.send(BackendEvent::ForegroundChanged);
+                discard_pending_raw_input(window, &diagnostics);
+                if events.send(BackendEvent::ForegroundChanged).is_err() {
+                    diagnostics.increment(Stage::ForwardFailed);
+                }
             }
             COMMAND_MESSAGE => {
                 while let Ok(command) = commands.try_recv() {
@@ -456,7 +476,7 @@ fn message_loop(
                                 Err(RegistrationFailure::Failed)
                             } else {
                                 if registered.len() == 1 && raw_registered {
-                                    discard_pending_raw_input(window);
+                                    discard_pending_raw_input(window, &diagnostics);
                                 }
                                 registered.remove(&id);
                                 if registered.is_empty() {
@@ -497,6 +517,7 @@ fn message_loop(
 struct InputWindowState {
     events: Sender<BackendEvent>,
     monitored_keys: HashSet<u16>,
+    diagnostics: Arc<HotkeyDiagnostics>,
 }
 
 fn monitored_keys(bindings: &[HotkeyBinding]) -> HashSet<u16> {
@@ -539,9 +560,10 @@ fn unregister_raw_keyboard() -> bool {
     }
 }
 
-fn discard_pending_raw_input(window: HWND) {
+fn discard_pending_raw_input(window: HWND, diagnostics: &HotkeyDiagnostics) {
     let mut message = MSG::default();
     while unsafe { PeekMessageW(&mut message, window, WM_INPUT, WM_INPUT, PM_REMOVE) } != 0 {
+        diagnostics.increment(Stage::QueueDiscarded);
         if message.wParam as u32 == windows_sys::Win32::UI::WindowsAndMessaging::RIM_INPUT {
             unsafe {
                 DefWindowProcW(window, message.message, message.wParam, message.lParam);
@@ -606,9 +628,15 @@ fn read_raw_keyboard(state: *mut InputWindowState, lparam: LPARAM) {
     };
     let required = std::mem::size_of::<RAWINPUTHEADER>() + std::mem::size_of::<RAWKEYBOARD>();
     if read == u32::MAX || read < required as u32 {
-        let _ = unsafe { &*state }
+        let state = unsafe { &*state };
+        state.diagnostics.increment(Stage::RawInputReadFailed);
+        if state
             .events
-            .send(BackendEvent::Failed(HotkeyErrorCode::RawInputReadFailed));
+            .send(BackendEvent::Failed(HotkeyErrorCode::RawInputReadFailed))
+            .is_err()
+        {
+            state.diagnostics.increment(Stage::ForwardFailed);
+        }
         return;
     }
     let raw = unsafe { raw.assume_init() };
@@ -621,9 +649,17 @@ fn read_raw_keyboard(state: *mut InputWindowState, lparam: LPARAM) {
     if state.monitored_keys.contains(&virtual_key) {
         let is_down =
             keyboard.Flags & windows_sys::Win32::UI::WindowsAndMessaging::RI_KEY_BREAK as u16 == 0;
-        let _ = state
-            .events
-            .send(BackendEvent::KeyboardInput(virtual_key, is_down));
+        state.diagnostics.increment(Stage::RawInputObserved);
+        let event = BackendEvent::KeyboardInput {
+            virtual_key,
+            is_down,
+            generation: FOCUS_GENERATION.load(Ordering::Acquire),
+        };
+        if state.events.send(event).is_ok() {
+            state.diagnostics.increment(Stage::InputForwarded);
+        } else {
+            state.diagnostics.increment(Stage::ForwardFailed);
+        }
     }
 }
 
@@ -659,6 +695,7 @@ unsafe extern "system" fn foreground_event(
     _event_time: u32,
 ) {
     if event == EVENT_SYSTEM_FOREGROUND {
+        FOCUS_GENERATION.fetch_add(1, Ordering::AcqRel);
         let thread_id = unsafe {
             // SAFETY: GetCurrentThreadId has no preconditions.
             GetCurrentThreadId()
@@ -837,13 +874,15 @@ pub(super) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let mut backend = match WindowsBackend::start(&bindings) {
-        Ok(backend) => backend,
-        Err(code) => {
-            eprintln!("{code}");
-            return ExitCode::FAILURE;
-        }
-    };
+    let diagnostics = Arc::new(HotkeyDiagnostics::default());
+    let mut backend =
+        match WindowsBackend::start_with_diagnostics(&bindings, Arc::clone(&diagnostics)) {
+            Ok(backend) => backend,
+            Err(code) => {
+                eprintln!("{code}");
+                return ExitCode::FAILURE;
+            }
+        };
     let mut manager =
         match HotkeyManager::new(bindings.clone(), game, backend.registrar(), foreground) {
             Ok(manager) => manager,
@@ -875,26 +914,97 @@ pub(super) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
     }
 
     let mut last_reported_state = None;
-    report_state_change(manager.state(), &mut last_reported_state, &bindings);
+    let mut last_focus_generation = FOCUS_GENERATION.load(Ordering::Acquire);
+    report_state_change(
+        manager.state(),
+        &mut last_reported_state,
+        &bindings,
+        &diagnostics,
+    );
     let mut exit_code = ExitCode::SUCCESS;
     while !STOP_REQUESTED.load(Ordering::SeqCst) {
-        match backend.recv_timeout(Duration::from_millis(250)) {
-            Ok(BackendEvent::KeyboardInput(virtual_key, is_down)) => {
-                if let Some(event) = manager.handle_keyboard_input(virtual_key, is_down) {
-                    print_hotkey_event(event);
+        let received = backend.recv_timeout(Duration::from_millis(250));
+        let focus_generation = FOCUS_GENERATION.load(Ordering::Acquire);
+        let focus_changes = focus_generation.wrapping_sub(last_focus_generation);
+        if focus_changes != 0 {
+            diagnostics.increment_by(Stage::FocusChanged, focus_changes);
+            last_focus_generation = focus_generation;
+        }
+        let focus_changed = matches!(&received, Ok(BackendEvent::ForegroundChanged));
+        match received {
+            Ok(BackendEvent::KeyboardInput {
+                virtual_key,
+                is_down,
+                generation,
+            }) => {
+                let current_generation = FOCUS_GENERATION.load(Ordering::Acquire);
+                let event = manager.handle_keyboard_input_at_generation(
+                    virtual_key,
+                    is_down,
+                    generation,
+                    current_generation,
+                );
+                if generation != current_generation {
+                    diagnostics.increment(Stage::StaleDropped);
+                } else {
+                    diagnostics.increment(Stage::InputProcessed);
+                    if generation != FOCUS_GENERATION.load(Ordering::Acquire) {
+                        diagnostics.increment(Stage::StaleDropped);
+                        manager.reset_keyboard_state();
+                    } else if let Some(event) = event {
+                        diagnostics.increment(Stage::ChordCandidate);
+                        match event {
+                            HotkeyEvent::Accepted(_) => {
+                                diagnostics.increment(Stage::Accepted);
+                                print_hotkey_event(event);
+                            }
+                            HotkeyEvent::Rejected { code, .. } => {
+                                diagnostics.increment(Stage::Rejected);
+                                if matches!(
+                                    code,
+                                    HotkeyErrorCode::IdentityChanged
+                                        | HotkeyErrorCode::NoProcess
+                                        | HotkeyErrorCode::AmbiguousProcess
+                                        | HotkeyErrorCode::AccessDenied
+                                        | HotkeyErrorCode::ProcessExited
+                                ) {
+                                    diagnostics.increment(Stage::IdentityRejected);
+                                }
+                                print_hotkey_event(event);
+                            }
+                        }
+                    }
                 }
-                report_state_change(manager.state(), &mut last_reported_state, &bindings);
+                report_state_change(
+                    manager.state(),
+                    &mut last_reported_state,
+                    &bindings,
+                    &diagnostics,
+                );
             }
             Ok(BackendEvent::ForegroundChanged) | Err(mpsc::RecvTimeoutError::Timeout) => {
+                if focus_changed {
+                    manager.reset_keyboard_state();
+                }
                 if let Err(failure) = manager.reconcile() {
                     eprintln!("{}", failure.code);
                     if failure.code != HotkeyErrorCode::RegistrationConflict {
                         exit_code = ExitCode::FAILURE;
                         break;
                     }
-                    report_state_change(manager.state(), &mut last_reported_state, &bindings);
+                    report_state_change(
+                        manager.state(),
+                        &mut last_reported_state,
+                        &bindings,
+                        &diagnostics,
+                    );
                 } else {
-                    report_state_change(manager.state(), &mut last_reported_state, &bindings);
+                    report_state_change(
+                        manager.state(),
+                        &mut last_reported_state,
+                        &bindings,
+                        &diagnostics,
+                    );
                 }
             }
             Ok(BackendEvent::Failed(code)) => {
@@ -918,10 +1028,17 @@ pub(super) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
         eprintln!("{}", failure.code);
         exit_code = ExitCode::FAILURE;
     }
+    report_state_change(
+        manager.state(),
+        &mut last_reported_state,
+        &bindings,
+        &diagnostics,
+    );
     if let Err(code) = backend.shutdown() {
         eprintln!("{code}");
         exit_code = ExitCode::FAILURE;
     }
+    println!("{}", diagnostics.summary());
     exit_code
 }
 
@@ -929,9 +1046,20 @@ fn report_state_change(
     state: HotkeyState,
     last_reported: &mut Option<HotkeyState>,
     bindings: &[HotkeyBinding],
+    diagnostics: &HotkeyDiagnostics,
 ) {
     if *last_reported == Some(state) {
         return;
+    }
+    match *last_reported {
+        Some(previous) if previous != HotkeyState::Active && state == HotkeyState::Active => {
+            diagnostics.increment(Stage::Activated);
+        }
+        Some(previous) if previous == HotkeyState::Active && state != HotkeyState::Active => {
+            diagnostics.increment(Stage::Deactivated);
+        }
+        None if state == HotkeyState::Active => diagnostics.increment(Stage::Activated),
+        _ => {}
     }
     *last_reported = Some(state);
     let evidence = CapabilityEvidence {
