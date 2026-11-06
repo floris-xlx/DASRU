@@ -8,7 +8,7 @@
 - **Keyboard tracking:** `tests/hotkey_input_events.rs` was added before the tracker. Its first build failed because `hotkeys::keyboard` did not exist. The four tests now cover make/break, left/right modifier state, repeat suppression, and focus-loss reset.
 - **Raw Input lifecycle:** two manager tests were added before `handle_keyboard_input`; their first build failed because the method did not exist. They now verify one dispatch per chord make and that focus reactivation cannot reuse stale modifier state. A regression test also checks that a Raw Input registration failure preserves its structured error code.
 - **Focus ordering replay:** the first deterministic focus-cycle replay observed the bug: a Ctrl+Alt+F9 sequence queued before focus loss produced one accepted event after refocus. The generation-aware keyboard replay test now produces one chord candidate in the current generation, advances through focus loss/refocus, then replays the old-generation chord and observes zero candidates. The lifecycle suite also verifies keyboard rejection after focus loss, immediate rejection after process-identity change, and balanced registration/unregistration over eight focus cycles. Diagnostic counter tests verify independent stage counts and saturation at `u64::MAX`.
-- **Windows input backend:** the earlier `RegisterHotKey` tests were replaced after the live investigation showed `WM_HOTKEY` was not delivered in TDA. The five current Windows tests cover Raw Input being absent while inactive, registration on activation, removal on deactivation and shutdown, repeated start/stop, coexistence with another owner’s global hotkey registration, and message-loop termination. Focus transitions also discard queued input before the manager changes state, preventing an old chord from carrying across a focus cycle. They use no synthetic keyboard input. The final assertions passed in hosted Windows CI run `42172509846`.
+- **Windows input backend:** the earlier `RegisterHotKey` tests were replaced after the live investigation showed `WM_HOTKEY` was not delivered in TDA. The five current Windows tests cover Raw Input being absent while inactive, registration on activation, removal on deactivation and shutdown, repeated start/stop, coexistence with another owner’s global hotkey registration, and message-loop termination. Focus callbacks advance an input generation; stale queued events are rejected before dispatch and queued window messages are drained at focus boundaries. The tests use no synthetic keyboard input. The updated generation code passed hosted Windows and Ubuntu CI runs `42177633403` and `42177626267`.
 
 ## Local verification
 
@@ -23,7 +23,7 @@ Commands were run from WSL2 as required for Cargo tests:
 
 The final Windows backend tests assert registration occurs only on activation and is removed on deactivation and shutdown, plus repeated start/stop, coexistence with another owner’s global hotkey, and message-loop termination. Hosted Windows CI run `42172509846` executed those tests successfully.
 
-Hosted run `42162658883` first exposed that two valid-binding tests wrongly expected the Linux-only `HOTKEY_UNSUPPORTED_PLATFORM` result on Windows. Those assertions now exercise the pure parser. The follow-up run `42163079270` passed on both Windows and Ubuntu before the Raw Input change. Current Raw Input code passed Windows and Ubuntu in PR run `42172509846` and push run `42172510313`, including formatting, Clippy, and `cargo test --locked`.
+Hosted run `42162658883` first exposed that two valid-binding tests wrongly expected the Linux-only `HOTKEY_UNSUPPORTED_PLATFORM` result on Windows. Those assertions now exercise the pure parser. The follow-up run `42163079270` passed on both Windows and Ubuntu before the Raw Input change. The prior Raw Input version passed in runs `42172509846` and `42172510313`. Commit `5fdf929` with the focus-generation replay and counters passed the push run `42177626267` and PR run `42177633403` on Windows and Ubuntu, including formatting, Clippy, and `cargo test --locked`.
 
 ## Known limits and acceptance still required
 
@@ -42,6 +42,6 @@ The actual DASRU listener was then run against the verified TDA process. It reac
 
 - Gate A - TDD evidence: new pure keyboard and lifecycle behavior tests were demonstrated failing before implementation, then passing.
 - Gate B - Local validation: WSL2 tests, format, Linux Clippy, and Windows-target Clippy passed; the final Windows API lifecycle tests passed in hosted Windows CI.
-- Gate C - Hosted Windows and Ubuntu CI: passed on PR run `42172509846` and push run `42172510313` for commit `e161335`.
+- Gate C - Hosted Windows and Ubuntu CI: passed on PR run `42177633403` and push run `42177626267` for commit `5fdf929`.
 - Gate D - Live Windows + TDA acceptance: failed/incomplete. Diagnostic Raw Input and the actual listener did not produce a verified production acceptance for the latest physical attempts.
 - Gate E - PR review: pending; no merge has been performed.
