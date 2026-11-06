@@ -1,4 +1,5 @@
 pub mod binding;
+pub mod keyboard;
 pub mod manager;
 pub mod state;
 #[cfg(windows)]
@@ -37,6 +38,8 @@ pub enum HotkeyErrorCode {
     ShutdownFailed,
     ShutdownTimeout,
     ProcessExited,
+    RawInputRegistrationFailed,
+    RawInputReadFailed,
 }
 
 impl HotkeyErrorCode {
@@ -69,6 +72,8 @@ impl HotkeyErrorCode {
             Self::ShutdownFailed => "HOTKEY_SHUTDOWN_FAILED",
             Self::ShutdownTimeout => "HOTKEY_SHUTDOWN_TIMEOUT",
             Self::ProcessExited => "HOTKEY_PROCESS_EXITED",
+            Self::RawInputRegistrationFailed => "HOTKEY_RAW_INPUT_REGISTRATION_FAILED",
+            Self::RawInputReadFailed => "HOTKEY_RAW_INPUT_READ_FAILED",
         }
     }
 }

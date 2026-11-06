@@ -289,6 +289,18 @@ fn registration_error_enters_error_state() {
 }
 
 #[test]
+fn raw_input_registration_failure_keeps_its_structured_error_code() {
+    let (mut manager, _, _) =
+        rig_with_failure(Some(RegistrationFailure::RawInputRegistrationFailed));
+
+    assert_eq!(
+        manager.start().unwrap_err().code,
+        HotkeyErrorCode::RawInputRegistrationFailed
+    );
+    assert_eq!(manager.state(), HotkeyState::Error);
+}
+
+#[test]
 fn partial_registration_failure_unregisters_earlier_bindings() {
     let identity = identity(1);
     let operations = Rc::new(RefCell::new(Vec::new()));
@@ -390,6 +402,45 @@ fn accepts_event_from_verified_foreground_game() {
             HotkeyBinding::parse("CTRL+ALT+F9").unwrap(),
         ))
     );
+}
+
+#[test]
+fn physical_binding_make_is_delivered_once_and_repeats_are_suppressed() {
+    let (mut manager, _, _) = rig();
+    manager.start().unwrap();
+
+    assert_eq!(manager.handle_keyboard_input(0xa2, true), None);
+    assert_eq!(manager.handle_keyboard_input(0xa4, true), None);
+    assert_eq!(
+        manager.handle_keyboard_input(0x78, true),
+        Some(HotkeyEvent::Accepted(
+            HotkeyBinding::parse("CTRL+ALT+F9").unwrap(),
+        ))
+    );
+    assert_eq!(manager.handle_keyboard_input(0x78, true), None);
+    assert_eq!(manager.handle_keyboard_input(0x78, false), None);
+}
+
+#[test]
+fn focus_reactivation_does_not_reuse_stale_modifier_state() {
+    let (mut manager, _, foreground) = rig();
+    manager.start().unwrap();
+    manager.handle_keyboard_input(0xa2, true);
+    manager.handle_keyboard_input(0xa4, true);
+
+    foreground.borrow_mut().foreground_pid = Ok(Some(99));
+    manager.reconcile().unwrap();
+    foreground.borrow_mut().foreground_pid = Ok(Some(42));
+    manager.reconcile().unwrap();
+
+    assert_eq!(manager.handle_keyboard_input(0x78, true), None);
+    manager.handle_keyboard_input(0x78, false);
+    manager.handle_keyboard_input(0xa2, true);
+    manager.handle_keyboard_input(0xa4, true);
+    assert!(matches!(
+        manager.handle_keyboard_input(0x78, true),
+        Some(HotkeyEvent::Accepted(_))
+    ));
 }
 
 #[test]

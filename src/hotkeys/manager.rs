@@ -2,6 +2,7 @@ use crate::process::ProcessIdentity;
 
 use super::{
     binding::{BindingError, HotkeyBinding, validate_bindings},
+    keyboard::KeyboardEventTracker,
     state::{HotkeyLifecycle, LifecycleEvent},
 };
 
@@ -44,6 +45,7 @@ pub struct VerifiedGameProcess {
 pub enum RegistrationFailure {
     Conflict,
     Failed,
+    RawInputRegistrationFailed,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -89,6 +91,7 @@ pub struct HotkeyManager<R, F> {
     registrar: R,
     foreground: F,
     lifecycle: HotkeyLifecycle,
+    keyboard: KeyboardEventTracker,
     registered: Vec<u32>,
     enabled: bool,
     terminal: bool,
@@ -108,6 +111,7 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
             registrar,
             foreground,
             lifecycle: HotkeyLifecycle::default(),
+            keyboard: KeyboardEventTracker::default(),
             registered: Vec::new(),
             enabled: true,
             terminal: false,
@@ -121,6 +125,7 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
             registrar,
             foreground,
             lifecycle: HotkeyLifecycle::default(),
+            keyboard: KeyboardEventTracker::default(),
             registered: Vec::new(),
             enabled: false,
             terminal: false,
@@ -245,7 +250,28 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
         }
     }
 
+    pub fn handle_keyboard_input(
+        &mut self,
+        virtual_key: u16,
+        is_down: bool,
+    ) -> Option<HotkeyEvent> {
+        let event = self.keyboard.observe(virtual_key, is_down)?;
+        if !event.is_down {
+            return None;
+        }
+        let id = self
+            .bindings
+            .iter()
+            .position(|binding| {
+                binding.virtual_key() as u16 == event.virtual_key
+                    && binding.modifiers() as u8 == event.modifiers
+            })
+            .map(|index| index as u32 + 1)?;
+        self.handle_hotkey(id)
+    }
+
     pub fn shutdown(&mut self) -> Result<(), HotkeyFailure> {
+        self.keyboard.focus_lost();
         if self.state() == HotkeyState::Disabled {
             return Ok(());
         }
@@ -265,6 +291,7 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
     }
 
     fn register_all(&mut self) -> Result<(), HotkeyFailure> {
+        self.keyboard.focus_lost();
         self.lifecycle
             .transition(LifecycleEvent::BeginRegistration)
             .map_err(|code| self.failure(code))?;
@@ -274,18 +301,31 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
                 Ok(()) => self.registered.push(id),
                 Err(failure) => {
                     let rollback_failed = self.unregister_all().is_err();
-                    let code = if rollback_failed || failure == RegistrationFailure::Failed {
-                        self.lifecycle
-                            .transition(LifecycleEvent::RegistrationFailed)
-                            .ok();
-                        self.terminal = true;
-                        HotkeyErrorCode::RegistrationFailed
+                    let (event, code) = if rollback_failed {
+                        (
+                            LifecycleEvent::RegistrationFailed,
+                            HotkeyErrorCode::RegistrationFailed,
+                        )
                     } else {
-                        self.lifecycle
-                            .transition(LifecycleEvent::RegistrationConflict)
-                            .ok();
-                        HotkeyErrorCode::RegistrationConflict
+                        match failure {
+                            RegistrationFailure::Conflict => (
+                                LifecycleEvent::RegistrationConflict,
+                                HotkeyErrorCode::RegistrationConflict,
+                            ),
+                            RegistrationFailure::Failed => (
+                                LifecycleEvent::RegistrationFailed,
+                                HotkeyErrorCode::RegistrationFailed,
+                            ),
+                            RegistrationFailure::RawInputRegistrationFailed => (
+                                LifecycleEvent::RegistrationFailed,
+                                HotkeyErrorCode::RawInputRegistrationFailed,
+                            ),
+                        }
                     };
+                    self.lifecycle.transition(event).ok();
+                    if event == LifecycleEvent::RegistrationFailed {
+                        self.terminal = true;
+                    }
                     return Err(self.failure(code));
                 }
             }
@@ -297,6 +337,7 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
     }
 
     fn deactivate(&mut self) -> Result<(), HotkeyFailure> {
+        self.keyboard.focus_lost();
         let unregister_failed = self.unregister_all().is_err();
         if unregister_failed {
             self.fail_runtime();
@@ -315,6 +356,7 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
     }
 
     fn invalidate(&mut self) {
+        self.keyboard.focus_lost();
         let _ = self.unregister_all();
         self.lifecycle
             .transition(LifecycleEvent::ProcessInvalidated)
@@ -323,6 +365,7 @@ impl<R: RegistrationBackend, F: ForegroundBackend> HotkeyManager<R, F> {
     }
 
     fn fail_runtime(&mut self) {
+        self.keyboard.focus_lost();
         let _ = self.unregister_all();
         self.lifecycle
             .transition(LifecycleEvent::OperationFailed)
