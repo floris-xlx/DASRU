@@ -11,7 +11,11 @@ fn main() -> eframe::Result {
                 .with_min_inner_size([860.0, 560.0]),
             ..Default::default()
         },
-        Box::new(|_| Ok(Box::new(dasru::gui::DesktopApp::default()))),
+        Box::new(|creation| {
+            let mut app = dasru::gui::DesktopApp::monitored()?;
+            app.restore_window(creation);
+            Ok(Box::new(app))
+        }),
     )
 }
 

@@ -3,6 +3,7 @@ pub mod binding;
 mod diagnostics;
 pub mod keyboard;
 pub mod manager;
+pub mod runtime;
 pub mod state;
 #[cfg(windows)]
 mod windows;
@@ -42,6 +43,7 @@ pub enum HotkeyErrorCode {
     ProcessExited,
     RawInputRegistrationFailed,
     RawInputReadFailed,
+    EventQueueOverflow,
 }
 
 impl HotkeyErrorCode {
@@ -76,6 +78,7 @@ impl HotkeyErrorCode {
             Self::ProcessExited => "HOTKEY_PROCESS_EXITED",
             Self::RawInputRegistrationFailed => "HOTKEY_RAW_INPUT_REGISTRATION_FAILED",
             Self::RawInputReadFailed => "HOTKEY_RAW_INPUT_READ_FAILED",
+            Self::EventQueueOverflow => "HOTKEY_EVENT_QUEUE_OVERFLOW",
         }
     }
 }

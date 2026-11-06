@@ -1,6 +1,5 @@
 use std::{
     collections::HashSet,
-    process::ExitCode,
     sync::{
         Arc,
         atomic::{AtomicBool, AtomicU64, Ordering},
@@ -12,10 +11,7 @@ use std::{
 
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
-    System::{
-        Console::SetConsoleCtrlHandler, LibraryLoader::GetModuleHandleW,
-        Threading::GetCurrentThreadId,
-    },
+    System::{LibraryLoader::GetModuleHandleW, Threading::GetCurrentThreadId},
     UI::{
         Accessibility::{HWINEVENTHOOK, SetWinEventHook, UnhookWinEvent},
         Input::{
@@ -24,21 +20,11 @@ use windows_sys::Win32::{
         },
         WindowsAndMessaging::{
             CREATESTRUCTW, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW,
-            EVENT_SYSTEM_FOREGROUND, GWLP_USERDATA, GetForegroundWindow, GetMessageW,
-            GetWindowLongPtrW, GetWindowThreadProcessId, MSG, PM_NOREMOVE, PM_REMOVE, PeekMessageW,
-            PostThreadMessageW, RegisterClassW, SetWindowLongPtrW, TranslateMessage,
-            UnregisterClassW, WINEVENT_OUTOFCONTEXT, WM_APP, WM_DESTROY, WM_INPUT, WM_NCCREATE,
-            WNDCLASSW,
+            EVENT_SYSTEM_FOREGROUND, GWLP_USERDATA, GetMessageW, GetWindowLongPtrW, MSG,
+            PM_NOREMOVE, PM_REMOVE, PeekMessageW, PostThreadMessageW, RegisterClassW,
+            SetWindowLongPtrW, TranslateMessage, UnregisterClassW, WINEVENT_OUTOFCONTEXT, WM_APP,
+            WM_DESTROY, WM_INPUT, WM_NCCREATE, WNDCLASSW,
         },
-    },
-};
-
-use crate::{
-    capability::{self, BuildEvidence, CapabilityEvidence, FeatureId, ProcessEvidence},
-    identity::{BuildRegistry, BuildResolution, ExecutableIdentity},
-    process::{
-        PinnedProcessCandidate, ProcessInspection, ProcessScanError,
-        enumerate_pinned_game_processes, recheck_pinned_process,
     },
 };
 
@@ -46,10 +32,7 @@ use super::{
     HotkeyErrorCode,
     binding::HotkeyBinding,
     diagnostics::{HotkeyDiagnostics, Stage},
-    manager::{
-        ForegroundBackend, HotkeyEvent, HotkeyManager, HotkeyState, RegistrationBackend,
-        RegistrationFailure, VerifiedGameProcess,
-    },
+    manager::{RegistrationBackend, RegistrationFailure},
 };
 
 const COMMAND_MESSAGE: u32 = WM_APP + 1;
@@ -106,6 +89,7 @@ pub(super) struct WindowsBackend {
     completed: Receiver<Result<(), HotkeyErrorCode>>,
     thread: Option<JoinHandle<()>>,
     stopped: bool,
+    overloaded: Arc<AtomicBool>,
 }
 
 impl WindowsBackend {
@@ -119,7 +103,9 @@ impl WindowsBackend {
         diagnostics: Arc<HotkeyDiagnostics>,
     ) -> Result<Self, HotkeyErrorCode> {
         let (commands_tx, commands_rx) = mpsc::channel();
-        let (events_tx, events_rx) = mpsc::channel();
+        let (events_tx, events_rx) = mpsc::sync_channel(256);
+        let overloaded = Arc::new(AtomicBool::new(false));
+        let worker_overloaded = overloaded.clone();
         let (startup_tx, startup_rx) = mpsc::sync_channel(2);
         let (completed_tx, completed_rx) = mpsc::sync_channel(1);
         let abort = Arc::new(AtomicBool::new(false));
@@ -136,6 +122,7 @@ impl WindowsBackend {
                     worker_abort,
                     worker_bindings,
                     worker_diagnostics,
+                    worker_overloaded,
                 );
                 let _ = completed_tx.send(result);
             })
@@ -191,6 +178,7 @@ impl WindowsBackend {
             completed: completed_rx,
             thread: Some(worker),
             stopped: false,
+            overloaded,
         })
     }
 
@@ -202,6 +190,9 @@ impl WindowsBackend {
     }
 
     fn recv_timeout(&self, timeout: Duration) -> Result<BackendEvent, mpsc::RecvTimeoutError> {
+        if self.overloaded.load(Ordering::Acquire) {
+            return Ok(BackendEvent::Failed(HotkeyErrorCode::EventQueueOverflow));
+        }
         self.events.recv_timeout(timeout)
     }
 
@@ -305,11 +296,12 @@ impl RegistrationBackend for WindowsRegistrar {
 
 fn message_loop(
     commands: Receiver<Command>,
-    events: Sender<BackendEvent>,
+    events: SyncSender<BackendEvent>,
     startup: SyncSender<StartupMessage>,
     abort: Arc<AtomicBool>,
     bindings: Vec<HotkeyBinding>,
     diagnostics: Arc<HotkeyDiagnostics>,
+    overloaded: Arc<AtomicBool>,
 ) -> Result<(), HotkeyErrorCode> {
     let mut message = MSG::default();
     unsafe {
@@ -343,6 +335,7 @@ fn message_loop(
         events: events.clone(),
         monitored_keys: monitored_keys(&bindings),
         diagnostics: Arc::clone(&diagnostics),
+        overloaded: overloaded.clone(),
     });
     let class = WNDCLASSW {
         lpfnWndProc: Some(input_window_proc),
@@ -430,7 +423,7 @@ fn message_loop(
             GetMessageW(&mut message, std::ptr::null_mut(), 0, 0)
         };
         if status == -1 {
-            let _ = events.send(BackendEvent::Failed(
+            let _ = events.try_send(BackendEvent::Failed(
                 HotkeyErrorCode::MessageLoopStartFailed,
             ));
             result = Err(HotkeyErrorCode::MessageLoopStartFailed);
@@ -443,8 +436,9 @@ fn message_loop(
             FOREGROUND_MESSAGE => {
                 // Discard queued keys so a chord cannot survive a focus cycle.
                 discard_pending_raw_input(window, &diagnostics);
-                if events.send(BackendEvent::ForegroundChanged).is_err() {
+                if events.try_send(BackendEvent::ForegroundChanged).is_err() {
                     diagnostics.increment(Stage::ForwardFailed);
+                    invalidate_overflow(&overloaded);
                 }
             }
             COMMAND_MESSAGE => {
@@ -515,9 +509,10 @@ fn message_loop(
 }
 
 struct InputWindowState {
-    events: Sender<BackendEvent>,
+    events: SyncSender<BackendEvent>,
     monitored_keys: HashSet<u16>,
     diagnostics: Arc<HotkeyDiagnostics>,
+    overloaded: Arc<AtomicBool>,
 }
 
 fn monitored_keys(bindings: &[HotkeyBinding]) -> HashSet<u16> {
@@ -632,10 +627,11 @@ fn read_raw_keyboard(state: *mut InputWindowState, lparam: LPARAM) {
         state.diagnostics.increment(Stage::RawInputReadFailed);
         if state
             .events
-            .send(BackendEvent::Failed(HotkeyErrorCode::RawInputReadFailed))
+            .try_send(BackendEvent::Failed(HotkeyErrorCode::RawInputReadFailed))
             .is_err()
         {
             state.diagnostics.increment(Stage::ForwardFailed);
+            invalidate_overflow(&state.overloaded);
         }
         return;
     }
@@ -655,14 +651,20 @@ fn read_raw_keyboard(state: *mut InputWindowState, lparam: LPARAM) {
             is_down,
             generation: FOCUS_GENERATION.load(Ordering::Acquire),
         };
-        if state.events.send(event).is_ok() {
+        if state.events.try_send(event).is_ok() {
             state.diagnostics.increment(Stage::InputForwarded);
         } else {
             state.diagnostics.increment(Stage::ForwardFailed);
+            invalidate_overflow(&state.overloaded);
         }
     }
 }
 
+fn invalidate_overflow(overloaded: &AtomicBool) {
+    // Invalidate queued chords before the dispatcher observes the terminal overflow.
+    FOCUS_GENERATION.fetch_add(1, Ordering::AcqRel);
+    overloaded.store(true, Ordering::Release);
+}
 fn normalize_raw_virtual_key(keyboard: RAWKEYBOARD) -> u16 {
     match keyboard.VKey {
         VK_SHIFT if keyboard.MakeCode == 0x36 => VK_RSHIFT,
@@ -707,390 +709,8 @@ unsafe extern "system" fn foreground_event(
     }
 }
 
-struct WindowsForeground {
-    pinned: PinnedProcessCandidate,
-    expected_pid: u32,
-    expected_identity: crate::process::ProcessIdentity,
-}
-
-impl ForegroundBackend for WindowsForeground {
-    fn verify_game(
-        &mut self,
-        expected_pid: u32,
-        expected_identity: &crate::process::ProcessIdentity,
-    ) -> Result<(), HotkeyErrorCode> {
-        if expected_pid != self.expected_pid || expected_identity != &self.expected_identity {
-            return Err(HotkeyErrorCode::IdentityChanged);
-        }
-        let current = enumerate_pinned_game_processes().map_err(process_scan_error)?;
-        match current.as_slice() {
-            [] => return Err(HotkeyErrorCode::NoProcess),
-            [candidate] if candidate.candidate.pid == self.expected_pid => {
-                match &candidate.candidate.inspection {
-                    ProcessInspection::Available { identity }
-                        if identity == &self.expected_identity => {}
-                    ProcessInspection::Unavailable { failure }
-                        if failure.kind == crate::process::ProcessFailureKind::AccessDenied =>
-                    {
-                        return Err(HotkeyErrorCode::AccessDenied);
-                    }
-                    ProcessInspection::Unavailable { failure }
-                        if failure.kind == crate::process::ProcessFailureKind::ProcessExited =>
-                    {
-                        return Err(HotkeyErrorCode::ProcessExited);
-                    }
-                    _ => return Err(HotkeyErrorCode::IdentityChanged),
-                }
-            }
-            [_] => return Err(HotkeyErrorCode::IdentityChanged),
-            _ => return Err(HotkeyErrorCode::AmbiguousProcess),
-        }
-        match recheck_pinned_process(&self.pinned) {
-            ProcessInspection::Available { identity } if identity == self.expected_identity => {
-                Ok(())
-            }
-            ProcessInspection::Unavailable { failure }
-                if failure.kind == crate::process::ProcessFailureKind::AccessDenied =>
-            {
-                Err(HotkeyErrorCode::AccessDenied)
-            }
-            ProcessInspection::Unavailable { failure }
-                if failure.kind == crate::process::ProcessFailureKind::ProcessExited =>
-            {
-                Err(HotkeyErrorCode::ProcessExited)
-            }
-            _ => Err(HotkeyErrorCode::IdentityChanged),
-        }
-    }
-
-    fn foreground_pid(&mut self) -> Result<Option<u32>, HotkeyErrorCode> {
-        let window = unsafe {
-            // SAFETY: GetForegroundWindow has no preconditions.
-            GetForegroundWindow()
-        };
-        if window.is_null() {
-            return Ok(None);
-        }
-        let mut pid = 0;
-        let thread = unsafe {
-            // SAFETY: window is non-null and pid points to writable storage.
-            GetWindowThreadProcessId(window, &mut pid)
-        };
-        if thread == 0 || pid == 0 {
-            Err(HotkeyErrorCode::ForegroundUnavailable)
-        } else {
-            Ok(Some(pid))
-        }
-    }
-}
-
-fn attach_to_game() -> Result<(VerifiedGameProcess, WindowsForeground), HotkeyErrorCode> {
-    let mut candidates = enumerate_pinned_game_processes().map_err(process_scan_error)?;
-    if candidates.is_empty() {
-        return Err(HotkeyErrorCode::NoProcess);
-    }
-    if candidates.len() != 1 {
-        return Err(HotkeyErrorCode::AmbiguousProcess);
-    }
-    let pinned = candidates.pop().ok_or(HotkeyErrorCode::NoProcess)?;
-    let identity = match &pinned.candidate.inspection {
-        ProcessInspection::Available { identity } => identity.clone(),
-        ProcessInspection::Unavailable { failure }
-            if failure.kind == crate::process::ProcessFailureKind::AccessDenied =>
-        {
-            return Err(HotkeyErrorCode::AccessDenied);
-        }
-        ProcessInspection::Unavailable { failure }
-            if failure.kind == crate::process::ProcessFailureKind::ProcessExited =>
-        {
-            return Err(HotkeyErrorCode::ProcessExited);
-        }
-        ProcessInspection::Unavailable { .. } => {
-            return Err(HotkeyErrorCode::ProcessInspectionFailed);
-        }
-    };
-    let executable =
-        ExecutableIdentity::inspect(&identity.executable_path).map_err(|error| match error {
-            crate::identity::ExecutableError::Io { source, .. }
-                if source.kind() == std::io::ErrorKind::PermissionDenied =>
-            {
-                HotkeyErrorCode::AccessDenied
-            }
-            _ => HotkeyErrorCode::ExecutableInspectionFailed,
-        })?;
-    let registry = BuildRegistry::from_toml(include_str!("../../data/builds.toml"))
-        .map_err(|_| HotkeyErrorCode::ProcessInspectionFailed)?;
-    let build = match registry.resolve(&executable) {
-        BuildResolution::ExactMatch { build } => build,
-        BuildResolution::UnknownBuild | BuildResolution::IdentityInconsistent { .. } => {
-            return Err(HotkeyErrorCode::UnknownBuild);
-        }
-    };
-    if !matches!(
-        recheck_pinned_process(&pinned),
-        ProcessInspection::Available { identity: ref current } if current == &identity
-    ) {
-        return Err(HotkeyErrorCode::IdentityChanged);
-    }
-    let pid = pinned.candidate.pid;
-    Ok((
-        VerifiedGameProcess {
-            pid,
-            identity: identity.clone(),
-            build_id: build.id,
-        },
-        WindowsForeground {
-            pinned,
-            expected_pid: pid,
-            expected_identity: identity,
-        },
-    ))
-}
-
-fn process_scan_error(error: ProcessScanError) -> HotkeyErrorCode {
-    match error {
-        ProcessScanError::UnsupportedPlatform => HotkeyErrorCode::UnsupportedPlatform,
-        ProcessScanError::Io { source, .. }
-            if source.kind() == std::io::ErrorKind::PermissionDenied =>
-        {
-            HotkeyErrorCode::AccessDenied
-        }
-        ProcessScanError::Io { .. } => HotkeyErrorCode::ProcessInspectionFailed,
-    }
-}
-
-static STOP_REQUESTED: AtomicBool = AtomicBool::new(false);
-
-unsafe extern "system" fn console_control(_control: u32) -> i32 {
-    STOP_REQUESTED.store(true, Ordering::SeqCst);
-    1
-}
-
-pub(super) fn run_cli(bindings: Vec<HotkeyBinding>) -> ExitCode {
-    let (game, foreground) = match attach_to_game() {
-        Ok(attached) => attached,
-        Err(code) => {
-            eprintln!("{code}");
-            return ExitCode::FAILURE;
-        }
-    };
-    let diagnostics = Arc::new(HotkeyDiagnostics::default());
-    let mut backend =
-        match WindowsBackend::start_with_diagnostics(&bindings, Arc::clone(&diagnostics)) {
-            Ok(backend) => backend,
-            Err(code) => {
-                eprintln!("{code}");
-                return ExitCode::FAILURE;
-            }
-        };
-    let mut manager =
-        match HotkeyManager::new(bindings.clone(), game, backend.registrar(), foreground) {
-            Ok(manager) => manager,
-            Err(_) => {
-                eprintln!("HOTKEY_INVALID_BINDING");
-                let _ = backend.shutdown();
-                return ExitCode::FAILURE;
-            }
-        };
-    if let Err(failure) = manager.start() {
-        eprintln!("{}", failure.code);
-        if failure.code != HotkeyErrorCode::RegistrationConflict {
-            let _ = manager.shutdown();
-            let _ = backend.shutdown();
-            return ExitCode::FAILURE;
-        }
-    }
-
-    STOP_REQUESTED.store(false, Ordering::SeqCst);
-    let handler = unsafe {
-        // SAFETY: callback is static and only sets an atomic flag.
-        SetConsoleCtrlHandler(Some(console_control), 1)
-    };
-    if handler == 0 {
-        eprintln!("HOTKEY_SHUTDOWN_FAILED");
-        let _ = manager.shutdown();
-        let _ = backend.shutdown();
-        return ExitCode::FAILURE;
-    }
-
-    let mut last_reported_state = None;
-    let mut last_focus_generation = FOCUS_GENERATION.load(Ordering::Acquire);
-    report_state_change(
-        manager.state(),
-        &mut last_reported_state,
-        &bindings,
-        &diagnostics,
-    );
-    let mut exit_code = ExitCode::SUCCESS;
-    while !STOP_REQUESTED.load(Ordering::SeqCst) {
-        let received = backend.recv_timeout(Duration::from_millis(250));
-        let focus_generation = FOCUS_GENERATION.load(Ordering::Acquire);
-        let focus_changes = focus_generation.wrapping_sub(last_focus_generation);
-        if focus_changes != 0 {
-            diagnostics.increment_by(Stage::FocusChanged, focus_changes);
-            last_focus_generation = focus_generation;
-        }
-        let focus_changed = matches!(&received, Ok(BackendEvent::ForegroundChanged));
-        match received {
-            Ok(BackendEvent::KeyboardInput {
-                virtual_key,
-                is_down,
-                generation,
-            }) => {
-                let current_generation = FOCUS_GENERATION.load(Ordering::Acquire);
-                let event = manager.handle_keyboard_input_at_generation(
-                    virtual_key,
-                    is_down,
-                    generation,
-                    current_generation,
-                );
-                if generation != current_generation {
-                    diagnostics.increment(Stage::StaleDropped);
-                } else {
-                    diagnostics.increment(Stage::InputProcessed);
-                    if generation != FOCUS_GENERATION.load(Ordering::Acquire) {
-                        diagnostics.increment(Stage::StaleDropped);
-                        manager.reset_keyboard_state();
-                    } else if let Some(event) = event {
-                        diagnostics.increment(Stage::ChordCandidate);
-                        match event {
-                            HotkeyEvent::Accepted(_) => {
-                                diagnostics.increment(Stage::Accepted);
-                                print_hotkey_event(event);
-                            }
-                            HotkeyEvent::Rejected { code, .. } => {
-                                diagnostics.increment(Stage::Rejected);
-                                if matches!(
-                                    code,
-                                    HotkeyErrorCode::IdentityChanged
-                                        | HotkeyErrorCode::NoProcess
-                                        | HotkeyErrorCode::AmbiguousProcess
-                                        | HotkeyErrorCode::AccessDenied
-                                        | HotkeyErrorCode::ProcessExited
-                                ) {
-                                    diagnostics.increment(Stage::IdentityRejected);
-                                }
-                                print_hotkey_event(event);
-                            }
-                        }
-                    }
-                }
-                report_state_change(
-                    manager.state(),
-                    &mut last_reported_state,
-                    &bindings,
-                    &diagnostics,
-                );
-            }
-            Ok(BackendEvent::ForegroundChanged) | Err(mpsc::RecvTimeoutError::Timeout) => {
-                if focus_changed {
-                    manager.reset_keyboard_state();
-                }
-                if let Err(failure) = manager.reconcile() {
-                    eprintln!("{}", failure.code);
-                    if failure.code != HotkeyErrorCode::RegistrationConflict {
-                        exit_code = ExitCode::FAILURE;
-                        break;
-                    }
-                    report_state_change(
-                        manager.state(),
-                        &mut last_reported_state,
-                        &bindings,
-                        &diagnostics,
-                    );
-                } else {
-                    report_state_change(
-                        manager.state(),
-                        &mut last_reported_state,
-                        &bindings,
-                        &diagnostics,
-                    );
-                }
-            }
-            Ok(BackendEvent::Failed(code)) => {
-                eprintln!("{code}");
-                exit_code = ExitCode::FAILURE;
-                break;
-            }
-            Err(mpsc::RecvTimeoutError::Disconnected) => {
-                eprintln!("HOTKEY_MESSAGE_LOOP_START_FAILED");
-                exit_code = ExitCode::FAILURE;
-                break;
-            }
-        }
-    }
-
-    let _ = unsafe {
-        // SAFETY: removes the same static handler installed above.
-        SetConsoleCtrlHandler(Some(console_control), 0)
-    };
-    if let Err(failure) = manager.shutdown() {
-        eprintln!("{}", failure.code);
-        exit_code = ExitCode::FAILURE;
-    }
-    report_state_change(
-        manager.state(),
-        &mut last_reported_state,
-        &bindings,
-        &diagnostics,
-    );
-    if let Err(code) = backend.shutdown() {
-        eprintln!("{code}");
-        exit_code = ExitCode::FAILURE;
-    }
-    println!("{}", diagnostics.summary());
-    exit_code
-}
-
-fn report_state_change(
-    state: HotkeyState,
-    last_reported: &mut Option<HotkeyState>,
-    bindings: &[HotkeyBinding],
-    diagnostics: &HotkeyDiagnostics,
-) {
-    if *last_reported == Some(state) {
-        return;
-    }
-    match *last_reported {
-        Some(previous) if previous != HotkeyState::Active && state == HotkeyState::Active => {
-            diagnostics.increment(Stage::Activated);
-        }
-        Some(previous) if previous == HotkeyState::Active && state != HotkeyState::Active => {
-            diagnostics.increment(Stage::Deactivated);
-        }
-        None if state == HotkeyState::Active => diagnostics.increment(Stage::Activated),
-        _ => {}
-    }
-    *last_reported = Some(state);
-    let evidence = CapabilityEvidence {
-        process: ProcessEvidence::Verified,
-        build: BuildEvidence::ExactMatch,
-        hotkey_registration: state.registration_evidence(),
-        ..CapabilityEvidence::default()
-    };
-    let capability = capability::evaluate(FeatureId::GlobalHotkeys, &evidence);
-    let status = match capability.status {
-        capability::FeatureStatus::Supported => "SUPPORTED",
-        capability::FeatureStatus::Unsupported => "UNSUPPORTED",
-        capability::FeatureStatus::Unknown => "UNKNOWN",
-        capability::FeatureStatus::Experimental => "EXPERIMENTAL",
-    };
-    let listed = bindings
-        .iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>()
-        .join(",");
-    println!("HOTKEY_STATE state={state:?} capability={status} bindings={listed}");
-}
-
-fn print_hotkey_event(event: HotkeyEvent) {
-    match event {
-        HotkeyEvent::Accepted(binding) => println!("HOTKEY_ACCEPTED binding={binding}"),
-        HotkeyEvent::Rejected { binding, code } => {
-            println!("HOTKEY_REJECTED binding={binding} code={code}");
-        }
-    }
-}
+mod session;
+pub(super) use session::{run_cli, run_session};
 
 #[cfg(test)]
 mod tests {
@@ -1109,6 +729,23 @@ mod tests {
 
     fn binding() -> HotkeyBinding {
         HotkeyBinding::parse("CTRL+ALT+SHIFT+F24").unwrap()
+    }
+
+    #[test]
+    fn event_queue_overflow_is_terminal_and_backend_still_shuts_down() {
+        let _lock = test_lock();
+        let mut backend = WindowsBackend::start(&[binding()]).unwrap();
+        backend
+            .overloaded
+            .store(true, std::sync::atomic::Ordering::Release);
+        assert!(matches!(
+            backend.recv_timeout(std::time::Duration::ZERO),
+            Ok(super::BackendEvent::Failed(
+                super::HotkeyErrorCode::EventQueueOverflow
+            ))
+        ));
+        backend.shutdown().unwrap();
+        assert!(backend.is_stopped());
     }
 
     #[test]

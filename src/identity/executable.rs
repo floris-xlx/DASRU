@@ -33,6 +33,27 @@ pub enum ExecutableError {
 
 impl ExecutableIdentity {
     pub fn inspect(path: &Path) -> Result<Self, ExecutableError> {
+        Self::inspect_with_cancel(path, || false)
+    }
+    pub fn inspect_cancellable(
+        path: &Path,
+        cancel: &std::sync::atomic::AtomicBool,
+    ) -> Result<Self, ExecutableError> {
+        Self::inspect_with_cancel(path, || cancel.load(std::sync::atomic::Ordering::Acquire))
+    }
+    fn inspect_with_cancel(
+        path: &Path,
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<Self, ExecutableError> {
+        if cancelled() {
+            return Err(io_error(
+                path,
+                io::Error::new(
+                    io::ErrorKind::Interrupted,
+                    "executable verification cancelled",
+                ),
+            ));
+        }
         let mut file = File::open(path).map_err(|source| io_error(path, source))?;
         let before = file_snapshot(&file).map_err(|source| io_error(path, source))?;
         let path_before = File::open(path)
@@ -46,6 +67,15 @@ impl ExecutableIdentity {
         let mut buffer = [0u8; 64 * 1024];
         let mut bytes_hashed = 0u64;
         loop {
+            if cancelled() {
+                return Err(io_error(
+                    path,
+                    io::Error::new(
+                        io::ErrorKind::Interrupted,
+                        "executable verification cancelled",
+                    ),
+                ));
+            }
             let read = file
                 .read(&mut buffer)
                 .map_err(|source| io_error(path, source))?;
@@ -289,6 +319,35 @@ fn format_version(high: u32, low: u32) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cancelled_hash_does_not_open_a_file() {
+        let cancel = std::sync::atomic::AtomicBool::new(true);
+        let error = ExecutableIdentity::inspect_cancellable(
+            Path::new("missing-cancelled-executable"),
+            &cancel,
+        )
+        .unwrap_err();
+        assert!(
+            matches!(error,ExecutableError::Io { source,.. } if source.kind()==io::ErrorKind::Interrupted)
+        );
+    }
+
+    #[test]
+    fn cancellation_is_checked_between_hash_chunks() {
+        let path = std::env::temp_dir().join(format!("dasru-cancel-hash-{}", std::process::id()));
+        std::fs::write(&path, vec![0; 256 * 1024]).unwrap();
+        let mut checks = 0;
+        let result = ExecutableIdentity::inspect_with_cancel(&path, || {
+            checks += 1;
+            checks >= 3
+        });
+        std::fs::remove_file(path).unwrap();
+        assert!(
+            matches!(result,Err(ExecutableError::Io { source,.. }) if source.kind()==io::ErrorKind::Interrupted)
+        );
+        assert_eq!(checks, 3);
+    }
 
     #[test]
     fn preserves_version_metadata_read_errors_separately_from_absence() {

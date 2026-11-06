@@ -1,0 +1,13 @@
+{
+    "configuration":  "Windows native debug build; game running; listener not started",
+    "startup_ms":  437.9042,
+    "dpi":  96,
+    "sample_seconds":  10,
+    "cpu_ms":  3125,
+    "working_set_before":  86937600,
+    "working_set_after":  88244224,
+    "maximum_message_response_ms":  9.841800000000001,
+    "shutdown_ms":  140.1625,
+    "exit_code":  0,
+    "print_window_succeeded":  true
+}
