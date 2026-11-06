@@ -5,6 +5,8 @@ use std::{
 
 use serde::Serialize;
 
+use crate::capability::{self, CapabilityEvidence, FeatureId, Platform};
+
 #[derive(Debug, Serialize)]
 pub struct DoctorReport {
     pub schema_version: u8,
@@ -268,6 +270,14 @@ fn current_platform() -> HostPlatform {
     }
 }
 
+fn capability_platform(platform: HostPlatform) -> Platform {
+    match platform {
+        HostPlatform::Windows => Platform::Windows,
+        HostPlatform::Linux => Platform::Linux,
+        HostPlatform::Other => Platform::Other,
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct SessionDetection {
     session_type: &'static str,
@@ -348,23 +358,25 @@ fn host_capabilities(
 }
 
 fn process_memory_capability(platform: HostPlatform) -> Capability {
+    let implementation_status =
+        capability_decision(FeatureId::MemoryScan, platform).implementation_status();
     match platform {
         HostPlatform::Windows => Capability {
             detected: "DETECTED",
             accessible: "UNKNOWN",
-            implementation_status: "IMPLEMENTED",
+            implementation_status,
             reason: "Windows process-memory APIs are used by DASRU, but access to a target process was not tested.".to_owned(),
         },
         HostPlatform::Linux => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "DASRU has no Linux process-memory backend; host ptrace access was not tested.".to_owned(),
         },
         HostPlatform::Other => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "DASRU has no process-memory backend for this platform.".to_owned(),
         },
     }
@@ -382,115 +394,136 @@ fn clipboard_capability_from_detection(
     platform: HostPlatform,
     utility: UtilityDetection,
 ) -> Capability {
+    let implementation_status =
+        capability_decision(FeatureId::Clipboard, platform).implementation_status();
     match platform {
         HostPlatform::Windows => Capability {
             detected: "DETECTED",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "Windows has a clipboard API, but doctor did not open it and DASRU has no clipboard feature.".to_owned(),
         },
         HostPlatform::Linux => match utility {
             UtilityDetection::Found(utility) => Capability {
                 detected: "DETECTED",
                 accessible: "UNKNOWN",
-                implementation_status: "NOT_IMPLEMENTED",
+                implementation_status,
                 reason: format!("Found {utility} on PATH; doctor did not test clipboard access and DASRU has no clipboard feature."),
             },
             UtilityDetection::Missing => Capability {
                 detected: "NOT_DETECTED",
                 accessible: "UNKNOWN",
-                implementation_status: "NOT_IMPLEMENTED",
+                implementation_status,
                 reason: "No session-appropriate clipboard utility was found on PATH.".to_owned(),
             },
             UtilityDetection::Unknown => Capability {
                 detected: "UNKNOWN",
                 accessible: "UNKNOWN",
-                implementation_status: "NOT_IMPLEMENTED",
+                implementation_status,
                 reason: "Clipboard utilities could not be checked because PATH or file permissions were unavailable.".to_owned(),
             },
         },
         HostPlatform::Other => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "DASRU has no clipboard integration for this platform.".to_owned(),
         },
     }
 }
 
 fn hotkey_capability(platform: HostPlatform, session: &'static str) -> Capability {
+    let implementation_status =
+        capability_decision(FeatureId::GlobalHotkeys, platform).implementation_status();
     match (platform, session) {
         (HostPlatform::Windows, _) => Capability {
             detected: "DETECTED",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "Windows supports global-hotkey registration, but doctor registered no hotkeys and DASRU has no hotkey feature.".to_owned(),
         },
         (HostPlatform::Linux, "X11") => Capability {
             detected: "DETECTED",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "An X11 session is present; permissions and hotkey registration were not tested.".to_owned(),
         },
         (HostPlatform::Linux, "WAYLAND") => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "Global hotkey support depends on compositor or portal policy; no access check was performed.".to_owned(),
         },
         (HostPlatform::Linux, _) => Capability {
             detected: "NOT_DETECTED",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "No desktop session for global hotkeys was detected.".to_owned(),
         },
         (HostPlatform::Other, _) => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "DASRU has no global-hotkey integration for this platform.".to_owned(),
         },
     }
 }
 
 fn portal_capability(platform: HostPlatform, session: &'static str) -> Capability {
+    let implementation_status =
+        capability_decision(FeatureId::GlobalHotkeys, platform).implementation_status();
     match (platform, session) {
         (HostPlatform::Linux, "WAYLAND") => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "The GlobalShortcuts portal service was not queried; Wayland session detection does not establish portal availability.".to_owned(),
         },
         _ => Capability {
             detected: "NOT_APPLICABLE",
             accessible: "NOT_APPLICABLE",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "No Wayland GlobalShortcuts portal check applies to this session.".to_owned(),
         },
     }
 }
 
 fn keyboard_input_capability(platform: HostPlatform) -> Capability {
+    let implementation_status =
+        capability_decision(FeatureId::KeyboardInput, platform).implementation_status();
     match platform {
         HostPlatform::Windows => Capability {
             detected: "DETECTED",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "Windows provides the SendInput API, but DASRU has not tested input access and does not inject keyboard input.".to_owned(),
         },
         HostPlatform::Linux => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "DASRU has no Linux keyboard-input backend; host input access was not tested.".to_owned(),
         },
         HostPlatform::Other => Capability {
             detected: "UNKNOWN",
             accessible: "UNKNOWN",
-            implementation_status: "NOT_IMPLEMENTED",
+            implementation_status,
             reason: "DASRU has no keyboard-input backend for this platform.".to_owned(),
         },
     }
+}
+
+fn capability_decision(
+    feature: FeatureId,
+    platform: HostPlatform,
+) -> capability::CapabilityDecision {
+    capability::evaluate(
+        feature,
+        &CapabilityEvidence {
+            platform: capability_platform(platform),
+            ..CapabilityEvidence::default()
+        },
+    )
 }
 
 #[derive(Clone, Copy)]
@@ -523,92 +556,85 @@ fn feature_readiness(
     platform: HostPlatform,
     capabilities: &HostCapabilities,
 ) -> Vec<FeatureReadiness> {
-    let (process_detected, process_accessible, process_impl, process_ready, process_reason) =
-        if platform == HostPlatform::Windows {
-            (
-                "DETECTED",
-                "UNKNOWN",
-                "IMPLEMENTED",
-                "NOT_PROBED",
-                "Target process access was not tested.",
-            )
-        } else {
-            (
-                "UNKNOWN",
-                "UNKNOWN",
-                "NOT_IMPLEMENTED",
-                "UNSUPPORTED_PLATFORM",
-                "DASRU process discovery is implemented on Windows only.",
-            )
-        };
-    let (osd_detected, osd_accessible, osd_impl, osd_ready, osd_reason) =
-        if platform == HostPlatform::Windows {
-            (
-                "DETECTED",
-                "UNKNOWN",
-                "EXPERIMENTAL",
-                "EXPERIMENTAL_OPT_IN",
-                "A recognized executable and explicit write opt-in are required.",
-            )
-        } else {
-            (
-                "UNKNOWN",
-                "UNKNOWN",
-                "NOT_IMPLEMENTED",
-                "UNSUPPORTED_PLATFORM",
-                "The native OSD writer is Windows-only.",
-            )
-        };
+    let platform_evidence = CapabilityEvidence {
+        platform: capability_platform(platform),
+        ..CapabilityEvidence::default()
+    };
+    let process_probe = capability::evaluate(FeatureId::ProcessProbe, &platform_evidence);
+    let memory_scan = capability::evaluate(FeatureId::MemoryScan, &platform_evidence);
+    let fps_marker = capability::evaluate(FeatureId::ExperimentalFpsMarker, &platform_evidence);
+    let clipboard = capability::evaluate(FeatureId::Clipboard, &platform_evidence);
+    let global_hotkeys = capability::evaluate(FeatureId::GlobalHotkeys, &platform_evidence);
+    let keyboard_input = capability::evaluate(FeatureId::KeyboardInput, &platform_evidence);
+    let wayland_portal = capability::evaluate(FeatureId::GlobalHotkeys, &platform_evidence);
     vec![
         FeatureReadiness {
             feature: "process_probe",
-            detected: process_detected,
-            accessible: process_accessible,
-            implementation_status: process_impl,
-            readiness: process_ready,
-            failure_reasons: vec![process_reason],
+            detected: if platform == HostPlatform::Windows {
+                "DETECTED"
+            } else {
+                "UNKNOWN"
+            },
+            accessible: "UNKNOWN",
+            implementation_status: process_probe.implementation_status(),
+            readiness: if process_probe.status == capability::FeatureStatus::Supported {
+                "NOT_PROBED"
+            } else {
+                process_probe.diagnostic_readiness()
+            },
+            failure_reasons: vec![
+                if process_probe.status == capability::FeatureStatus::Supported {
+                    "Target process access was not tested."
+                } else {
+                    "DASRU process discovery is not implemented for this platform."
+                },
+            ],
         },
         FeatureReadiness {
             feature: "memory_scan",
             detected: capabilities.process_memory_read.detected,
             accessible: capabilities.process_memory_read.accessible,
-            implementation_status: capabilities.process_memory_read.implementation_status,
-            readiness: if platform == HostPlatform::Windows {
-                "NOT_PROBED"
-            } else {
-                "UNSUPPORTED_PLATFORM"
-            },
+            implementation_status: memory_scan.implementation_status(),
+            readiness: memory_scan.diagnostic_readiness(),
             failure_reasons: vec!["A target process was not opened by doctor."],
         },
         FeatureReadiness {
             feature: "native_osd_write",
-            detected: osd_detected,
-            accessible: osd_accessible,
-            implementation_status: osd_impl,
-            readiness: osd_ready,
-            failure_reasons: vec![osd_reason],
+            detected: if platform == HostPlatform::Windows {
+                "DETECTED"
+            } else {
+                "UNKNOWN"
+            },
+            accessible: "UNKNOWN",
+            implementation_status: fps_marker.implementation_status(),
+            readiness: fps_marker.diagnostic_readiness(),
+            failure_reasons: vec![if platform == HostPlatform::Windows {
+                "A recognized executable and explicit write opt-in are required."
+            } else {
+                "The native OSD writer is Windows-only."
+            }],
         },
         FeatureReadiness {
             feature: "clipboard",
             detected: capabilities.clipboard.detected,
             accessible: capabilities.clipboard.accessible,
-            implementation_status: "NOT_IMPLEMENTED",
-            readiness: "NOT_IMPLEMENTED",
+            implementation_status: clipboard.implementation_status(),
+            readiness: clipboard.diagnostic_readiness(),
             failure_reasons: vec!["DASRU has no clipboard feature."],
         },
         FeatureReadiness {
             feature: "global_hotkeys",
             detected: capabilities.global_hotkeys.detected,
             accessible: capabilities.global_hotkeys.accessible,
-            implementation_status: "NOT_IMPLEMENTED",
-            readiness: "NOT_IMPLEMENTED",
+            implementation_status: global_hotkeys.implementation_status(),
+            readiness: global_hotkeys.diagnostic_readiness(),
             failure_reasons: vec!["DASRU has no global-hotkey feature."],
         },
         FeatureReadiness {
             feature: "keyboard_input",
             detected: capabilities.keyboard_input.detected,
             accessible: capabilities.keyboard_input.accessible,
-            implementation_status: capabilities.keyboard_input.implementation_status,
+            implementation_status: keyboard_input.implementation_status(),
             readiness: if platform == HostPlatform::Windows {
                 "NOT_IMPLEMENTED"
             } else {
@@ -620,8 +646,8 @@ fn feature_readiness(
             feature: "wayland_global_shortcuts_portal",
             detected: capabilities.wayland_global_shortcuts_portal.detected,
             accessible: capabilities.wayland_global_shortcuts_portal.accessible,
-            implementation_status: "NOT_IMPLEMENTED",
-            readiness: "NOT_IMPLEMENTED",
+            implementation_status: wayland_portal.implementation_status(),
+            readiness: wayland_portal.diagnostic_readiness(),
             failure_reasons: vec!["DASRU does not query or use the GlobalShortcuts portal."],
         },
     ]

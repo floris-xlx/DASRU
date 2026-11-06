@@ -35,6 +35,8 @@ pub(crate) struct RecoverySnapshot {
     pub(crate) creation_time_filetime: u64,
     pub(crate) executable_path: PathBuf,
     pub(crate) executable_sha256: String,
+    #[serde(default)]
+    pub(crate) registered_build_id: Option<String>,
     pub(crate) module_base: u64,
     pub(crate) module_size: u32,
     pub(crate) patch_module_offset: u64,
@@ -48,6 +50,7 @@ impl RecoverySnapshot {
         pid: u32,
         process: &ProcessIdentity,
         executable_sha256: String,
+        registered_build_id: String,
         patch_module_offset: u64,
         original_protection: u32,
     ) -> Self {
@@ -57,6 +60,7 @@ impl RecoverySnapshot {
             creation_time_filetime: process.creation_time_filetime,
             executable_path: process.executable_path.clone(),
             executable_sha256,
+            registered_build_id: Some(registered_build_id),
             module_base: process.module_base,
             module_size: process.image_size,
             patch_module_offset,
@@ -97,6 +101,13 @@ impl RecoverySnapshot {
                 .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case(GAME_EXECUTABLE))
         {
             return Err("snapshot has invalid executable identity".to_owned());
+        }
+        if self
+            .registered_build_id
+            .as_ref()
+            .is_some_and(|build_id| build_id.is_empty() || build_id.len() > 256)
+        {
+            return Err("snapshot has an invalid registered build identity".to_owned());
         }
         if self.original_bytes != FPS_SLOT_ORIGINAL
             || self.patched_bytes != FPS_SLOT_PATCHED
@@ -142,8 +153,14 @@ impl RecoverySnapshot {
 
     #[cfg(windows)]
     pub(crate) fn remove(path: &Path) -> Result<(), String> {
-        fs::remove_file(path)
-            .map_err(|error| format!("remove recovery snapshot {}: {error}", path.display()))
+        match fs::remove_file(path) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(format!(
+                "remove recovery snapshot {}: {error}",
+                path.display()
+            )),
+        }
     }
 }
 
@@ -195,6 +212,7 @@ mod tests {
                 image_size: 0x10000,
             },
             "a".repeat(64),
+            "fixture-build".to_owned(),
             0x2006,
             0x02,
         )
@@ -221,6 +239,15 @@ mod tests {
         assert!(snapshot.persist(&path).is_err());
 
         std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn schema_one_snapshots_without_registered_build_ids_remain_recoverable() {
+        let mut value = serde_json::to_value(snapshot()).unwrap();
+        value.as_object_mut().unwrap().remove("registered_build_id");
+        let legacy: RecoverySnapshot = serde_json::from_value(value).unwrap();
+        assert_eq!(legacy.registered_build_id, None);
+        legacy.validate().unwrap();
     }
 
     #[test]

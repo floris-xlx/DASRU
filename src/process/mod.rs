@@ -47,7 +47,7 @@ fn normalize_process_path(path: &std::path::Path) -> String {
         .to_lowercase()
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize)]
 pub struct ProcessIdentity {
     pub creation_time_filetime: u64,
     pub executable_path: PathBuf,

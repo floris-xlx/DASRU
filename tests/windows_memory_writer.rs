@@ -105,6 +105,11 @@ fn simulated_game_marker_is_patched_and_restored() {
     session.restore().unwrap();
     assert_eq!(session.fps_slot().unwrap(), FPS_SLOT_ORIGINAL);
     assert!(!snapshot_path.exists());
+    session.restore().unwrap();
+    assert_eq!(
+        restore_fps_marker_from(&snapshot_path).unwrap(),
+        "No pending FPS marker recovery snapshot"
+    );
 
     drop(_child);
     fs::remove_dir_all(root).unwrap();
@@ -134,6 +139,27 @@ fn unknown_build_is_refused_without_creating_a_snapshot() {
 }
 
 #[test]
+fn an_existing_recovery_snapshot_is_never_deleted_by_a_failed_attach() {
+    let _serial = TEST_LOCK.lock().unwrap();
+    let (root, executable) = fixture();
+    let registry = registry_for(&executable);
+    let _child = start(&executable);
+    let snapshot_path = root.join("recovery.json");
+    let original = b"recovery data from another session";
+    fs::write(&snapshot_path, original).unwrap();
+
+    let error = match apply_fps_marker_with_registry(&registry, "+", true, &snapshot_path) {
+        Err(error) => error,
+        Ok(_) => panic!("an existing recovery snapshot must block a new patch"),
+    };
+
+    assert!(!error.is_empty());
+    assert_eq!(fs::read(&snapshot_path).unwrap(), original);
+    drop(_child);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn duplicate_game_processes_are_refused_before_snapshot_creation() {
     let _serial = TEST_LOCK.lock().unwrap();
     let (root, executable) = fixture();
@@ -147,7 +173,7 @@ fn duplicate_game_processes_are_refused_before_snapshot_creation() {
         Ok(_) => panic!("duplicate game processes must be refused"),
     };
 
-    assert!(error.contains("AmbiguousProcess"));
+    assert!(error.contains("multiple game processes were found"));
     assert!(!snapshot_path.exists());
     drop(_second);
     drop(_first);
@@ -170,6 +196,7 @@ fn recovery_refuses_a_snapshot_bound_to_another_process_creation_time() {
 
     let error = restore_fps_marker_from(&snapshot_path).unwrap_err();
     assert!(error.contains("writable process handle identity differs"));
+    assert!(snapshot_path.exists());
     assert_eq!(session.fps_slot().unwrap(), FPS_SLOT_PATCHED);
 
     session.restore().unwrap();
