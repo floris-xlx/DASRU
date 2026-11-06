@@ -83,6 +83,28 @@ normal-close timeout. Joining can wait on an uninterruptible OS call. The separa
 normal-shutdown fallback and final cleanup-error reporting remain under review;
 Gate A remains FAIL.
 
+### A2/A3 - terminal Raw Input ownership on shutdown errors
+
+Requirement: cleanup notification failure must not detach a resource owner or
+erase the failure. The same early-return pattern existed in normal shutdown;
+after repeated errors `Drop` could discard the remaining live handle.
+
+Failing tests: `shutdown_joins_owner_after_notification_failure` and
+`shutdown_joins_owner_after_notification_timeout`, both failed with `shutdown
+returned with a live owner`. GREEN: both pass after always joining before
+returning the original notification outcome. Backend cleanup failure and owner
+panic tests already passed before the fix and remain regression checks, not
+claimed RED cycles. Six ownership tests now pass. The backend retains the abort
+flag and checks it after waking, including when posting STOP fails. A blocked
+Windows call still has no safe hard interruption guarantee.
+
+Refactor: the existing completion/join sequence lives in a private portable
+helper used by Windows; no input or dispatch logic changes. Windows Rust 1.95
+all-target/all-feature check and warnings-as-errors Clippy pass. WSL Rust 1.95
+regression: 240 tests pass. Raw outputs: `evidence/pr10-shutdown-join-*-*.log`.
+Commit: `Join Raw Input worker before returning shutdown failures`.
+Gate A remains FAIL pending final error reporting and instrumented native closes.
+
 ## Current presentation revision: compact DESRU-style utility
 
 The user's revised direction supersedes the sidebar/page specification. The

@@ -89,6 +89,7 @@ pub(super) struct WindowsBackend {
     completed: Receiver<Result<(), HotkeyErrorCode>>,
     thread: Option<JoinHandle<()>>,
     stopped: bool,
+    abort: Arc<AtomicBool>,
     overloaded: Arc<AtomicBool>,
 }
 
@@ -178,6 +179,7 @@ impl WindowsBackend {
             completed: completed_rx,
             thread: Some(worker),
             stopped: false,
+            abort,
             overloaded,
         })
     }
@@ -200,27 +202,22 @@ impl WindowsBackend {
         if self.stopped {
             return Ok(());
         }
+        self.abort.store(true, Ordering::SeqCst);
         let posted = unsafe {
             // SAFETY: this thread id was acknowledged by the live message-loop thread.
             PostThreadMessageW(self.thread_id, STOP_MESSAGE, 0, 0)
         };
-        if posted == 0 {
-            return Err(HotkeyErrorCode::ShutdownFailed);
-        }
-        let result =
+        let result = if posted == 0 {
+            Err(HotkeyErrorCode::ShutdownFailed)
+        } else {
             self.completed
                 .recv_timeout(SHUTDOWN_TIMEOUT)
                 .map_err(|error| match error {
                     mpsc::RecvTimeoutError::Timeout => HotkeyErrorCode::ShutdownTimeout,
                     mpsc::RecvTimeoutError::Disconnected => HotkeyErrorCode::ShutdownFailed,
-                })?;
-        if self
-            .thread
-            .take()
-            .is_some_and(|thread| thread.join().is_err())
-        {
-            return Err(HotkeyErrorCode::ShutdownFailed);
-        }
+                })
+        };
+        let result = super::worker::finish_shutdown(&mut self.thread, result);
         self.stopped = true;
         result
     }
@@ -427,7 +424,7 @@ fn message_loop(
             result = Err(HotkeyErrorCode::MessageLoopStartFailed);
             break;
         }
-        if status == 0 || message.message == STOP_MESSAGE {
+        if status == 0 || message.message == STOP_MESSAGE || abort.load(Ordering::SeqCst) {
             break;
         }
         match message.message {
