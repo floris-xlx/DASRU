@@ -73,6 +73,6 @@ a user-entered path; a native browse dialog is not implemented. Raw Input events
 executable hashing now cooperatively cancels between chunks.
 
 No FPS limiting, input injection, macros, automation, OSD writes or memory writes
-were added. This document records evidence and open gates, not a completion claim.
+were added. This document records evidence and open gates, not a completion claim.
 
 Additional regression: a pre-existing temporary settings file is preserved on creation collision (RED missing publish helper; GREEN ownership-aware publication). The Windows overflow test first failed compilation with missing overload state/error code; it now compiles locally and awaits hosted execution. Windows orchestration was moved into windows/session.rs to keep the backend module below 1,000 lines.

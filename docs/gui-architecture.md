@@ -63,6 +63,6 @@ clamped when restoring a native window. No process IDs or executable paths persi
 
 Diagnostics only render projected fields and static error codes. Support export
 uses a user-entered destination path; no overwrite prompt grants replacement.
-The path selector is an input, not a native browse dialog.
+The path selector is an input, not a native browse dialog.
 
 The Raw Input event queue has capacity 256 and uses nonblocking sends. Overflow invalidates queued chord generations and surfaces HOTKEY_EVENT_QUEUE_OVERFLOW as a terminal runtime failure. The Windows message loop never waits for event-queue capacity.
