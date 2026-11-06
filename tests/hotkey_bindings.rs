@@ -1,5 +1,7 @@
 use std::process::{Command, Output};
 
+use dasru::hotkeys::binding::HotkeyBinding;
+
 fn listen(bindings: &[&str]) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_dasru"));
     command.args(["hotkeys", "listen"]);
@@ -19,14 +21,9 @@ fn output_text(output: &Output) -> String {
 
 #[test]
 fn accepts_valid_modifier_shortcut() {
-    let output = listen(&["CTRL+ALT+F9"]);
+    let binding = HotkeyBinding::parse("CTRL+ALT+F9").unwrap();
 
-    assert_eq!(output.status.code(), Some(1), "{}", output_text(&output));
-    assert!(
-        output_text(&output).contains("HOTKEY_UNSUPPORTED_PLATFORM"),
-        "{}",
-        output_text(&output)
-    );
+    assert_eq!(binding.to_string(), "CTRL+ALT+F9");
 }
 
 #[test]
@@ -128,11 +125,11 @@ fn rejects_known_reserved_shortcuts() {
 
 #[test]
 fn normalizes_equivalent_bindings() {
-    let output = listen(&["ALT+CTRL+F9"]);
-    let text = output_text(&output);
+    let reversed = HotkeyBinding::parse("ALT+CTRL+F9").unwrap();
+    let canonical = HotkeyBinding::parse("CTRL+ALT+F9").unwrap();
 
-    assert_eq!(output.status.code(), Some(1), "{text}");
-    assert!(text.contains("binding=CTRL+ALT+F9"), "{text}");
+    assert_eq!(reversed, canonical);
+    assert_eq!(reversed.to_string(), "CTRL+ALT+F9");
 }
 
 #[test]
