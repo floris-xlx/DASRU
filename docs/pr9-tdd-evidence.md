@@ -42,7 +42,7 @@ Cargo commands were run in WSL2:
 - `cargo clippy --locked --all-targets --target x86_64-pc-windows-gnu -- -D warnings` - passed, compiling Windows backend code and Windows-only tests.
 - `git diff --check` - passed.
 
-Hosted Windows and Ubuntu CI are pending the PR branch push.
+Hosted Windows and Ubuntu PR CI passed in run `42184375151`, including formatting, warnings-as-errors Clippy, and `cargo test --locked` on both runners.
 
 ## Scope and remaining acceptance
 
