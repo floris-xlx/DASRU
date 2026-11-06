@@ -1,5 +1,7 @@
 pub mod capability;
 pub mod doctor;
+#[cfg(feature = "desktop-ui")]
+pub mod gui;
 pub mod hotkeys;
 pub mod identity;
 pub mod memory;

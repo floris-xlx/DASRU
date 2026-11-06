@@ -142,10 +142,9 @@ fn parse_virtual_key(token: &str) -> Option<u32> {
     if let Some(number) = token
         .strip_prefix('F')
         .and_then(|suffix| suffix.parse::<u32>().ok())
+        && (1..=24).contains(&number)
     {
-        if (1..=24).contains(&number) {
-            return Some(0x70 + number - 1);
-        }
+        return Some(0x70 + number - 1);
     }
     Some(match token {
         "BACKSPACE" => 0x08,

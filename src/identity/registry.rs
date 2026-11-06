@@ -91,14 +91,14 @@ impl BuildRegistry {
                     build.product_version.as_deref(),
                 ),
             ] {
-                if let (Some(observed), Some(registered)) = (observed, registered) {
-                    if observed != registered {
-                        return BuildResolution::IdentityInconsistent {
-                            reason: format!(
-                                "registered build metadata conflicts with observed {field} {observed}; registry says {registered}"
-                            ),
-                        };
-                    }
+                if let (Some(observed), Some(registered)) = (observed, registered)
+                    && observed != registered
+                {
+                    return BuildResolution::IdentityInconsistent {
+                        reason: format!(
+                            "registered build metadata conflicts with observed {field} {observed}; registry says {registered}"
+                        ),
+                    };
                 }
             }
 

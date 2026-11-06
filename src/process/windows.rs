@@ -555,8 +555,8 @@ fn process_api_failure(
     operation: &str,
     error: u32,
 ) -> ProcessInspection {
-    if let Err(failure) = validate_process_handle(process, pid) {
-        if matches!(
+    if let Err(failure) = validate_process_handle(process, pid)
+        && matches!(
             &failure,
             ProcessInspection::Unavailable {
                 failure: ProcessFailure {
@@ -564,9 +564,9 @@ fn process_api_failure(
                     ..
                 }
             }
-        ) {
-            return failure;
-        }
+        )
+    {
+        return failure;
     }
     unavailable(operation, error)
 }
