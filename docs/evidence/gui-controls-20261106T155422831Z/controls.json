@@ -1,0 +1,34 @@
+{
+    "source_head":  "d68c67e07682106ae759638dc160869551868a58",
+    "source_tracked_dirty":  true,
+    "binary_sha256":  "69AD8A4278E566EDCB5F8042FC59C40D135CF891D072407E854D94482E7DC7F4",
+    "physical_key_test_performed":  false,
+    "generated_keyboard_events":  0,
+    "stages":  [
+                   {
+                       "accepted":  "0",
+                       "foreground_is_game":  false,
+                       "stage":  "start listener outside game",
+                       "state":  "Inactive"
+                   },
+                   {
+                       "accepted":  "0",
+                       "foreground_is_game":  false,
+                       "stage":  "stop listener through GUI",
+                       "state":  "Disabled"
+                   }
+               ],
+    "build":  "steam-25755602",
+    "binding_disabled_while_listening":  true,
+    "binding_read_only_while_listening":  false,
+    "duplicate_start_disabled":  true,
+    "game_focus_granted":  false,
+    "gui_focus_restored":  false,
+    "stop_disabled_after_stop":  true,
+    "listener_state_at_close":  "Inactive",
+    "gui_process_exited":  true,
+    "close_ms":  355.3883,
+    "exit_code":  0,
+    "cleanup_phases_succeeded":  true,
+    "test_passed":  false
+}

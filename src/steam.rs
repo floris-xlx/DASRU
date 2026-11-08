@@ -130,10 +130,10 @@ fn parse_appmanifest(source: &str) -> Result<SteamInstallMetadata, String> {
                         } else {
                             None
                         };
-                        if let Some(target) = target {
-                            if target.replace(value.as_str()).is_some() {
-                                return Err(format!("Steam appmanifest repeats {key}"));
-                            }
+                        if let Some(target) = target
+                            && target.replace(value.as_str()).is_some()
+                        {
+                            return Err(format!("Steam appmanifest repeats {key}"));
                         }
                         index += 1;
                     }

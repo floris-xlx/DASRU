@@ -1,0 +1,15 @@
+{
+    "success":  true,
+    "configuration":  "Windows native debug build; listener not started",
+    "game_running_at_start":  false,
+    "startup_ms":  382.80920000000003,
+    "dpi":  96,
+    "sample_seconds":  10,
+    "cpu_ms":  281.25,
+    "working_set_before":  73752576,
+    "working_set_after":  76275712,
+    "maximum_message_response_ms":  5.7262,
+    "shutdown_ms":  121.8065,
+    "exit_code":  0,
+    "print_window_succeeded":  true
+}

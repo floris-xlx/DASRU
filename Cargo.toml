@@ -2,7 +2,7 @@
 name = "dasru"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.95"
 
 [lib]
 name = "dasru"
@@ -12,7 +12,16 @@ path = "src/lib.rs"
 name = "dasru"
 path = "src/main.rs"
 
+[features]
+desktop-ui = ["dep:egui", "dep:eframe"]
+
+[[bin]]
+name = "dasru-gui"
+path = "src/bin/dasru-gui.rs"
+required-features = ["desktop-ui"]
+
 [dependencies]
+egui = { version = "=0.37.0", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
@@ -22,6 +31,7 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 
 [target.'cfg(windows)'.dependencies]
+eframe = { version = "=0.37.0", default-features = false, features = ["glow", "default_fonts", "accesskit"], optional = true }
 windows-sys = { version = "0.61", features = [
     "Win32_Foundation",
     "Win32_Storage_FileSystem",
@@ -38,3 +48,5 @@ windows-sys = { version = "0.61", features = [
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_WindowsAndMessaging",
 ] }
+
+

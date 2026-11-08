@@ -1,0 +1,14 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.85s
+     Running tests/gui_settings.rs (target/debug/deps/gui_settings-bdf05db930c537ae)
+
+running 7 tests
+test geometry_is_clamped_to_visible_monitor ... ok
+test invalid_schema_binding_and_interval_are_rejected ... ok
+test compact_window_defaults_replace_dashboard_geometry ... ok
+test unchanged_preferences_avoid_republication_without_skipping_conflict_checks ... ok
+test legacy_wide_window_migrates_without_losing_binding_or_overwriting_on_load ... ok
+test background_writer_flushes_final_preferences_on_close ... ok
+test missing_settings_default_valid_round_trip_and_corrupt_is_preserved ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

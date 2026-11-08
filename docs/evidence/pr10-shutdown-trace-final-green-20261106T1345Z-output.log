@@ -1,0 +1,12 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.73s
+     Running unittests src/lib.rs (target/debug/deps/dasru-24ca75a5bfe32dc0)
+
+running 5 tests
+test gui::shutdown_trace::tests::invalid_trace_arguments_are_rejected_without_files ... ok
+test gui::shutdown_trace::tests::trace_refuses_existing_destination ... ok
+test gui::shutdown_trace::tests::trace_contains_phases_without_unrelated_sensitive_events ... ok
+test gui::shutdown_trace::tests::app_shutdown_has_one_terminal_phase_on_repeated_close ... ok
+test gui::shutdown_trace::tests::controller_shutdown_phases_are_not_repeated_by_drop ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 108 filtered out; finished in 0.01s

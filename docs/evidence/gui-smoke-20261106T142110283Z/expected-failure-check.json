@@ -1,0 +1,13 @@
+{
+    "test":  "native external-preference-conflict during close",
+    "test_passed":  true,
+    "application_cleanup_success":  false,
+    "expected_gui_exit":  1,
+    "observed_gui_error":  "GUI exit code 1",
+    "external_fixture_preserved":  true,
+    "gui_process_exited":  true,
+    "local_app_data_isolated":  true,
+    "source_head":  "85c1ff0f01549bb280ba7cbe179713752a53ef25",
+    "binary_sha256":  "4F8B21AA7AEB9410C0E7A1200B1AC43099DDA17387C20A58E224B36E5C0AE17E",
+    "game_running":  false
+}

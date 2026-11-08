@@ -1,0 +1,24 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 22.66s
+     Running tests/gui_settings.rs (target/debug/deps/gui_settings-bdf05db930c537ae)
+
+running 1 test
+test unchanged_preferences_avoid_republication_without_skipping_conflict_checks ... FAILED
+
+failures:
+
+---- unchanged_preferences_avoid_republication_without_skipping_conflict_checks stdout ----
+
+thread 'unchanged_preferences_avoid_republication_without_skipping_conflict_checks' (143570) panicked at tests/gui_settings.rs:86:5:
+assertion `left == right` failed: unchanged preferences were unnecessarily republished
+  left: SystemTime { tv_sec: 1793972658, tv_nsec: 151082525 }
+ right: SystemTime { tv_sec: 946684800, tv_nsec: 0 }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    unchanged_preferences_avoid_republication_without_skipping_conflict_checks
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test gui_settings`

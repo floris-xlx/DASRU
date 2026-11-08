@@ -1,0 +1,29 @@
+    Blocking waiting for file lock on artifact directory
+   Compiling dasru v0.1.0 (<workspace>)
+error[E0599]: no method named `shutdown_report` found for struct `gui::DesktopApp` in the current scope
+   --> src/gui/mod.rs:185:26
+    |
+  9 | pub struct DesktopApp {
+    | --------------------- method `shutdown_report` not found for this struct
+...
+185 |         let report = app.shutdown_report();
+    |                          ^^^^^^^^^^^^^^^
+    |
+help: there is a method `shutdown` with a similar name
+    |
+185 -         let report = app.shutdown_report();
+185 +         let report = app.shutdown();
+    |
+
+error[E0308]: mismatched types
+   --> src/gui/mod.rs:191:27
+    |
+191 |         assert_eq!(first, Err("SETTINGS_CHANGED_EXTERNALLY"));
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `()`, found `Result<_, &str>`
+    |
+    = note: expected unit type `()`
+                    found enum `Result<_, &str>`
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `dasru` (lib test) due to 2 previous errors

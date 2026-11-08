@@ -1,0 +1,16 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.74s
+     Running tests/gui_bootstrap.rs (target/debug/deps/gui_bootstrap-5cc07dcb8b513863)
+
+running 9 tests
+test unsupported_and_verified_states_use_distinct_colors ... ok
+test application_initializes_without_game_or_open_dialog ... ok
+test status_inputs_expose_read_only_semantics_to_accessibility ... ok
+test compact_utility_shows_primary_panels_without_sidebar ... ok
+test dark_theme_tokens_apply_even_when_windows_prefers_light ... ok
+test utility_idle_does_not_request_continuous_repainting ... ok
+test dialogs_open_and_close_without_replacing_primary_controls ... ok
+test text_inputs_expose_their_visible_labels_to_accessibility ... ok
+test compact_utility_and_dialogs_render_at_supported_scaling ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s

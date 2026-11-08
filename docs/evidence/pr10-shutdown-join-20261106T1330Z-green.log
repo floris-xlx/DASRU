@@ -1,0 +1,13 @@
+   Compiling dasru v0.1.0 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.06s
+     Running unittests src/lib.rs (target/debug/deps/dasru-c811eb6fdce50d1f)
+
+running 6 tests
+test hotkeys::worker::tests::shutdown_preserves_backend_cleanup_failure ... ok
+test hotkeys::worker::tests::shutdown_reports_owner_panic ... ok
+test hotkeys::worker::tests::startup_abort_joins_after_completion_timeout ... ok
+test hotkeys::worker::tests::shutdown_joins_owner_after_notification_timeout ... ok
+test hotkeys::worker::tests::shutdown_joins_owner_after_notification_failure ... ok
+test hotkeys::worker::tests::startup_abort_joins_after_completion_disconnect ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 97 filtered out; finished in 0.10s
